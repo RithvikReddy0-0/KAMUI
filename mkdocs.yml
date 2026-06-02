@@ -1,0 +1,128 @@
+site_name: KAMUI
+site_description: >-
+  Knowledge Activation Mapping & Understanding Interface —
+  A transformer interpretability framework built entirely from scratch.
+site_url: https://rithvikreddy0-0.github.io/kamui
+repo_url: https://github.com/RithvikReddy0-0/kamui
+repo_name: RithvikReddy0-0/kamui
+copyright: "Copyright &copy; 2025 Rithvik Reddy Mukkara — MIT License"
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  font:
+    text: IBM Plex Sans
+    code: IBM Plex Mono
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+
+nav:
+  - Home: index.md
+  - Architecture:
+      - Transformer: architecture/transformer.md
+      - Training Loop: architecture/training.md
+      - Hook System: architecture/hooks.md
+  - Mechanistic Interpretability:
+      - Overview: mechinterp/overview.md
+      - Logit Lens: mechinterp/logit_lens.md
+      - Activation Patching: mechinterp/activation_patching.md
+      - Induction Heads: mechinterp/induction_heads.md
+      - Circuit Analysis: mechinterp/circuits.md
+  - Tutorials:
+      - Quickstart: tutorials/quickstart.md
+      - Train Your First Model: tutorials/training_your_first_model.md
+      - First Interpretability Experiment: tutorials/your_first_interpretability_experiment.md
+  - Research:
+      - Research Log: ../research/RESEARCH_LOG.md
+      - v0.2 — SAE Design: ../research/future/sae_design.md
+  - API Reference: api/
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            docstring_style: google
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/RithvikReddy0-0/kamui
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/rithvik-reddy-911b6b279
+  version:
+    provider: mike
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

@@ -1,0 +1,113 @@
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ── Testing & coverage ───────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+nosetests.xml
+
+# ── Type checking ────────────────────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+.pyre/
+
+# ── IDEs ─────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+profile_default/
+ipython_config.py
+
+# ── ML / Model artefacts ─────────────────────────────────────────────────────
+# Checkpoints (large binary files — use Git LFS or external storage)
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Tokeniser artefacts trained from data
+*.model
+*.vocab
+
+# ── Data ─────────────────────────────────────────────────────────────────────
+# Raw data is never committed — see data/README.md for download instructions
+data/*.txt
+data/*.bin
+data/*.json
+data/*.jsonl
+data/*.parquet
+data/*.arrow
+data/*.csv
+!data/README.md
+!data/download_*.sh
+
+# ── Research artefacts ───────────────────────────────────────────────────────
+# Large figures — commit only final publication-ready figures
+research/figures/*.png
+research/figures/*.pdf
+# Keep SVG (version-controllable vector graphics)
+!research/figures/*.svg
+
+# ── Documentation build ──────────────────────────────────────────────────────
+site/
+docs/_build/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+wandb/
+runs/
+tensorboard_logs/
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db

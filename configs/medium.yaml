@@ -1,0 +1,40 @@
+# KAMUI medium configuration
+# Purpose: scaling experiments and higher-quality language modelling
+# Use case: research comparing circuit structure at different model scales
+#
+# Parameter count: ~85M
+# Training time: ~6 hours on a single A100 GPU (OpenWebText, 10K steps)
+# Expected val perplexity: ~25–30 on OpenWebText-10k
+
+model:
+  n_layers: 12
+  d_model: 512
+  n_heads: 8             # d_head = 64
+  d_ff: 2048             # 4 * d_model
+  vocab_size: 50257      # GPT-2 vocabulary size for compatibility
+  context_length: 512
+  positional_encoding: "learned"
+  dropout: 0.1           # regularisation at this scale
+
+training:
+  batch_size: 16
+  grad_accum_steps: 32   # effective batch = 512 (matches GPT-2 small training)
+  max_steps: 10000
+  learning_rate: 1.0e-4  # lower LR for larger model
+  min_lr: 1.0e-5
+  warmup_steps: 500
+  grad_clip: 1.0
+  weight_decay: 0.1
+  betas: [0.9, 0.95]
+  eval_interval: 500
+  checkpoint_interval: 2000
+  mixed_precision: true
+
+data:
+  dataset: "openwebtext10k"
+  train_split: 0.95
+  seed: 42
+
+logging:
+  log_interval: 100
+  output_dir: "checkpoints/medium"

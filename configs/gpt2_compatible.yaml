@@ -1,0 +1,42 @@
+# KAMUI GPT-2 small compatible configuration
+# Purpose: regression testing — verify KAMUI's logit lens matches published GPT-2 results
+# Use case: load GPT-2 small weights into a KAMUI model and run interpretability tools
+#
+# This config matches GPT-2 small architecture exactly.
+# Do NOT train from scratch with this config unless you have significant compute.
+# Use it to load pretrained GPT-2 weights for interpretability experiments.
+
+model:
+  n_layers: 12
+  d_model: 768
+  n_heads: 12            # d_head = 64
+  d_ff: 3072             # 4 * d_model
+  vocab_size: 50257      # GPT-2 vocabulary (tiktoken cl100k_base)
+  context_length: 1024
+  positional_encoding: "learned"
+  dropout: 0.1
+
+# Training config not used — this model is loaded from pretrained weights.
+# See scripts/load_gpt2_weights.py for the weight-loading procedure.
+training:
+  batch_size: 8
+  grad_accum_steps: 64
+  max_steps: 0            # 0 = inference only
+  learning_rate: 1.0e-4
+  min_lr: 1.0e-5
+  warmup_steps: 0
+  grad_clip: 1.0
+  weight_decay: 0.1
+  betas: [0.9, 0.95]
+  eval_interval: 500
+  checkpoint_interval: 5000
+  mixed_precision: true
+
+data:
+  dataset: "openwebtext"
+  train_split: 0.95
+  seed: 42
+
+logging:
+  log_interval: 100
+  output_dir: "checkpoints/gpt2_compat"

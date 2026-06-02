@@ -1,0 +1,135 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kamui"
+version = "0.1.0"
+description = "A transformer interpretability framework built entirely from scratch"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Rithvik Reddy Mukkara", email = "rithvikreddymukkara@gmail.com" }
+]
+keywords = [
+  "transformer",
+  "mechanistic-interpretability",
+  "nlp",
+  "language-model",
+  "deep-learning",
+  "circuits",
+  "attention",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Education",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Typing :: Typed",
+]
+requires-python = ">=3.11"
+dependencies = [
+  "torch>=2.1.0",
+  "numpy>=1.24.0",
+  "einops>=0.7.0",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+viz = [
+  "matplotlib>=3.7.0",
+  "plotly>=5.0.0",
+  "rich>=13.0.0",
+]
+notebooks = [
+  "jupyter>=1.0.0",
+  "ipywidgets>=8.0.0",
+  "matplotlib>=3.7.0",
+  "plotly>=5.0.0",
+]
+dev = [
+  "pytest>=7.4.0",
+  "pytest-cov>=4.1.0",
+  "black>=23.0.0",
+  "ruff>=0.1.0",
+  "mypy>=1.5.0",
+  "pre-commit>=3.5.0",
+  "mkdocs>=1.5.0",
+  "mkdocs-material>=9.0.0",
+  "mkdocstrings[python]>=0.24.0",
+]
+all = [
+  "kamui[viz,notebooks,dev]",
+]
+
+[project.urls]
+Homepage      = "https://github.com/RithvikReddy0-0/kamui"
+Documentation = "https://rithvikreddy0-0.github.io/kamui"
+Repository    = "https://github.com/RithvikReddy0-0/kamui"
+Issues        = "https://github.com/RithvikReddy0-0/kamui/issues"
+Changelog     = "https://github.com/RithvikReddy0-0/kamui/blob/main/CHANGELOG.md"
+
+[project.scripts]
+kamui-train   = "kamui.scripts.train:main"
+kamui-eval    = "kamui.scripts.evaluate:main"
+
+# ---------------------------------------------------------------------------
+# Tool configuration
+# ---------------------------------------------------------------------------
+
+[tool.hatch.build.targets.wheel]
+packages = ["kamui"]
+
+[tool.black]
+line-length    = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length    = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "ANN", "B", "SIM", "C90"]
+ignore = [
+  "ANN101",  # missing type annotation for self
+  "ANN102",  # missing type annotation for cls
+  "ANN401",  # dynamically typed expressions (Any)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**"     = ["ANN", "S101"]   # no annotations required in tests; assert is fine
+"scripts/**"   = ["ANN"]
+"notebooks/**" = ["ANN", "E402"]
+
+[tool.mypy]
+python_version      = "3.11"
+strict              = true
+ignore_missing_imports = true
+exclude             = ["notebooks/", "docs/", "scripts/"]
+
+[[tool.mypy.overrides]]
+module = ["torch.*", "einops.*", "matplotlib.*", "plotly.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts   = "--cov=kamui --cov-report=term-missing --cov-fail-under=80 -v"
+markers   = [
+  "slow: marks tests as slow — deselect with -m 'not slow'",
+  "gpu:  marks tests that require a CUDA GPU",
+]
+
+[tool.coverage.run]
+source = ["kamui"]
+omit   = ["kamui/scripts/*", "tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "@overload",
+]
