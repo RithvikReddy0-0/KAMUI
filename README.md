@@ -40,6 +40,30 @@ models actually work — not just use them.
 
 ---
 
+## Development Status
+
+KAMUI is currently being built in public.
+
+**Current Progress:**
+
+```
+Repository Foundation    ██████████  ✅ complete
+ModelConfig System       ██████████  ✅ complete
+Vocabulary System        ██████████  ✅ complete
+BPE Tokenizer            ████░░░░░░  ⏳ in progress
+Embeddings               ░░░░░░░░░░  ⏳ planned
+Attention Mechanism      ░░░░░░░░░░  ⏳ planned
+Transformer Architecture ░░░░░░░░░░  ⏳ planned
+Training Pipeline        ░░░░░░░░░░  ⏳ planned
+Hook System              ░░░░░░░░░░  ⏳ planned
+Logit Lens               ░░░░░░░░░░  ⏳ planned
+Activation Patching      ░░░░░░░░░░  ⏳ planned
+```
+
+The [roadmap](#roadmap) and [issue tracker](https://github.com/RithvikReddy0-0/kamui/issues) reflect active development.
+
+---
+
 ## Why KAMUI exists
 
 Most interpretability research is done on pretrained models (GPT-2,
@@ -74,10 +98,20 @@ You read every line of every tool.
 ## Quickstart
 
 ```bash
-pip install kamui
+git clone https://github.com/RithvikReddy0-0/kamui
+cd kamui
+pip install -e ".[all]"
+pytest
 ```
 
-### Train a model
+This clones the repo, installs all dependencies in editable mode, and runs the test suite.
+The tests cover the components that are implemented so far — config, vocabulary, and tokenizer infrastructure.
+
+### Planned API (v0.1)
+
+Once the core components are complete, the intended interface will look like this:
+
+**Train a model**
 
 ```python
 import kamui
@@ -88,7 +122,7 @@ trainer   = kamui.Trainer(model, tokenizer, config="configs/small.yaml")
 trainer.train()
 ```
 
-### Run logit lens
+**Run logit lens**
 
 ```python
 lens   = kamui.LogitLens(model, tokenizer)
@@ -96,7 +130,7 @@ result = lens.run("The Eiffel Tower is located in the city of")
 result.plot()   # layer × token heatmap — watch "Paris" emerge
 ```
 
-### Find induction heads
+**Find induction heads**
 
 ```python
 detector = kamui.InductionHeadDetector(model)
@@ -105,7 +139,7 @@ detector.plot_scores(scores)
 # Expect high scores at layer 1, heads 2 and 5
 ```
 
-### Causal intervention
+**Causal intervention**
 
 ```python
 patcher = kamui.ActivationPatcher(model)
@@ -145,7 +179,7 @@ mechinterp tools use captured activations for analysis
 
 ---
 
-## Interpretability tools (v0.1)
+## Planned Interpretability Toolkit (v0.1)
 
 | Tool | What it answers |
 |------|----------------|
@@ -257,10 +291,10 @@ The framework is inspired by:
 If you use KAMUI in research, please cite:
 
 ```bibtex
-@software{mukkara2025kamui,
+@software{mukkara2026kamui,
   author    = {Mukkara, Rithvik Reddy},
   title     = {{KAMUI}: {K}nowledge {A}ctivation {M}apping \& {U}nderstanding {I}nterface},
-  year      = {2025},
+  year      = {2026},
   publisher = {GitHub},
   url       = {https://github.com/RithvikReddy0-0/kamui},
   license   = {MIT},
