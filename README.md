@@ -50,8 +50,9 @@ KAMUI is currently being built in public.
 Repository Foundation    ██████████  ✅ complete
 ModelConfig System       ██████████  ✅ complete
 Vocabulary System        ██████████  ✅ complete
-BPE Tokenizer            ████░░░░░░  ⏳ in progress
-Embeddings               ░░░░░░░░░░  ⏳ planned
+BPE Tokenizer            ██████████  ✅ complete
+Embeddings               ██████████  ✅ complete
+LayerNorm                ██████████  ✅ complete
 Attention Mechanism      ░░░░░░░░░░  ⏳ planned
 Transformer Architecture ░░░░░░░░░░  ⏳ planned
 Training Pipeline        ░░░░░░░░░░  ⏳ planned

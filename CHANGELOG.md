@@ -10,6 +10,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Phase 2C — normalisation layers (`kamui.model.normalization`):
+  `LayerNorm` implemented from scratch (not wrapping `torch.nn.LayerNorm`)
+  with learnable γ/β `nn.Parameter`s and epsilon numerical stability, plus
+  `RMSNorm` (LLaMA-style, no mean-centering, scale-only) as a research
+  alternative. Both normalise over the feature dimension per token and
+  preserve `(..., D)` shape. KAMUI uses Pre-LN. 37-test suite at 100%
+  coverage on `normalization.py`, verified against `F.layer_norm`.
+- Phase 2A — token & positional embeddings (`kamui.model.embedding`):
+  `TokenEmbedding` (raw `nn.Parameter` lookup table, weight-tying ready),
+  `SinusoidalPositionalEncoding` (fixed, non-learnable buffer),
+  `LearnedPositionalEncoding` (GPT-2 style), and the combined `Embedding`
+  module that adds token + positional vectors and applies dropout to produce
+  the `(B, S, D)` residual stream. Variant selected via
+  `ModelConfig.positional_encoding`. 53-test suite at 100% coverage on
+  `embedding.py`.
+- Phase 1C — BPE tokeniser (`kamui.tokenizer`): byte-level byte-pair encoding
+  implemented from scratch with no external tokenizer dependencies. Includes
+  `text_to_bytes` / `bytes_to_text` / `get_stats` / `merge_pair` utilities,
+  the `BPETokenizer` class (train, encode, decode, save/load, special-token
+  handling), and a 196-test suite at ~94% coverage.
 - Phase 0 scaffold: complete repository structure, all placeholder modules,
   documentation pages, CI pipeline, pre-commit hooks, and architecture diagrams
 
