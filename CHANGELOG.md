@@ -30,6 +30,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `text_to_bytes` / `bytes_to_text` / `get_stats` / `merge_pair` utilities,
   the `BPETokenizer` class (train, encode, decode, save/load, special-token
   handling), and a 196-test suite at ~94% coverage.
+- Phase 1B — vocabulary management (`kamui.tokenizer.vocab`): the `Vocabulary`
+  class providing a bidirectional token↔ID mapping with reserved special
+  tokens, deterministic/stable ID assignment, duplicate prevention, and
+  JSON save/load. Importable for direct vocabulary inspection (~93% coverage).
+- Phase 1A — model configuration (`kamui.model.config`): the `ModelConfig`
+  dataclass as the single source of truth for transformer hyperparameters,
+  with validation, the derived `d_head` dimension, parameter-count estimators
+  (attention / feed-forward / embedding / total), and YAML load/save
+  (100% coverage).
 - Phase 0 scaffold: complete repository structure, all placeholder modules,
   documentation pages, CI pipeline, pre-commit hooks, and architecture diagrams
 
