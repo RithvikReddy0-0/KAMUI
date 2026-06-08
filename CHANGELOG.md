@@ -10,6 +10,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Phase 2D — position-wise feed-forward network (`kamui.model.feedforward`):
+  the `FeedForward` sublayer — a two-layer MLP (expand `d_model → d_ff`, GELU,
+  hidden dropout, project `d_ff → d_model`) applied independently per token,
+  preserving the `(B, S, d_model)` residual-stream shape. Contains no
+  normalisation or residual connection (owned by the block, Pre-LN). Parameter
+  count matches `ModelConfig.feedforward_parameters`. 19-test suite at 100%
+  coverage on `feedforward.py`.
 - Phase 2C — normalisation layers (`kamui.model.normalization`):
   `LayerNorm` implemented from scratch (not wrapping `torch.nn.LayerNorm`)
   with learnable γ/β `nn.Parameter`s and epsilon numerical stability, plus

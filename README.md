@@ -53,6 +53,7 @@ Vocabulary System        ██████████  ✅ complete
 BPE Tokenizer            ██████████  ✅ complete
 Embeddings               ██████████  ✅ complete
 LayerNorm                ██████████  ✅ complete
+FeedForward Network      ██████████  ✅ complete
 Attention Mechanism      ░░░░░░░░░░  ⏳ planned
 Transformer Architecture ░░░░░░░░░░  ⏳ planned
 Training Pipeline        ░░░░░░░░░░  ⏳ planned
