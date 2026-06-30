@@ -10,6 +10,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Phase 2E — multi-head causal self-attention (`kamui.model.attention`):
+  the standalone `scaled_dot_product_attention` function (`softmax(QKᵀ/√d_k)V`,
+  optional boolean mask applied as −∞, always returns the post-softmax weights
+  for interpretability) and the `MultiHeadAttention` module (separate Q/K/V/O
+  linear projections, `einops` head reshaping, precomputed causal-mask buffer,
+  optional `return_weights`). No normalisation or residual (owned by the block,
+  Pre-LN). Parameter count matches `ModelConfig.attention_parameters`. 29-test
+  suite at 100% coverage on `attention.py`, including an autograd gradient check.
 - Phase 2D — position-wise feed-forward network (`kamui.model.feedforward`):
   the `FeedForward` sublayer — a two-layer MLP (expand `d_model → d_ff`, GELU,
   hidden dropout, project `d_ff → d_model`) applied independently per token,

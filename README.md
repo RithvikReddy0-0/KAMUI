@@ -54,7 +54,7 @@ BPE Tokenizer            ██████████  ✅ complete
 Embeddings               ██████████  ✅ complete
 LayerNorm                ██████████  ✅ complete
 FeedForward Network      ██████████  ✅ complete
-Attention Mechanism      ░░░░░░░░░░  ⏳ planned
+Attention Mechanism      ██████████  ✅ complete
 Transformer Architecture ░░░░░░░░░░  ⏳ planned
 Training Pipeline        ░░░░░░░░░░  ⏳ planned
 Hook System              ░░░░░░░░░░  ⏳ planned
