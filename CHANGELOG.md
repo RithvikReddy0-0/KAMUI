@@ -10,6 +10,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Phase 2F — transformer block (`kamui.model.block`): the `TransformerBlock`
+  repeating unit assembling the Pre-LN pattern
+  `x = x + attn(ln1(x)); x = x + ffn(ln2(x))` from `LayerNorm`,
+  `MultiHeadAttention`, and `FeedForward`. Residual additions live in the
+  block (not the sublayers) so a sublayer can be ablated without touching its
+  code; named submodules `ln1/attn/ln2/ffn` are the hook-registry contract.
+  Preserves `(B, S, d_model)`, exposes optional `return_weights`, and its
+  parameter count matches attention + FFN + two LayerNorms. 16-test suite at
+  100% coverage on `block.py`.
 - Phase 2E — multi-head causal self-attention (`kamui.model.attention`):
   the standalone `scaled_dot_product_attention` function (`softmax(QKᵀ/√d_k)V`,
   optional boolean mask applied as −∞, always returns the post-softmax weights

@@ -55,6 +55,7 @@ Embeddings               ██████████  ✅ complete
 LayerNorm                ██████████  ✅ complete
 FeedForward Network      ██████████  ✅ complete
 Attention Mechanism      ██████████  ✅ complete
+Transformer Block        ██████████  ✅ complete
 Transformer Architecture ░░░░░░░░░░  ⏳ planned
 Training Pipeline        ░░░░░░░░░░  ⏳ planned
 Hook System              ░░░░░░░░░░  ⏳ planned
