@@ -34,14 +34,14 @@ Module layout:
     transformer.py   — KAMUITransformer: full model assembly
     init_weights.py  — scaled weight initialisation strategy
 
-Public API (available after Phase 1):
+Public API:
     ModelConfig         — all hyperparameters as a typed dataclass
     KAMUITransformer    — the full model
 
 Implemented in: Phase 1, Weeks 5–8
 """
 
-# from kamui.model.config import ModelConfig
-# from kamui.model.transformer import KAMUITransformer
+from kamui.model.config import ModelConfig
+from kamui.model.transformer import KAMUITransformer
 
-__all__: list[str] = []
+__all__: list[str] = ["ModelConfig", "KAMUITransformer"]

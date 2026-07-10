@@ -56,11 +56,12 @@ __license__ = "MIT"
 # This prevents ImportError during Phase 0 scaffold stage.
 
 # Phase 1 (model):
-# from kamui.model.config import ModelConfig
-# from kamui.model.transformer import KAMUITransformer
+from kamui.model.config import ModelConfig
+from kamui.model.transformer import KAMUITransformer
 
 # Phase 1 (tokenizer):
-# from kamui.tokenizer.bpe import BPETokenizer
+from kamui.tokenizer.bpe import BPETokenizer
+from kamui.tokenizer.vocab import Vocabulary
 
 # Phase 2 (training):
 # from kamui.training.trainer import Trainer
@@ -83,5 +84,9 @@ __license__ = "MIT"
 
 __all__: list[str] = [
     "__version__",
-    # Populated as phases are implemented — see above
+    "ModelConfig",
+    "KAMUITransformer",
+    "BPETokenizer",
+    "Vocabulary",
+    # Populated as further phases are implemented — see above
 ]

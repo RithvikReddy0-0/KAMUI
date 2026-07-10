@@ -56,7 +56,7 @@ LayerNorm                ██████████  ✅ complete
 FeedForward Network      ██████████  ✅ complete
 Attention Mechanism      ██████████  ✅ complete
 Transformer Block        ██████████  ✅ complete
-Transformer Architecture ░░░░░░░░░░  ⏳ planned
+Transformer Architecture ██████████  ✅ complete
 Training Pipeline        ░░░░░░░░░░  ⏳ planned
 Hook System              ░░░░░░░░░░  ⏳ planned
 Logit Lens               ░░░░░░░░░░  ⏳ planned

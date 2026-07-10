@@ -10,6 +10,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Phase 2G — full model + weight init (`kamui.model.transformer`,
+  `kamui.model.init_weights`): `KAMUITransformer` assembles embedding →
+  `n_layers` × `TransformerBlock` → final `LayerNorm` → weight-tied linear
+  unembedding, returning `(B, S, V)` logits or a scalar cross-entropy loss
+  when targets are given. GPT-2-style scaled initialisation (`N(0, 0.02)`,
+  residual projections scaled by `1/√(2·n_layers)`). `from_config` /
+  `from_yaml` constructors and `num_parameters()`. Actual parameter count
+  matches `ModelConfig.estimated_total_parameters`. The public API
+  (`kamui.ModelConfig`, `kamui.KAMUITransformer`, `kamui.BPETokenizer`,
+  `kamui.Vocabulary`) is now exported. 28-test suite at 100% coverage on both
+  modules.
 - Phase 2F — transformer block (`kamui.model.block`): the `TransformerBlock`
   repeating unit assembling the Pre-LN pattern
   `x = x + attn(ln1(x)); x = x + ffn(ln2(x))` from `LayerNorm`,
