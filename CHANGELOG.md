@@ -10,6 +10,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Phase 4 — evaluation (`kamui.evaluate`): `compute_perplexity` (corpus-level,
+  accepting `(inputs, targets)` pairs or plain token tensors),
+  `compute_token_loss` (per-token loss), and `compute_sequence_perplexity`
+  (single sequence with a sliding window for long inputs). Plus `generate`
+  with four from-scratch sampling strategies — greedy, top-k, nucleus (top-p),
+  and temperature — with context cropping and reproducible seeding, and
+  `generate_with_probs` returning per-step distributions. 34-test suite at
+  100% coverage on both modules.
 - Phase 3 — hook system (`kamui.hooks`): `HookManager`, a context manager that
   captures named activations during a forward pass and always removes its hooks
   on exit (even on exceptions), guaranteeing model output is unchanged. Supports

@@ -59,6 +59,7 @@ Transformer Block        ██████████  ✅ complete
 Transformer Architecture ██████████  ✅ complete
 Training Pipeline        ░░░░░░░░░░  ⏳ planned
 Hook System              ██████████  ✅ complete
+Evaluation (ppl + gen)   ██████████  ✅ complete
 Logit Lens               ░░░░░░░░░░  ⏳ planned
 Activation Patching      ░░░░░░░░░░  ⏳ planned
 ```

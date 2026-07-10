@@ -79,8 +79,8 @@ from kamui.hooks.manager import HookManager
 # from kamui.mechinterp.probing import LinearProbe
 
 # Phase 4 (evaluate):
-# from kamui.evaluate.perplexity import compute_perplexity
-# from kamui.evaluate.generation import generate
+from kamui.evaluate.perplexity import compute_perplexity
+from kamui.evaluate.generation import generate
 
 __all__: list[str] = [
     "__version__",
@@ -89,5 +89,7 @@ __all__: list[str] = [
     "BPETokenizer",
     "Vocabulary",
     "HookManager",
+    "compute_perplexity",
+    "generate",
     # Populated as further phases are implemented — see above
 ]
