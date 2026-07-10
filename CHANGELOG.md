@@ -10,6 +10,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Phase 5 — training pipeline (`kamui.training`): an explicit, from-scratch
+  training loop with no framework magic. `CosineWithWarmup` (linear warmup +
+  cosine decay), `build_optimizer` (AdamW with weight-decay separated so
+  biases/LayerNorm are undecayed), `TextDataset`/`DataLoader` (packed
+  next-token batches) plus `tokenise_corpus`/`train_val_split`, full-state
+  `save_checkpoint`/`load_checkpoint`/`load_model_only` (with read-back
+  verification), and `Trainer`/`TrainingConfig` with explicit gradient
+  accumulation, gradient clipping + norm logging, scheduled LR, and
+  `evaluate()`. A regression test confirms the loop reduces loss on a small
+  corpus. 61-test suite at 100% coverage across all five modules. The KAMUI
+  model can now be trained end-to-end.
 - Phase 4 — evaluation (`kamui.evaluate`): `compute_perplexity` (corpus-level,
   accepting `(inputs, targets)` pairs or plain token tensors),
   `compute_token_loss` (per-token loss), and `compute_sequence_perplexity`

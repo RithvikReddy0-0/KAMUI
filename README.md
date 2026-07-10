@@ -57,7 +57,7 @@ FeedForward Network      ██████████  ✅ complete
 Attention Mechanism      ██████████  ✅ complete
 Transformer Block        ██████████  ✅ complete
 Transformer Architecture ██████████  ✅ complete
-Training Pipeline        ░░░░░░░░░░  ⏳ planned
+Training Pipeline        ██████████  ✅ complete
 Hook System              ██████████  ✅ complete
 Evaluation (ppl + gen)   ██████████  ✅ complete
 Logit Lens               ░░░░░░░░░░  ⏳ planned

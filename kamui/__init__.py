@@ -64,8 +64,7 @@ from kamui.tokenizer.bpe import BPETokenizer
 from kamui.tokenizer.vocab import Vocabulary
 
 # Phase 2 (training):
-# from kamui.training.trainer import Trainer
-# from kamui.training.trainer import TrainingConfig
+from kamui.training.trainer import Trainer, TrainingConfig
 
 # Phase 3 (hooks):
 from kamui.hooks.manager import HookManager
@@ -91,5 +90,6 @@ __all__: list[str] = [
     "HookManager",
     "compute_perplexity",
     "generate",
-    # Populated as further phases are implemented — see above
+    "Trainer",
+    "TrainingConfig",
 ]

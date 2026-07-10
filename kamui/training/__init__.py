@@ -24,13 +24,42 @@ Module layout:
     data.py           — DataLoader, tokenisation, sequence packing
     checkpointing.py  — save/load model + optimiser + step state
 
-Public API (available after Phase 2):
+Public API:
     Trainer           — main training loop
     TrainingConfig    — all training hyperparameters as a typed dataclass
+    CosineWithWarmup  — LR schedule
+    build_optimizer   — AdamW with weight-decay separation
+    TextDataset, DataLoader, tokenise_corpus, train_val_split — data pipeline
+    save_checkpoint, load_checkpoint, load_model_only — checkpointing
 
 Implemented in: Phase 2, Weeks 9–12
 """
 
-# from kamui.training.trainer import Trainer, TrainingConfig
+from kamui.training.checkpointing import (
+    load_checkpoint,
+    load_model_only,
+    save_checkpoint,
+)
+from kamui.training.data import (
+    DataLoader,
+    TextDataset,
+    tokenise_corpus,
+    train_val_split,
+)
+from kamui.training.optimizer import build_optimizer
+from kamui.training.scheduler import CosineWithWarmup
+from kamui.training.trainer import Trainer, TrainingConfig
 
-__all__: list[str] = []
+__all__: list[str] = [
+    "Trainer",
+    "TrainingConfig",
+    "CosineWithWarmup",
+    "build_optimizer",
+    "TextDataset",
+    "DataLoader",
+    "tokenise_corpus",
+    "train_val_split",
+    "save_checkpoint",
+    "load_checkpoint",
+    "load_model_only",
+]
