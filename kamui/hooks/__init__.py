@@ -24,8 +24,9 @@ Module layout:
     registry.py   — named hook points for all KAMUI model components
     types.py      — type definitions for hook functions and cached values
 
-Public API (available after Phase 3):
+Public API:
     HookManager   — context-managed activation capture
+    HookRegistry  — canonical list of valid hook points
 
 Usage pattern:
     with HookManager(model) as hooks:
@@ -36,6 +37,7 @@ Usage pattern:
 Implemented in: Phase 3, Weeks 13–14
 """
 
-# from kamui.hooks.manager import HookManager
+from kamui.hooks.manager import HookManager
+from kamui.hooks.registry import HookRegistry
 
-__all__: list[str] = []
+__all__: list[str] = ["HookManager", "HookRegistry"]

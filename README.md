@@ -58,7 +58,7 @@ Attention Mechanism      ██████████  ✅ complete
 Transformer Block        ██████████  ✅ complete
 Transformer Architecture ██████████  ✅ complete
 Training Pipeline        ░░░░░░░░░░  ⏳ planned
-Hook System              ░░░░░░░░░░  ⏳ planned
+Hook System              ██████████  ✅ complete
 Logit Lens               ░░░░░░░░░░  ⏳ planned
 Activation Patching      ░░░░░░░░░░  ⏳ planned
 ```

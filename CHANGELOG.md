@@ -10,6 +10,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Phase 3 — hook system (`kamui.hooks`): `HookManager`, a context manager that
+  captures named activations during a forward pass and always removes its hooks
+  on exit (even on exceptions), guaranteeing model output is unchanged. Supports
+  `embed.output`, `blocks.{i}.attn.output`, `blocks.{i}.attn.weights`,
+  `blocks.{i}.ffn.mid`, `blocks.{i}.ffn.output`, and `unembed.input`. Attention
+  weights are captured via a reversible forward-wrapper (the model stays fully
+  hook-agnostic). `HookRegistry` provides the canonical valid-point list so
+  typos fail loudly. 22-test suite at 100% coverage on the hooks subpackage.
 - Phase 2G — full model + weight init (`kamui.model.transformer`,
   `kamui.model.init_weights`): `KAMUITransformer` assembles embedding →
   `n_layers` × `TransformerBlock` → final `LayerNorm` → weight-tied linear

@@ -68,7 +68,7 @@ from kamui.tokenizer.vocab import Vocabulary
 # from kamui.training.trainer import TrainingConfig
 
 # Phase 3 (hooks):
-# from kamui.hooks.manager import HookManager
+from kamui.hooks.manager import HookManager
 
 # Phase 4 (mechinterp):
 # from kamui.mechinterp.logit_lens import LogitLens
@@ -88,5 +88,6 @@ __all__: list[str] = [
     "KAMUITransformer",
     "BPETokenizer",
     "Vocabulary",
+    "HookManager",
     # Populated as further phases are implemented — see above
 ]
