@@ -10,6 +10,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Mechinterp: logit lens (`kamui.mechinterp.LogitLens`): projects the residual
+  stream to vocabulary at every layer via `final_ln + unembed`, revealing at
+  which depth each prediction emerges. Reconstructs per-layer residual streams
+  purely from existing hook points (`embed.output` + running sum of each
+  block's `attn.output`/`ffn.output`), so it stays decoupled from model
+  internals; the final layer provably reproduces the model's own logits.
+  `LogitLensResult` exposes per-layer probabilities, top-k tokens, and
+  `plot()` / `plot_position()` heatmaps. 18-test suite at 100% coverage.
 - Phase 5 — training pipeline (`kamui.training`): an explicit, from-scratch
   training loop with no framework magic. `CosineWithWarmup` (linear warmup +
   cosine decay), `build_optimizer` (AdamW with weight-decay separated so

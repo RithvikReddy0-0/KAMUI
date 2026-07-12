@@ -60,7 +60,7 @@ Transformer Architecture ██████████  ✅ complete
 Training Pipeline        ██████████  ✅ complete
 Hook System              ██████████  ✅ complete
 Evaluation (ppl + gen)   ██████████  ✅ complete
-Logit Lens               ░░░░░░░░░░  ⏳ planned
+Logit Lens               ██████████  ✅ complete
 Activation Patching      ░░░░░░░░░░  ⏳ planned
 ```
 

@@ -70,7 +70,7 @@ from kamui.training.trainer import Trainer, TrainingConfig
 from kamui.hooks.manager import HookManager
 
 # Phase 4 (mechinterp):
-# from kamui.mechinterp.logit_lens import LogitLens
+from kamui.mechinterp.logit_lens import LogitLens
 # from kamui.mechinterp.activation_patch import ActivationPatcher
 # from kamui.mechinterp.induction import InductionHeadDetector
 # from kamui.mechinterp.circuits import CircuitAblator
@@ -92,4 +92,5 @@ __all__: list[str] = [
     "generate",
     "Trainer",
     "TrainingConfig",
+    "LogitLens",
 ]
