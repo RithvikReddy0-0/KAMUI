@@ -9,6 +9,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Quality pass across all phases: the full `kamui` package and test suite now
+  pass `ruff` (E/F/W/I/N/UP/ANN/B/SIM/C90) and `black` cleanly — PEP 604 union
+  syntax, sorted imports, `OSError` over the `IOError` alias, complete return-type
+  annotations, and `N812` allowed for the conventional `torch.nn.functional as F`.
+  No behaviour changes; all 507 tests pass at 98% coverage.
+
 ### Added
 - Mechinterp: logit lens (`kamui.mechinterp.LogitLens`): projects the residual
   stream to vocabulary at every layer via `final_ln + unembed`, revealing at

@@ -13,7 +13,7 @@ import torch
 matplotlib.use("Agg")  # headless backend for plot tests
 import matplotlib.pyplot as plt  # noqa: E402
 
-from kamui.mechinterp.logit_lens import LogitLens, LogitLensResult  # noqa: E402
+from kamui.mechinterp.logit_lens import LogitLens  # noqa: E402
 from kamui.model.config import ModelConfig  # noqa: E402
 from kamui.model.transformer import KAMUITransformer  # noqa: E402
 

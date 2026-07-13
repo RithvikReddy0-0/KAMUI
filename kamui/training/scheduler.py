@@ -74,9 +74,7 @@ class CosineWithWarmup:
         if warmup_steps < 0:
             raise ValueError(f"warmup_steps must be >= 0, got {warmup_steps}")
         if max_steps <= warmup_steps:
-            raise ValueError(
-                f"max_steps ({max_steps}) must be > warmup_steps ({warmup_steps})"
-            )
+            raise ValueError(f"max_steps ({max_steps}) must be > warmup_steps ({warmup_steps})")
 
         self.max_lr = max_lr
         self.min_lr = min_lr

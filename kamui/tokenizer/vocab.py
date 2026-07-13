@@ -170,9 +170,7 @@ class Vocabulary:
         if isinstance(token_id, bool) or not isinstance(token_id, int):
             raise TypeError(f"Token ID must be an integer, got type {type(token_id)}")
         if token_id < 0 or token_id >= len(self._id_to_token):
-            raise ValueError(
-                f"Token ID {token_id} is out of range [0, {len(self._id_to_token)})"
-            )
+            raise ValueError(f"Token ID {token_id} is out of range [0, {len(self._id_to_token)})")
         return self._id_to_token[token_id]
 
     def __getitem__(self, key: str | int) -> int | str:
@@ -194,9 +192,7 @@ class Vocabulary:
         elif isinstance(key, int) and not isinstance(key, bool):
             return self.id_to_token(key)
         else:
-            raise TypeError(
-                f"Key must be a string or an integer, got type {type(key)}"
-            )
+            raise TypeError(f"Key must be a string or an integer, got type {type(key)}")
 
     def __contains__(self, item: str | int) -> bool:
         """Check if a token or ID is in the vocabulary.
@@ -255,9 +251,7 @@ class Vocabulary:
             IOError: If writing to the file fails.
         """
         # Ensure special tokens are serialized in their ID order
-        sorted_specials = sorted(
-            list(self._special_tokens), key=lambda x: self._token_to_id[x]
-        )
+        sorted_specials = sorted(list(self._special_tokens), key=lambda x: self._token_to_id[x])
 
         data = {
             "special_tokens": sorted_specials,
@@ -270,10 +264,10 @@ class Vocabulary:
             with open(path_obj, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
         except Exception as e:
-            raise IOError(f"Failed to save vocabulary to {path}: {e}") from e
+            raise OSError(f"Failed to save vocabulary to {path}: {e}") from e
 
     @classmethod
-    def load(cls, path: str | Path) -> "Vocabulary":
+    def load(cls, path: str | Path) -> "Vocabulary":  # noqa: C901 — defensive JSON validation
         """Load a vocabulary from a JSON file.
 
         Args:
@@ -293,12 +287,12 @@ class Vocabulary:
             raise FileNotFoundError(f"Vocabulary file not found: {path}")
 
         try:
-            with open(path_obj, "r", encoding="utf-8") as f:
+            with open(path_obj, encoding="utf-8") as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON format in vocabulary file {path}: {e}") from e
         except Exception as e:
-            raise IOError(f"Failed to read vocabulary from {path}: {e}") from e
+            raise OSError(f"Failed to read vocabulary from {path}: {e}") from e
 
         if not isinstance(data, dict):
             raise ValueError("Vocabulary file must contain a JSON object at the top level")
@@ -319,9 +313,7 @@ class Vocabulary:
             raise ValueError("'vocab' must be a dictionary")
 
         # Sort vocab items by ID to verify they are consecutive and start from 0
-        sorted_vocab: list[tuple[Any, Any]] = sorted(
-            vocab_dict.items(), key=lambda item: item[1]
-        )
+        sorted_vocab: list[tuple[Any, Any]] = sorted(vocab_dict.items(), key=lambda item: item[1])
 
         for idx, (token, token_id) in enumerate(sorted_vocab):
             if not isinstance(token, str):
@@ -332,7 +324,8 @@ class Vocabulary:
                 )
             if token_id != idx:
                 raise ValueError(
-                    f"Vocabulary IDs must be consecutive starting from 0. Expected {idx}, got {token_id}"
+                    f"Vocabulary IDs must be consecutive starting from 0. "
+                    f"Expected {idx}, got {token_id}"
                 )
 
         # Verify all listed special tokens are actually in the vocabulary

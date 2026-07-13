@@ -26,21 +26,21 @@ Implemented in: Phase 5.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import torch
 from torch import nn
 
 
 def save_checkpoint(
-    path: Union[str, Path],
+    path: str | Path,
     model: nn.Module,
     optimizer: torch.optim.Optimizer,
     scheduler: Any,
     step: int,
     config: Any = None,
-    train_loss: Optional[float] = None,
-    val_loss: Optional[float] = None,
+    train_loss: float | None = None,
+    val_loss: float | None = None,
 ) -> None:
     """Save full training state to ``path`` and verify the write.
 
@@ -74,13 +74,13 @@ def save_checkpoint(
     # Verify: read back and confirm the model keys survived the write.
     reloaded = torch.load(path_obj, map_location="cpu", weights_only=False)
     if set(reloaded["model_state"].keys()) != set(checkpoint["model_state"].keys()):
-        raise IOError(f"checkpoint verification failed for {path}: model keys differ")
+        raise OSError(f"checkpoint verification failed for {path}: model keys differ")
 
 
 def load_checkpoint(
-    path: Union[str, Path],
+    path: str | Path,
     model: nn.Module,
-    optimizer: Optional[torch.optim.Optimizer] = None,
+    optimizer: torch.optim.Optimizer | None = None,
     scheduler: Any = None,
 ) -> int:
     """Restore training state from a checkpoint.
@@ -110,7 +110,7 @@ def load_checkpoint(
     return int(checkpoint["step"])
 
 
-def load_model_only(path: Union[str, Path], model: nn.Module) -> nn.Module:
+def load_model_only(path: str | Path, model: nn.Module) -> nn.Module:
     """Load only model weights from a checkpoint (for inference / analysis).
 
     Args:

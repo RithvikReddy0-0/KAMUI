@@ -41,6 +41,7 @@ def _small_config(**overrides: object) -> ModelConfig:
 # Construction — submodule contract
 # ===========================================================================
 
+
 class TestTransformerBlockConstruction:
     def test_submodule_names_and_types(self) -> None:
         # These exact names are relied on by kamui.hooks.registry.
@@ -63,6 +64,7 @@ class TestTransformerBlockConstruction:
 # ===========================================================================
 # Forward
 # ===========================================================================
+
 
 class TestTransformerBlockForward:
     def test_output_shape(self) -> None:
@@ -144,6 +146,7 @@ class TestTransformerBlockForward:
 # ===========================================================================
 # Architecture
 # ===========================================================================
+
 
 class TestTransformerBlockArchitecture:
     def test_parameter_count_matches_config(self) -> None:

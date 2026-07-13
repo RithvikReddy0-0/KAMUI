@@ -132,13 +132,9 @@ class TokenEmbedding(nn.Module):
         if not isinstance(token_ids, Tensor):
             raise TypeError(f"token_ids must be a torch.Tensor, got {type(token_ids)}")
         if token_ids.dtype not in _INT_DTYPES:
-            raise TypeError(
-                f"token_ids must have an integer dtype, got {token_ids.dtype}"
-            )
+            raise TypeError(f"token_ids must have an integer dtype, got {token_ids.dtype}")
         if ((token_ids < 0) | (token_ids >= self.vocab_size)).any():
-            raise ValueError(
-                f"token_ids contains values outside [0, {self.vocab_size})"
-            )
+            raise ValueError(f"token_ids contains values outside [0, {self.vocab_size})")
         return self.weight[token_ids]
 
     def __repr__(self) -> str:
@@ -187,8 +183,7 @@ class SinusoidalPositionalEncoding(nn.Module):
         position = torch.arange(context_length, dtype=torch.float32).unsqueeze(1)
         # Frequencies for the even dimensions: 10000^(-2i/d_model).
         div_term = torch.exp(
-            torch.arange(0, d_model, 2, dtype=torch.float32)
-            * (-math.log(_SINUSOID_BASE) / d_model)
+            torch.arange(0, d_model, 2, dtype=torch.float32) * (-math.log(_SINUSOID_BASE) / d_model)
         )
         pe = torch.zeros(context_length, d_model, dtype=torch.float32)
         pe[:, 0::2] = torch.sin(position * div_term)
@@ -212,9 +207,7 @@ class SinusoidalPositionalEncoding(nn.Module):
         if seq_len < 1:
             raise ValueError(f"seq_len must be >= 1, got {seq_len}")
         if seq_len > self.context_length:
-            raise ValueError(
-                f"seq_len ({seq_len}) exceeds context_length ({self.context_length})"
-            )
+            raise ValueError(f"seq_len ({seq_len}) exceeds context_length ({self.context_length})")
         return self.pe[:seq_len]
 
     def __repr__(self) -> str:
@@ -280,9 +273,7 @@ class LearnedPositionalEncoding(nn.Module):
         if seq_len < 1:
             raise ValueError(f"seq_len must be >= 1, got {seq_len}")
         if seq_len > self.context_length:
-            raise ValueError(
-                f"seq_len ({seq_len}) exceeds context_length ({self.context_length})"
-            )
+            raise ValueError(f"seq_len ({seq_len}) exceeds context_length ({self.context_length})")
         return self.weight[:seq_len]
 
     def __repr__(self) -> str:
@@ -347,9 +338,7 @@ class Embedding(nn.Module):
         if not isinstance(token_ids, Tensor):
             raise TypeError(f"token_ids must be a torch.Tensor, got {type(token_ids)}")
         if token_ids.dim() != 2:
-            raise ValueError(
-                f"token_ids must be 2-D (B, S), got shape {tuple(token_ids.shape)}"
-            )
+            raise ValueError(f"token_ids must be 2-D (B, S), got shape {tuple(token_ids.shape)}")
 
         seq_len = token_ids.shape[1]
         if seq_len > self.config.context_length:

@@ -60,9 +60,7 @@ Implemented in: Phase 2G.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
 
-import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
@@ -99,9 +97,7 @@ class KAMUITransformer(nn.Module):
         self.config = config
 
         self.embed = Embedding(config)
-        self.blocks = nn.ModuleList(
-            TransformerBlock(config) for _ in range(config.n_layers)
-        )
+        self.blocks = nn.ModuleList(TransformerBlock(config) for _ in range(config.n_layers))
         self.final_ln = LayerNorm(config.d_model)
         self.unembed = nn.Linear(config.d_model, config.vocab_size, bias=False)
 
@@ -117,12 +113,12 @@ class KAMUITransformer(nn.Module):
     # ------------------------------------------------------------------
 
     @classmethod
-    def from_config(cls, config: ModelConfig) -> "KAMUITransformer":
+    def from_config(cls, config: ModelConfig) -> KAMUITransformer:
         """Construct a model from a ``ModelConfig`` instance."""
         return cls(config)
 
     @classmethod
-    def from_yaml(cls, path: Union[str, Path]) -> "KAMUITransformer":
+    def from_yaml(cls, path: str | Path) -> KAMUITransformer:
         """Load a ``ModelConfig`` from YAML and construct the model.
 
         Args:
@@ -134,9 +130,7 @@ class KAMUITransformer(nn.Module):
     # Forward
     # ------------------------------------------------------------------
 
-    def forward(
-        self, token_ids: Tensor, targets: Tensor | None = None
-    ) -> Tensor:
+    def forward(self, token_ids: Tensor, targets: Tensor | None = None) -> Tensor:
         """Run the model.
 
         Args:
@@ -153,11 +147,11 @@ class KAMUITransformer(nn.Module):
             ValueError: If ``targets`` is provided but its shape differs from
                 ``token_ids``.
         """
-        x = self.embed(token_ids)          # (B, S, D)
+        x = self.embed(token_ids)  # (B, S, D)
         for block in self.blocks:
-            x = block(x)                   # (B, S, D)
-        x = self.final_ln(x)               # (B, S, D)
-        logits = self.unembed(x)           # (B, S, V)
+            x = block(x)  # (B, S, D)
+        x = self.final_ln(x)  # (B, S, D)
+        logits = self.unembed(x)  # (B, S, V)
 
         if targets is None:
             return logits
@@ -171,9 +165,7 @@ class KAMUITransformer(nn.Module):
             )
 
         # Cross-entropy over all positions; flatten batch and sequence.
-        loss = F.cross_entropy(
-            logits.reshape(-1, logits.shape[-1]), targets.reshape(-1)
-        )
+        loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), targets.reshape(-1))
         return loss
 
     # ------------------------------------------------------------------
@@ -194,11 +186,7 @@ class KAMUITransformer(nn.Module):
         Returns:
             The parameter count.
         """
-        return sum(
-            p.numel()
-            for p in self.parameters()
-            if p.requires_grad or not trainable_only
-        )
+        return sum(p.numel() for p in self.parameters() if p.requires_grad or not trainable_only)
 
     def __repr__(self) -> str:
         return (

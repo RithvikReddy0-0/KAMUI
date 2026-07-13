@@ -22,10 +22,10 @@ Implemented in: Phase 3.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Literal, Optional
+from collections.abc import Callable
+from typing import Any, Literal
 
-from torch import Tensor
-from torch import nn
+from torch import Tensor, nn
 
 #: Valid I/O suffixes for a hook point (the part after the module path).
 #:   output      — a module's forward output
@@ -39,4 +39,4 @@ ActivationCache = dict[str, Tensor]
 
 #: A PyTorch forward hook: ``(module, inputs, output) -> Optional[Tensor]``.
 #: Returning a tensor replaces the module's output.
-HookFn = Callable[[nn.Module, tuple[Any, ...], Any], Optional[Tensor]]
+HookFn = Callable[[nn.Module, tuple[Any, ...], Any], Tensor | None]

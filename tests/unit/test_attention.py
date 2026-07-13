@@ -44,6 +44,7 @@ def _small_config(**overrides: object) -> ModelConfig:
 # scaled_dot_product_attention
 # ===========================================================================
 
+
 class TestScaledDotProductAttention:
     def test_output_and_weights_shapes(self) -> None:
         q = torch.randn(2, 4, 5, 8)  # (B, H, S, Dh)
@@ -137,6 +138,7 @@ class TestScaledDotProductAttention:
 # MultiHeadAttention — construction
 # ===========================================================================
 
+
 class TestMultiHeadAttentionConstruction:
     def test_head_geometry(self) -> None:
         mha = MultiHeadAttention(_small_config(d_model=16, n_heads=4))
@@ -169,6 +171,7 @@ class TestMultiHeadAttentionConstruction:
 # ===========================================================================
 # MultiHeadAttention — forward
 # ===========================================================================
+
 
 class TestMultiHeadAttentionForward:
     def test_output_shape(self) -> None:
@@ -244,6 +247,7 @@ class TestMultiHeadAttentionForward:
 # ===========================================================================
 # MultiHeadAttention — architecture constraints
 # ===========================================================================
+
 
 class TestMultiHeadAttentionArchitecture:
     def test_parameter_count_matches_config(self) -> None:

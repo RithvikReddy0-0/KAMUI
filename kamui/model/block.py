@@ -93,9 +93,7 @@ class TransformerBlock(nn.Module):
         self.ln2 = LayerNorm(config.d_model)
         self.ffn = FeedForward(config)
 
-    def forward(
-        self, x: Tensor, return_weights: bool = False
-    ) -> Tensor | tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor, return_weights: bool = False) -> Tensor | tuple[Tensor, Tensor]:
         """Run the residual stream through the block.
 
         Args:
@@ -115,9 +113,7 @@ class TransformerBlock(nn.Module):
         if not isinstance(x, Tensor):
             raise TypeError(f"x must be a torch.Tensor, got {type(x)}")
         if x.dim() != 3:
-            raise ValueError(
-                f"x must be 3-D (B, S, d_model), got shape {tuple(x.shape)}"
-            )
+            raise ValueError(f"x must be 3-D (B, S, d_model), got shape {tuple(x.shape)}")
         if x.shape[-1] != self.config.d_model:
             raise ValueError(
                 f"last dimension of x ({x.shape[-1]}) does not match "

@@ -50,10 +50,8 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Union
 
-from kamui.tokenizer.utils import text_to_bytes, bytes_to_text, get_stats, merge_pair
-
+from kamui.tokenizer.utils import bytes_to_text, get_stats, merge_pair, text_to_bytes
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -118,9 +116,7 @@ class BPETokenizer:
         self._special_to_id: dict[str, int] = {
             tok: _NUM_BYTE_TOKENS + i for i, tok in enumerate(special_tokens)
         }
-        self._id_to_special: dict[int, str] = {
-            v: k for k, v in self._special_to_id.items()
-        }
+        self._id_to_special: dict[int, str] = {v: k for k, v in self._special_to_id.items()}
 
     # ------------------------------------------------------------------
     # Properties
@@ -141,13 +137,13 @@ class BPETokenizer:
     # ------------------------------------------------------------------
 
     @classmethod
-    def train(
+    def train(  # noqa: C901 — inherently branchy: corpus loading + BPE merge loop
         cls,
-        corpus: Union[str, Path],
+        corpus: str | Path,
         vocab_size: int,
         special_tokens: tuple[str, ...] = _DEFAULT_SPECIAL_TOKENS,
         verbose: bool = False,
-    ) -> "BPETokenizer":
+    ) -> BPETokenizer:
         """Train a BPE tokenizer on a text corpus.
 
         The training procedure:
@@ -194,9 +190,7 @@ class BPETokenizer:
         else:
             corpus_str = str(corpus)
             is_plausible_path = (
-                len(corpus_str) <= 4096
-                and "\n" not in corpus_str
-                and " " not in corpus_str
+                len(corpus_str) <= 4096 and "\n" not in corpus_str and " " not in corpus_str
             )
             corpus_path = Path(corpus_str) if is_plausible_path else None
             if corpus_path is not None and corpus_path.exists() and corpus_path.is_file():
@@ -207,14 +201,9 @@ class BPETokenizer:
         # Split on special tokens so they are never merged with surrounding text.
         # We process each chunk between special tokens as an independent sequence.
         special_pattern = (
-            "(" + "|".join(re.escape(s) for s in special_tokens) + ")"
-            if special_tokens
-            else None
+            "(" + "|".join(re.escape(s) for s in special_tokens) + ")" if special_tokens else None
         )
-        if special_pattern:
-            chunks = re.split(special_pattern, text)
-        else:
-            chunks = [text]
+        chunks = re.split(special_pattern, text) if special_pattern else [text]
 
         # Build initial byte-level sequences (one per chunk, skipping special tokens)
         sequences: list[list[int]] = []
@@ -335,7 +324,7 @@ class BPETokenizer:
 
             pair = (ids[best_pos], ids[best_pos + 1])
             new_id = self._merge_map[pair]
-            ids = ids[:best_pos] + [new_id] + ids[best_pos + 2:]
+            ids = ids[:best_pos] + [new_id] + ids[best_pos + 2 :]
 
         return ids
 
@@ -372,9 +361,7 @@ class BPETokenizer:
             if not isinstance(token_id, int) or isinstance(token_id, bool):
                 raise TypeError(f"token ID must be an int, got {type(token_id)}")
             if token_id < 0 or token_id >= self.vocab_size:
-                raise ValueError(
-                    f"token ID {token_id} is out of range [0, {self.vocab_size})"
-                )
+                raise ValueError(f"token ID {token_id} is out of range [0, {self.vocab_size})")
 
             if token_id in self._id_to_special:
                 # Flush any buffered bytes before emitting the special token
@@ -394,7 +381,7 @@ class BPETokenizer:
     # Serialisation
     # ------------------------------------------------------------------
 
-    def save(self, path: Union[str, Path]) -> None:
+    def save(self, path: str | Path) -> None:
         """Save the tokenizer to a JSON file.
 
         The JSON contains:
@@ -431,10 +418,10 @@ class BPETokenizer:
             with open(path_obj, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=True, sort_keys=False)
         except Exception as e:
-            raise IOError(f"Failed to save tokenizer to {path}: {e}") from e
+            raise OSError(f"Failed to save tokenizer to {path}: {e}") from e
 
     @classmethod
-    def load(cls, path: Union[str, Path]) -> "BPETokenizer":
+    def load(cls, path: str | Path) -> BPETokenizer:
         """Load a tokenizer from a JSON file created by ``save``.
 
         Args:
@@ -455,12 +442,12 @@ class BPETokenizer:
             raise FileNotFoundError(f"Tokenizer file not found: {path}")
 
         try:
-            with open(path_obj, "r", encoding="utf-8") as f:
+            with open(path_obj, encoding="utf-8") as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in tokenizer file {path}: {e}") from e
         except Exception as e:
-            raise IOError(f"Failed to read tokenizer file {path}: {e}") from e
+            raise OSError(f"Failed to read tokenizer file {path}: {e}") from e
 
         if not isinstance(data, dict):
             raise ValueError("Tokenizer file must contain a JSON object")

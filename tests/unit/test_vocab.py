@@ -16,11 +16,11 @@ Tests validate:
 """
 
 import json
-import pytest
 from pathlib import Path
 
-from kamui.tokenizer.vocab import Vocabulary
+import pytest
 
+from kamui.tokenizer.vocab import Vocabulary
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -253,9 +253,9 @@ class TestContains:
     def test_in_operator_with_int(self) -> None:
         """The ``in`` operator works for integer ID membership checks."""
         v = make_vocab(["cat"])
-        assert 0 in v       # <pad>
-        assert 4 in v       # cat
-        assert 5 not in v   # beyond range
+        assert 0 in v  # <pad>
+        assert 4 in v  # cat
+        assert 5 not in v  # beyond range
 
     def test_in_operator_negative_int(self) -> None:
         """Negative integers are not in the vocabulary."""

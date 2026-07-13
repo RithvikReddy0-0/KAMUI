@@ -43,6 +43,7 @@ def _small_config(**overrides: object) -> ModelConfig:
 # Construction
 # ===========================================================================
 
+
 class TestFeedForwardConstruction:
     def test_fc_in_is_expansion_linear(self) -> None:
         ff = FeedForward(_small_config(d_model=16, d_ff=64))
@@ -75,6 +76,7 @@ class TestFeedForwardConstruction:
 # Forward
 # ===========================================================================
 
+
 class TestFeedForwardForward:
     def test_output_shape_preserved_3d(self) -> None:
         ff = FeedForward(_small_config(d_model=16))
@@ -106,7 +108,7 @@ class TestFeedForwardForward:
         ff = FeedForward(_small_config())
         neg = torch.tensor([-1.0])
         out = ff.activation(neg)
-        assert out.item() < 0.0          # not clamped to 0 like ReLU
+        assert out.item() < 0.0  # not clamped to 0 like ReLU
         assert out.item() == pytest.approx(F.gelu(neg).item(), abs=1e-6)
 
     def test_dropout_active_in_train_mode(self) -> None:
@@ -139,6 +141,7 @@ class TestFeedForwardForward:
 # ===========================================================================
 # Architecture constraints
 # ===========================================================================
+
 
 class TestFeedForwardArchitecture:
     def test_no_normalization_layers(self) -> None:

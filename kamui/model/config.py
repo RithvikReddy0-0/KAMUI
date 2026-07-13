@@ -6,9 +6,8 @@ its hyperparameters from an instance of this class — never from magic
 numbers scattered in code.
 """
 
-from dataclasses import dataclass, asdict, fields
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
-from typing import Union
 
 
 @dataclass
@@ -28,6 +27,7 @@ class ModelConfig:
         positional_encoding: Type of positional encoding ('learned' or 'sinusoidal').
         dropout: Dropout rate (must be in [0, 1]).
     """
+
     n_layers: int = 6
     d_model: int = 256
     n_heads: int = 8
@@ -55,7 +55,7 @@ class ModelConfig:
             raise ValueError(f"vocab_size must be > 0, got {self.vocab_size}")
         if self.context_length <= 0:
             raise ValueError(f"context_length must be > 0, got {self.context_length}")
-        
+
         if self.d_model % self.n_heads != 0:
             raise ValueError(
                 f"d_model ({self.d_model}) must be divisible by n_heads ({self.n_heads}) "
@@ -67,7 +67,8 @@ class ModelConfig:
 
         if self.positional_encoding not in ("learned", "sinusoidal"):
             raise ValueError(
-                f"positional_encoding must be 'learned' or 'sinusoidal', got '{self.positional_encoding}'"
+                f"positional_encoding must be 'learned' or 'sinusoidal', "
+                f"got '{self.positional_encoding}'"
             )
 
     @property
@@ -100,8 +101,8 @@ class ModelConfig:
         Assumptions:
             - A position-wise MLP is applied at each of the `n_layers`.
             - The MLP consists of two linear layers:
-              1. An expansion layer: weight matrix of shape (d_model, d_ff) and bias of shape (d_ff).
-              2. A projection layer: weight matrix of shape (d_ff, d_model) and bias of shape (d_model).
+              1. Expansion layer: weight of shape (d_model, d_ff) and bias (d_ff).
+              2. Projection layer: weight of shape (d_ff, d_model) and bias (d_model).
             - Formula: n_layers * (2 * d_model * d_ff + d_model + d_ff)
         """
         return self.n_layers * (2 * self.d_model * self.d_ff + self.d_model + self.d_ff)
@@ -118,7 +119,9 @@ class ModelConfig:
               and add 0 trainable parameters.
             - Formula: (vocab_size * d_model) + (context_length * d_model if learned else 0)
         """
-        pos_params = self.context_length * self.d_model if self.positional_encoding == "learned" else 0
+        pos_params = (
+            self.context_length * self.d_model if self.positional_encoding == "learned" else 0
+        )
         return (self.vocab_size * self.d_model) + pos_params
 
     @property
@@ -130,7 +133,7 @@ class ModelConfig:
             - Includes normalization layer parameters:
               - 2 LayerNorms per block (attention input, FFN input). Each LayerNorm has
                 learnable scale (gamma) and bias (beta) parameters of shape (d_model,).
-              - 1 final LayerNorm before unembedding, also with scale and bias parameters of shape (d_model,).
+              - 1 final LayerNorm before unembedding, also with scale and bias (d_model,).
               - LayerNorm parameters formula: n_layers * 4 * d_model + 2 * d_model.
             - Includes unembedding layer parameters:
                 - The weight matrix is tied to the token embedding matrix transpose, so it
@@ -163,7 +166,7 @@ class ModelConfig:
         )
 
     @classmethod
-    def from_yaml(cls, path: Union[str, Path]) -> "ModelConfig":
+    def from_yaml(cls, path: str | Path) -> "ModelConfig":
         """Loads a ModelConfig from a YAML file.
 
         The YAML file must contain a 'model' section.
@@ -175,8 +178,9 @@ class ModelConfig:
             An instance of ModelConfig.
         """
         import yaml
+
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
         except Exception as e:
             raise ValueError(f"Failed to parse YAML file at {path}: {e}") from e
@@ -199,7 +203,7 @@ class ModelConfig:
 
         return cls(**model_data)
 
-    def to_yaml(self, path: Union[str, Path]) -> None:
+    def to_yaml(self, path: str | Path) -> None:
         """Serializes the ModelConfig instance to a YAML file.
 
         If the file already exists, preserves other sections (e.g., 'training',
@@ -209,12 +213,12 @@ class ModelConfig:
             path: Path where the YAML file should be written.
         """
         import yaml
-        
+
         path_obj = Path(path)
         existing_data = {}
         if path_obj.exists() and path_obj.is_file():
             try:
-                with open(path_obj, "r", encoding="utf-8") as f:
+                with open(path_obj, encoding="utf-8") as f:
                     content = yaml.safe_load(f)
                     if isinstance(content, dict):
                         existing_data = content
@@ -222,6 +226,6 @@ class ModelConfig:
                 pass
 
         existing_data["model"] = asdict(self)
-        
+
         with open(path_obj, "w", encoding="utf-8") as f:
             yaml.safe_dump(existing_data, f, default_flow_style=False, sort_keys=False)

@@ -38,6 +38,7 @@ def _config(**overrides: object) -> ModelConfig:
 # Construction / structure
 # ===========================================================================
 
+
 class TestKAMUITransformerStructure:
     def test_named_submodules(self) -> None:
         model = KAMUITransformer(_config(n_layers=3))
@@ -82,6 +83,7 @@ class TestKAMUITransformerStructure:
 # Forward — logits
 # ===========================================================================
 
+
 class TestKAMUITransformerForward:
     def test_logits_shape(self) -> None:
         model = KAMUITransformer(_config(vocab_size=100))
@@ -115,6 +117,7 @@ class TestKAMUITransformerForward:
 # ===========================================================================
 # Forward — loss
 # ===========================================================================
+
 
 class TestKAMUITransformerLoss:
     def test_loss_is_scalar(self) -> None:
@@ -160,6 +163,7 @@ class TestKAMUITransformerLoss:
 # ===========================================================================
 # Parameter counting
 # ===========================================================================
+
 
 class TestKAMUITransformerParameters:
     def test_num_parameters_positive(self) -> None:

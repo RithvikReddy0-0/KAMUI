@@ -69,9 +69,9 @@ def compute_token_loss(model: nn.Module, token_ids: Tensor) -> Tensor:
     ids = _as_sequence(token_ids)
     was_training = model.training
     model.eval()
-    inputs = ids[:-1].unsqueeze(0)     # (1, S-1)
-    targets = ids[1:].unsqueeze(0)     # (1, S-1)
-    logits = model(inputs)             # (1, S-1, V)
+    inputs = ids[:-1].unsqueeze(0)  # (1, S-1)
+    targets = ids[1:].unsqueeze(0)  # (1, S-1)
+    logits = model(inputs)  # (1, S-1, V)
     loss = F.cross_entropy(
         logits.reshape(-1, logits.shape[-1]),
         targets.reshape(-1),
@@ -156,9 +156,7 @@ def _split_batch(batch: object) -> tuple[Tensor, Tensor]:
         return batch[0], batch[1]
     if isinstance(batch, Tensor):
         return batch[:, :-1], batch[:, 1:]
-    raise TypeError(
-        f"batch must be a (inputs, targets) pair or a tensor, got {type(batch)}"
-    )
+    raise TypeError(f"batch must be a (inputs, targets) pair or a tensor, got {type(batch)}")
 
 
 @torch.no_grad()

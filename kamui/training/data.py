@@ -29,8 +29,8 @@ Implemented in: Phase 5.
 from __future__ import annotations
 
 import random
+from collections.abc import Iterator, Sequence
 from pathlib import Path
-from typing import Iterator, Sequence, Union
 
 import numpy as np
 import torch
@@ -60,9 +60,7 @@ class TextDataset:
             raise ValueError(f"context_length must be >= 1, got {context_length}")
         self.tokens = np.asarray(tokens)
         if self.tokens.ndim != 1:
-            raise ValueError(
-                f"tokens must be 1-D, got shape {self.tokens.shape}"
-            )
+            raise ValueError(f"tokens must be 1-D, got shape {self.tokens.shape}")
         self.context_length = context_length
         if len(self.tokens) < context_length + 1:
             raise ValueError(
@@ -148,9 +146,9 @@ class DataLoader:
 
 
 def tokenise_corpus(
-    corpus_path: Union[str, Path],
+    corpus_path: str | Path,
     tokenizer: object,
-    output_path: Union[str, Path, None] = None,
+    output_path: str | Path | None = None,
 ) -> np.ndarray:
     """Tokenise a text file into a token-ID array, optionally saving it.
 
@@ -170,7 +168,7 @@ def tokenise_corpus(
     return arr
 
 
-def load_tokens(path: Union[str, Path]) -> np.ndarray:
+def load_tokens(path: str | Path) -> np.ndarray:
     """Memory-map a token array saved by ``tokenise_corpus`` (``np.save``)."""
     return np.load(path, mmap_mode="r")
 

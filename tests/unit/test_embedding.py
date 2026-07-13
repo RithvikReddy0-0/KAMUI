@@ -28,10 +28,10 @@ from kamui.model.embedding import (
     TokenEmbedding,
 )
 
-
 # ===========================================================================
 # TokenEmbedding
 # ===========================================================================
+
 
 class TestTokenEmbedding:
     def test_weight_shape(self) -> None:
@@ -113,6 +113,7 @@ class TestTokenEmbedding:
 # SinusoidalPositionalEncoding
 # ===========================================================================
 
+
 class TestSinusoidalPositionalEncoding:
     def test_buffer_shape(self) -> None:
         pe = SinusoidalPositionalEncoding(context_length=32, d_model=16)
@@ -191,6 +192,7 @@ class TestSinusoidalPositionalEncoding:
 # LearnedPositionalEncoding
 # ===========================================================================
 
+
 class TestLearnedPositionalEncoding:
     def test_weight_shape(self) -> None:
         pe = LearnedPositionalEncoding(context_length=32, d_model=16)
@@ -244,6 +246,7 @@ class TestLearnedPositionalEncoding:
 # ===========================================================================
 # Embedding (combined)
 # ===========================================================================
+
 
 def _small_config(**overrides: object) -> ModelConfig:
     base = dict(

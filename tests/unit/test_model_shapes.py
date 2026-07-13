@@ -19,10 +19,10 @@ Shape contract reference (from kamui.model.config):
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Attention shape tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.xfail(reason="MultiHeadAttention not yet implemented — Phase 1")
 def test_attention_output_shape() -> None:
@@ -78,6 +78,7 @@ def test_causal_mask_no_future_leakage() -> None:
 # FFN shape tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.xfail(reason="FeedForward not yet implemented — Phase 1")
 def test_ffn_output_shape() -> None:
     """FFN output must be (B, S, D) — same as input."""
@@ -93,6 +94,7 @@ def test_ffn_hidden_shape() -> None:
 # ---------------------------------------------------------------------------
 # Full model shape tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.xfail(reason="KAMUITransformer not yet implemented — Phase 1")
 def test_model_logits_shape() -> None:
@@ -124,6 +126,7 @@ def test_model_loss_near_log_vocab_size_at_init() -> None:
 # ---------------------------------------------------------------------------
 # Embedding shape tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.xfail(reason="Embedding not yet implemented — Phase 1")
 def test_embedding_output_shape() -> None:

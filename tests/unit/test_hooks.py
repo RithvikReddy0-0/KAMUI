@@ -46,6 +46,7 @@ def _ids() -> torch.Tensor:
 # HookRegistry
 # ===========================================================================
 
+
 class TestHookRegistry:
     def test_all_points_structure(self) -> None:
         points = HookRegistry.all_points(_config(n_layers=2))
@@ -84,6 +85,7 @@ class TestHookRegistry:
 # ===========================================================================
 # HookManager — capture
 # ===========================================================================
+
 
 class TestHookManagerCapture:
     def test_embed_output(self) -> None:
@@ -159,6 +161,7 @@ class TestHookManagerCapture:
 # HookManager — invariants
 # ===========================================================================
 
+
 class TestHookManagerInvariants:
     def test_hooks_do_not_change_output(self) -> None:
         model = _model()
@@ -182,10 +185,9 @@ class TestHookManagerInvariants:
     def test_hooks_removed_on_exception(self) -> None:
         model = _model()
         attn = model.blocks[0].attn
-        with pytest.raises(RuntimeError):
-            with HookManager(model) as hooks:
-                hooks.attach("blocks.0.attn", "output")
-                raise RuntimeError("boom")
+        with pytest.raises(RuntimeError), HookManager(model) as hooks:
+            hooks.attach("blocks.0.attn", "output")
+            raise RuntimeError("boom")
         assert len(attn._forward_hooks) == 0
 
     def test_cache_survives_exit(self) -> None:
@@ -218,12 +220,12 @@ class TestHookManagerInvariants:
 # HookManager — errors
 # ===========================================================================
 
+
 class TestHookManagerErrors:
     def test_invalid_hook_point_raises(self) -> None:
         model = _model()
-        with HookManager(model) as hooks:
-            with pytest.raises(ValueError, match="not a valid hook point"):
-                hooks.attach("blocks.0.attn", "banana")
+        with HookManager(model) as hooks, pytest.raises(ValueError, match="not a valid hook point"):
+            hooks.attach("blocks.0.attn", "banana")
 
     def test_get_missing_raises(self) -> None:
         model = _model()
@@ -234,6 +236,5 @@ class TestHookManagerErrors:
 
     def test_out_of_range_layer_raises(self) -> None:
         model = _model()
-        with HookManager(model) as hooks:
-            with pytest.raises(ValueError, match="not a valid hook point"):
-                hooks.attach("blocks.9.attn", "output")
+        with HookManager(model) as hooks, pytest.raises(ValueError, match="not a valid hook point"):
+            hooks.attach("blocks.9.attn", "output")

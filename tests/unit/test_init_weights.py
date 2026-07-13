@@ -16,7 +16,6 @@ from kamui.model.block import TransformerBlock
 from kamui.model.config import ModelConfig
 from kamui.model.embedding import Embedding
 from kamui.model.init_weights import init_weights
-from kamui.model.normalization import LayerNorm
 
 
 def _config(**overrides: object) -> ModelConfig:

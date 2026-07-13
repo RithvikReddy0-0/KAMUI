@@ -64,6 +64,7 @@ Implemented in: Phase 3.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from torch import Tensor, nn
@@ -91,7 +92,7 @@ class HookManager:
     # Context manager protocol
     # ------------------------------------------------------------------
 
-    def __enter__(self) -> "HookManager":
+    def __enter__(self) -> HookManager:
         return self
 
     def __exit__(self, *exc: object) -> bool:
@@ -102,7 +103,7 @@ class HookManager:
     # Attaching
     # ------------------------------------------------------------------
 
-    def attach(self, module_path: str, point: str) -> "HookManager":
+    def attach(self, module_path: str, point: str) -> HookManager:
         """Attach a capture hook at ``"<module_path>.<point>"``.
 
         Args:
@@ -118,10 +119,7 @@ class HookManager:
         hook_point = f"{module_path}.{point}"
         if not HookRegistry.validate(hook_point, self.model.config):
             valid = HookRegistry.all_points(self.model.config)
-            raise ValueError(
-                f"'{hook_point}' is not a valid hook point. "
-                f"Valid points: {valid}"
-            )
+            raise ValueError(f"'{hook_point}' is not a valid hook point. " f"Valid points: {valid}")
 
         if point == "output":
             module = self._resolve(module_path)
@@ -201,7 +199,9 @@ class HookManager:
         # module path is always present here; a direct lookup suffices.
         return dict(self.model.named_modules())[module_path]
 
-    def _output_saver(self, hook_point: str):
+    def _output_saver(
+        self, hook_point: str
+    ) -> Callable[[nn.Module, tuple[Any, ...], Tensor], None]:
         # Every hookable point (embed, attn output, ffn output, ffn.activation)
         # yields a plain tensor: attention returns a bare tensor in the model's
         # forward, and the ``weights`` path is captured by the forward wrapper.
@@ -210,7 +210,7 @@ class HookManager:
 
         return hook
 
-    def _input_saver(self, hook_point: str):
+    def _input_saver(self, hook_point: str) -> Callable[[nn.Module, tuple[Any, ...]], None]:
         def pre_hook(module: nn.Module, inputs: tuple[Any, ...]) -> None:
             self._cache[hook_point] = inputs[0].detach()
 

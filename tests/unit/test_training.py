@@ -54,6 +54,7 @@ def _model(**overrides: object) -> KAMUITransformer:
 # Scheduler
 # ===========================================================================
 
+
 class TestCosineWithWarmup:
     def test_warmup_linear(self) -> None:
         s = CosineWithWarmup(max_lr=1.0, min_lr=0.0, warmup_steps=10, max_steps=110)
@@ -68,8 +69,8 @@ class TestCosineWithWarmup:
 
     def test_cosine_endpoint_and_floor(self) -> None:
         s = CosineWithWarmup(max_lr=1.0, min_lr=0.1, warmup_steps=0, max_steps=100)
-        assert s.get_lr(100) == pytest.approx(0.1)   # reaches min_lr
-        assert s.get_lr(500) == pytest.approx(0.1)   # floors after max_steps
+        assert s.get_lr(100) == pytest.approx(0.1)  # reaches min_lr
+        assert s.get_lr(500) == pytest.approx(0.1)  # floors after max_steps
 
     def test_peak_at_warmup_end(self) -> None:
         s = CosineWithWarmup(max_lr=3e-4, min_lr=3e-5, warmup_steps=100, max_steps=5000)
@@ -105,6 +106,7 @@ class TestCosineWithWarmup:
 # ===========================================================================
 # Optimizer
 # ===========================================================================
+
 
 class TestBuildOptimizer:
     def test_returns_adamw(self) -> None:
@@ -155,6 +157,7 @@ class TestBuildOptimizer:
 # ===========================================================================
 # Data
 # ===========================================================================
+
 
 class TestData:
     def test_dataset_len(self) -> None:
@@ -260,6 +263,7 @@ class TestData:
 # Checkpointing
 # ===========================================================================
 
+
 def _make_trainer(**cfg_overrides: object) -> Trainer:
     model = _model()
     # Tokens must stay within [0, vocab_size=32).
@@ -296,8 +300,8 @@ class TestCheckpointing:
         save_checkpoint(path, t.model, t.optimizer, t.scheduler, step=t.step)
         fresh = _model()
         load_model_only(path, fresh)
-        for (n1, p1), (n2, p2) in zip(
-            t.model.named_parameters(), fresh.named_parameters()
+        for (_, p1), (_, p2) in zip(
+            t.model.named_parameters(), fresh.named_parameters(), strict=True
         ):
             assert torch.equal(p1, p2)
 
@@ -305,8 +309,14 @@ class TestCheckpointing:
         t = _make_trainer()
         path = tmp_path / "c.pt"
         save_checkpoint(
-            path, t.model, t.optimizer, t.scheduler, step=1,
-            config=t.config, train_loss=2.5, val_loss=2.7,
+            path,
+            t.model,
+            t.optimizer,
+            t.scheduler,
+            step=1,
+            config=t.config,
+            train_loss=2.5,
+            val_loss=2.7,
         )
         ckpt = torch.load(path, map_location="cpu", weights_only=False)
         assert ckpt["train_loss"] == 2.5
@@ -316,9 +326,7 @@ class TestCheckpointing:
         # Simulate a corrupt write: the read-back returns mismatched keys.
         t = _make_trainer()
         path = tmp_path / "c.pt"
-        monkeypatch.setattr(
-            torch, "load", lambda *a, **k: {"model_state": {"corrupt": 1}}
-        )
+        monkeypatch.setattr(torch, "load", lambda *a, **k: {"model_state": {"corrupt": 1}})
         with pytest.raises(IOError, match="verification failed"):
             save_checkpoint(path, t.model, t.optimizer, t.scheduler, step=1)
 
@@ -341,6 +349,7 @@ class TestCheckpointing:
 # ===========================================================================
 # Trainer
 # ===========================================================================
+
 
 class TestTrainingConfig:
     def test_defaults(self) -> None:
@@ -390,9 +399,7 @@ class TestTrainer:
         t = _make_trainer(max_lr=1.0, min_lr=0.0, warmup_steps=4, max_steps=100)
         t.train(1)  # step 0 → lr 0 during warmup
         # After the first update, the optimiser LR equals the schedule at step 0.
-        assert t.optimizer.param_groups[0]["lr"] == pytest.approx(
-            t.scheduler.get_lr(0)
-        )
+        assert t.optimizer.param_groups[0]["lr"] == pytest.approx(t.scheduler.get_lr(0))
 
     def test_evaluate_returns_float(self) -> None:
         t = _make_trainer()
@@ -418,7 +425,7 @@ class TestTrainer:
     def test_eval_interval_records_val_loss(self) -> None:
         t = _make_trainer(eval_interval=2)
         records = t.train(4)
-        assert "val_loss" in records[1]   # step 2
+        assert "val_loss" in records[1]  # step 2
         assert "val_loss" not in records[0]
 
     def test_no_clip_uses_grad_norm_path(self) -> None:

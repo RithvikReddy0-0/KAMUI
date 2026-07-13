@@ -1,7 +1,9 @@
 """Unit tests for ModelConfig."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from kamui.model.config import ModelConfig
 
 
@@ -104,19 +106,19 @@ def test_computed_properties() -> None:
         vocab_size=1000,
         context_length=32,
         positional_encoding="learned",
-        dropout=0.1
+        dropout=0.1,
     )
     assert config.d_head == 16
-    
+
     # 2 layers * 4 projections/layer * 64 * 65 = 33280
     assert config.attention_parameters == 2 * 4 * 64 * 65
-    
+
     # 2 layers * (2 * 64 * 256 + 64 + 256) = 2 * (32768 + 320) = 66176
     assert config.feedforward_parameters == 2 * (2 * 64 * 256 + 64 + 256)
-    
+
     # vocab (1000 * 64) + context (32 * 64) = 64000 + 2048 = 66048
     assert config.embedding_parameters == (1000 * 64) + (32 * 64)
-    
+
     # layer norms: 2 * 4 * 64 + 2 * 64 = 512 + 128 = 640
     # unembed bias is 0 (bias is False)
     # total: 66048 + 33280 + 66176 + 640 = 166144
@@ -133,7 +135,7 @@ def test_sinusoidal_embedding_parameters() -> None:
         vocab_size=1000,
         context_length=32,
         positional_encoding="sinusoidal",
-        dropout=0.1
+        dropout=0.1,
     )
     assert config.embedding_parameters == 1000 * 64
 
@@ -158,13 +160,13 @@ def test_yaml_roundtrip(tmp_path: Path) -> None:
         vocab_size=4096,
         context_length=128,
         positional_encoding="sinusoidal",
-        dropout=0.2
+        dropout=0.2,
     )
-    
+
     # Save using Path object
     yaml_path_obj = tmp_path / "config.yaml"
     config.to_yaml(yaml_path_obj)
-    
+
     # Load using Path object
     loaded_config_obj = ModelConfig.from_yaml(yaml_path_obj)
     assert config == loaded_config_obj
@@ -172,7 +174,7 @@ def test_yaml_roundtrip(tmp_path: Path) -> None:
     # Save using string path
     yaml_path_str = str(tmp_path / "config_str.yaml")
     config.to_yaml(yaml_path_str)
-    
+
     # Load using string path
     loaded_config_str = ModelConfig.from_yaml(yaml_path_str)
     assert config == loaded_config_str
@@ -201,7 +203,7 @@ def test_yaml_validation_errors(tmp_path: Path) -> None:
     invalid_path = tmp_path / "invalid_list.yaml"
     with open(invalid_path, "w", encoding="utf-8") as f:
         yaml.safe_dump([1, 2, 3], f)
-    
+
     with pytest.raises(ValueError, match="must contain a dictionary mapping"):
         ModelConfig.from_yaml(invalid_path)
 
@@ -209,25 +211,22 @@ def test_yaml_validation_errors(tmp_path: Path) -> None:
     invalid_model_path = tmp_path / "invalid_model.yaml"
     with open(invalid_model_path, "w", encoding="utf-8") as f:
         yaml.safe_dump({"model": "not-a-dict"}, f)
-        
-    with pytest.raises(ValueError, match="Model configuration section in YAML must be a dictionary"):
+
+    with pytest.raises(
+        ValueError, match="Model configuration section in YAML must be a dictionary"
+    ):
         ModelConfig.from_yaml(invalid_model_path)
 
 
 def test_yaml_unknown_keys(tmp_path: Path) -> None:
     """Verifies that unknown configuration keys in the model section raise ValueError."""
     import yaml
+
     yaml_path = tmp_path / "unknown_keys.yaml"
-    data = {
-        "model": {
-            "n_layers": 4,
-            "d_model": 128,
-            "unknown_key": "some-value"
-        }
-    }
+    data = {"model": {"n_layers": 4, "d_model": 128, "unknown_key": "some-value"}}
     with open(yaml_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f)
-        
+
     with pytest.raises(ValueError, match="Unknown configuration key"):
         ModelConfig.from_yaml(yaml_path)
 
@@ -237,7 +236,7 @@ def test_yaml_malformed(tmp_path: Path) -> None:
     yaml_path = tmp_path / "malformed.yaml"
     with open(yaml_path, "w", encoding="utf-8") as f:
         f.write("model:\n  n_layers: 4\n  d_model: [invalid_list")
-        
+
     with pytest.raises(ValueError, match="Failed to parse YAML"):
         ModelConfig.from_yaml(yaml_path)
 
@@ -245,6 +244,7 @@ def test_yaml_malformed(tmp_path: Path) -> None:
 def test_yaml_preserve_non_model_sections(tmp_path: Path) -> None:
     """Verifies that to_yaml does not destroy non-model sections in existing files."""
     import yaml
+
     yaml_path = tmp_path / "unified.yaml"
     data = {
         "model": {
@@ -255,18 +255,11 @@ def test_yaml_preserve_non_model_sections(tmp_path: Path) -> None:
             "vocab_size": 4096,
             "context_length": 128,
             "positional_encoding": "learned",
-            "dropout": 0.0
+            "dropout": 0.0,
         },
-        "training": {
-            "batch_size": 16,
-            "learning_rate": 3e-4
-        },
-        "data": {
-            "dataset": "tinystories"
-        },
-        "logging": {
-            "output_dir": "checkpoints/nano"
-        }
+        "training": {"batch_size": 16, "learning_rate": 3e-4},
+        "data": {"dataset": "tinystories"},
+        "logging": {"output_dir": "checkpoints/nano"},
     }
     with open(yaml_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f)
@@ -277,7 +270,7 @@ def test_yaml_preserve_non_model_sections(tmp_path: Path) -> None:
     config.to_yaml(yaml_path)
 
     # Read back raw data to check preservation
-    with open(yaml_path, "r", encoding="utf-8") as f:
+    with open(yaml_path, encoding="utf-8") as f:
         saved_data = yaml.safe_load(f)
 
     assert saved_data["model"]["n_layers"] == 10
@@ -291,29 +284,27 @@ def test_yaml_preserve_non_model_sections(tmp_path: Path) -> None:
 def test_yaml_invalid_model_block_structure(tmp_path: Path) -> None:
     """Verifies that a non-dictionary 'model' section raises a ValueError."""
     import yaml
+
     yaml_path = tmp_path / "invalid_model_block.yaml"
-    data = {
-        "model": [1, 2, 3]
-    }
+    data = {"model": [1, 2, 3]}
     with open(yaml_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f)
-        
-    with pytest.raises(ValueError, match="Model configuration section in YAML must be a dictionary"):
+
+    with pytest.raises(
+        ValueError, match="Model configuration section in YAML must be a dictionary"
+    ):
         ModelConfig.from_yaml(yaml_path)
 
 
 def test_yaml_missing_model_section(tmp_path: Path) -> None:
     """Verifies that a missing 'model' section raises a ValueError."""
     import yaml
+
     yaml_path = tmp_path / "missing_model.yaml"
-    data = {
-        "training": {
-            "batch_size": 16
-        }
-    }
+    data = {"training": {"batch_size": 16}}
     with open(yaml_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f)
-        
+
     with pytest.raises(ValueError, match="YAML configuration must contain a 'model' section"):
         ModelConfig.from_yaml(yaml_path)
 
@@ -322,15 +313,14 @@ def test_to_yaml_with_existing_malformed_file(tmp_path: Path) -> None:
     """Verifies that to_yaml behaves correctly when the existing file is malformed."""
     config = ModelConfig()
     yaml_path = tmp_path / "malformed_existing.yaml"
-    
+
     # Create a malformed file
     with open(yaml_path, "w", encoding="utf-8") as f:
         f.write("[invalid_yaml")
-        
+
     # to_yaml should handle the exception and successfully write the config
     config.to_yaml(yaml_path)
-    
+
     # Read back to verify
     loaded = ModelConfig.from_yaml(yaml_path)
     assert loaded == config
-

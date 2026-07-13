@@ -95,9 +95,7 @@ def _sample_next(
         choice = torch.multinomial(probs, num_samples=1)
         return int(choice.item())
 
-    raise ValueError(
-        f"unknown strategy '{strategy}'; expected one of {_STRATEGIES}"
-    )
+    raise ValueError(f"unknown strategy '{strategy}'; expected one of {_STRATEGIES}")
 
 
 @torch.no_grad()
@@ -155,11 +153,9 @@ def generate(
     tokens = torch.tensor([ids], dtype=torch.long)  # (1, S)
     for _ in range(max_new_tokens):
         window = tokens[:, -ctx:]
-        logits = model(window)             # (1, s, V)
+        logits = model(window)  # (1, s, V)
         next_id = _sample_next(logits[0, -1], strategy, temperature, top_k, top_p)
-        tokens = torch.cat(
-            [tokens, torch.tensor([[next_id]], dtype=torch.long)], dim=1
-        )
+        tokens = torch.cat([tokens, torch.tensor([[next_id]], dtype=torch.long)], dim=1)
 
     if was_training:
         model.train()
@@ -206,9 +202,7 @@ def generate_with_probs(
         step_probs.append(probs)
         next_id = int(probs.argmax().item())
         generated.append(next_id)
-        tokens = torch.cat(
-            [tokens, torch.tensor([[next_id]], dtype=torch.long)], dim=1
-        )
+        tokens = torch.cat([tokens, torch.tensor([[next_id]], dtype=torch.long)], dim=1)
 
     if was_training:
         model.train()

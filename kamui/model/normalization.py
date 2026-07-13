@@ -200,7 +200,7 @@ class RMSNorm(nn.Module):
                 f"normalized_shape ({self.normalized_shape})"
             )
 
-        mean_square = (x ** 2).mean(dim=-1, keepdim=True)
+        mean_square = (x**2).mean(dim=-1, keepdim=True)
         x_norm = x / torch.sqrt(mean_square + self.eps)
         return self.weight * x_norm
 

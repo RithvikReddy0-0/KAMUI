@@ -44,12 +44,15 @@ Implemented in: Phase 4.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import torch
 from torch import Tensor, nn
 
 from kamui.hooks.manager import HookManager
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
 
 
 def _decode_token(tokenizer: Any, token_id: int) -> str:
@@ -90,12 +93,9 @@ class LogitLensResult:
     def top1_labels(self) -> list[list[str]]:
         """Decoded top-1 predicted token at each (layer, position)."""
         ids = self.top1_token_ids()
-        return [
-            [_decode_token(self.tokenizer, int(t)) for t in row]
-            for row in ids
-        ]
+        return [[_decode_token(self.tokenizer, int(t)) for t in row] for row in ids]
 
-    def plot(self, figsize: tuple[float, float] | None = None):
+    def plot(self, figsize: tuple[float, float] | None = None) -> Figure:
         """Heatmap of top-1 predictions coloured by their probability.
 
         Returns:
@@ -117,14 +117,19 @@ class LogitLensResult:
         for r in range(rows):
             for c in range(cols):
                 ax.text(
-                    c, r, labels[r][c], ha="center", va="center",
-                    fontsize=7, color="white",
+                    c,
+                    r,
+                    labels[r][c],
+                    ha="center",
+                    va="center",
+                    fontsize=7,
+                    color="white",
                 )
         fig.colorbar(im, ax=ax, label="top-1 probability")
         fig.tight_layout()
         return fig
 
-    def plot_position(self, pos: int, figsize: tuple[float, float] | None = None):
+    def plot_position(self, pos: int, figsize: tuple[float, float] | None = None) -> Figure:
         """Plot how the final prediction's probability evolves across layers.
 
         Args:
@@ -208,7 +213,7 @@ class LogitLens:
                 hooks.attach(f"blocks.{i}.ffn", "output")
             self.model(token_ids)
 
-            stream = hooks.get("embed.output")     # (1, S, D)
+            stream = hooks.get("embed.output")  # (1, S, D)
             streams = [stream]
             for i in range(n_layers):
                 stream = (

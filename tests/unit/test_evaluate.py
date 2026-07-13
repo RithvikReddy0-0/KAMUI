@@ -59,6 +59,7 @@ class _ByteTokenizer:
 # Perplexity
 # ===========================================================================
 
+
 class TestPerplexity:
     def test_token_loss_shape(self) -> None:
         model = _model()
@@ -140,10 +141,7 @@ class TestPerplexity:
 
     def test_compute_perplexity_pair_batches(self) -> None:
         model = _model()
-        loader = [
-            (torch.randint(0, 40, (2, 7)), torch.randint(0, 40, (2, 7)))
-            for _ in range(3)
-        ]
+        loader = [(torch.randint(0, 40, (2, 7)), torch.randint(0, 40, (2, 7))) for _ in range(3)]
         ppl = compute_perplexity(model, loader)
         assert math.isfinite(ppl) and ppl > 0
 
@@ -167,6 +165,7 @@ class TestPerplexity:
 # ===========================================================================
 # Generation
 # ===========================================================================
+
 
 class TestGeneration:
     def test_greedy_is_deterministic(self) -> None:
@@ -201,8 +200,13 @@ class TestGeneration:
         model = _model()
         tok = _ByteTokenizer()
         out = generate(
-            model, tok, "abc", max_new_tokens=5, strategy="temperature",
-            temperature=0.8, seed=2,
+            model,
+            tok,
+            "abc",
+            max_new_tokens=5,
+            strategy="temperature",
+            temperature=0.8,
+            seed=2,
         )
         assert isinstance(out, str)
 

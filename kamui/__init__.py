@@ -51,35 +51,24 @@ __author__ = "Rithvik Reddy Mukkara"
 __email__ = "rithvikreddymukkara@gmail.com"
 __license__ = "MIT"
 
-# Public API — populated progressively as phases are implemented.
-# Imports are commented out until the implementing phase is complete.
-# This prevents ImportError during Phase 0 scaffold stage.
-
-# Phase 1 (model):
+# Public API — each symbol is imported once its implementing phase is complete.
+# Tools from not-yet-implemented phases are listed (commented) at the bottom.
+from kamui.evaluate.generation import generate
+from kamui.evaluate.perplexity import compute_perplexity
+from kamui.hooks.manager import HookManager
+from kamui.mechinterp.logit_lens import LogitLens
 from kamui.model.config import ModelConfig
 from kamui.model.transformer import KAMUITransformer
-
-# Phase 1 (tokenizer):
 from kamui.tokenizer.bpe import BPETokenizer
 from kamui.tokenizer.vocab import Vocabulary
-
-# Phase 2 (training):
 from kamui.training.trainer import Trainer, TrainingConfig
 
-# Phase 3 (hooks):
-from kamui.hooks.manager import HookManager
-
-# Phase 4 (mechinterp):
-from kamui.mechinterp.logit_lens import LogitLens
+# Not yet implemented (future mechinterp tools):
+# from kamui.mechinterp.attention_viz import AttentionVisualizer
+# from kamui.mechinterp.probing import LinearProbe
 # from kamui.mechinterp.activation_patch import ActivationPatcher
 # from kamui.mechinterp.induction import InductionHeadDetector
 # from kamui.mechinterp.circuits import CircuitAblator
-# from kamui.mechinterp.attention_viz import AttentionVisualizer
-# from kamui.mechinterp.probing import LinearProbe
-
-# Phase 4 (evaluate):
-from kamui.evaluate.perplexity import compute_perplexity
-from kamui.evaluate.generation import generate
 
 __all__: list[str] = [
     "__version__",

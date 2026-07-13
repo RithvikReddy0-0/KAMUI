@@ -29,8 +29,8 @@ Implemented in: Phase 5.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Iterable, Iterator
+from collections.abc import Iterable, Iterator
+from dataclasses import dataclass
 
 import torch
 from torch import Tensor, nn
@@ -72,9 +72,7 @@ class TrainingConfig:
 
     def __post_init__(self) -> None:
         if self.grad_accum_steps < 1:
-            raise ValueError(
-                f"grad_accum_steps must be >= 1, got {self.grad_accum_steps}"
-            )
+            raise ValueError(f"grad_accum_steps must be >= 1, got {self.grad_accum_steps}")
         if self.eval_interval < 0:
             raise ValueError(f"eval_interval must be >= 0, got {self.eval_interval}")
 

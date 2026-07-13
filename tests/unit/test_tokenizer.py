@@ -17,12 +17,12 @@ Test categories:
 from __future__ import annotations
 
 import json
-import pytest
 from pathlib import Path
 
-from kamui.tokenizer.utils import text_to_bytes, bytes_to_text, get_stats, merge_pair
-from kamui.tokenizer.bpe import BPETokenizer
+import pytest
 
+from kamui.tokenizer.bpe import BPETokenizer
+from kamui.tokenizer.utils import bytes_to_text, get_stats, merge_pair, text_to_bytes
 
 # ===========================================================================
 # Fixtures
@@ -53,6 +53,7 @@ def default_tokenizer() -> BPETokenizer:
 # ===========================================================================
 # utils — text_to_bytes
 # ===========================================================================
+
 
 class TestTextToBytes:
     def test_empty_string(self) -> None:
@@ -108,6 +109,7 @@ class TestTextToBytes:
 # utils — bytes_to_text
 # ===========================================================================
 
+
 class TestBytesToText:
     def test_empty_list(self) -> None:
         assert bytes_to_text([]) == ""
@@ -154,6 +156,7 @@ class TestBytesToText:
 # ===========================================================================
 # utils — get_stats
 # ===========================================================================
+
 
 class TestGetStats:
     def test_empty_vocab(self) -> None:
@@ -205,6 +208,7 @@ class TestGetStats:
 # ===========================================================================
 # utils — merge_pair
 # ===========================================================================
+
 
 class TestMergePair:
     def test_basic_merge(self) -> None:
@@ -262,6 +266,7 @@ class TestMergePair:
 # BPETokenizer — training
 # ===========================================================================
 
+
 class TestBPETokenizerTrain:
     def test_vocab_size_matches_request(self, tiny_tokenizer: BPETokenizer) -> None:
         assert tiny_tokenizer.vocab_size == 300
@@ -313,6 +318,7 @@ class TestBPETokenizerTrain:
 # BPETokenizer — encoding
 # ===========================================================================
 
+
 class TestBPETokenizerEncode:
     def test_empty_string_returns_empty_list(self, tiny_tokenizer: BPETokenizer) -> None:
         assert tiny_tokenizer.encode("") == []
@@ -326,9 +332,9 @@ class TestBPETokenizerEncode:
         for text in texts:
             ids = tiny_tokenizer.encode(text)
             for token_id in ids:
-                assert 0 <= token_id < tiny_tokenizer.vocab_size, (
-                    f"token_id {token_id} out of range for text={text!r}"
-                )
+                assert (
+                    0 <= token_id < tiny_tokenizer.vocab_size
+                ), f"token_id {token_id} out of range for text={text!r}"
 
     def test_type_error_on_non_string(self, tiny_tokenizer: BPETokenizer) -> None:
         with pytest.raises(TypeError):
@@ -337,24 +343,18 @@ class TestBPETokenizerEncode:
     def test_encode_nonempty_gives_nonempty(self, tiny_tokenizer: BPETokenizer) -> None:
         assert len(tiny_tokenizer.encode("a")) > 0
 
-    def test_special_token_encodes_to_single_id(
-        self, default_tokenizer: BPETokenizer
-    ) -> None:
+    def test_special_token_encodes_to_single_id(self, default_tokenizer: BPETokenizer) -> None:
         ids = default_tokenizer.encode("<|endoftext|>")
         assert len(ids) == 1
         assert ids[0] == default_tokenizer.token_to_id("<|endoftext|>")
 
-    def test_special_token_not_split_when_embedded(
-        self, default_tokenizer: BPETokenizer
-    ) -> None:
+    def test_special_token_not_split_when_embedded(self, default_tokenizer: BPETokenizer) -> None:
         text = "hello<|endoftext|>world"
         ids = default_tokenizer.encode(text)
         eos_id = default_tokenizer.token_to_id("<|endoftext|>")
         assert eos_id in ids
 
-    def test_pad_token_encodes_to_single_id(
-        self, default_tokenizer: BPETokenizer
-    ) -> None:
+    def test_pad_token_encodes_to_single_id(self, default_tokenizer: BPETokenizer) -> None:
         ids = default_tokenizer.encode("<|pad|>")
         assert len(ids) == 1
 
@@ -368,10 +368,9 @@ class TestBPETokenizerEncode:
 # BPETokenizer — decoding
 # ===========================================================================
 
+
 class TestBPETokenizerDecode:
-    def test_empty_list_returns_empty_string(
-        self, tiny_tokenizer: BPETokenizer
-    ) -> None:
+    def test_empty_list_returns_empty_string(self, tiny_tokenizer: BPETokenizer) -> None:
         assert tiny_tokenizer.decode([]) == ""
 
     def test_returns_string(self, tiny_tokenizer: BPETokenizer) -> None:
@@ -395,9 +394,7 @@ class TestBPETokenizerDecode:
         with pytest.raises(ValueError):
             tiny_tokenizer.decode([-1])
 
-    def test_special_token_decoded_to_string(
-        self, default_tokenizer: BPETokenizer
-    ) -> None:
+    def test_special_token_decoded_to_string(self, default_tokenizer: BPETokenizer) -> None:
         eos_id = default_tokenizer.token_to_id("<|endoftext|>")
         assert default_tokenizer.decode([eos_id]) == "<|endoftext|>"
 
@@ -405,6 +402,7 @@ class TestBPETokenizerDecode:
 # ===========================================================================
 # BPETokenizer — encode/decode roundtrip
 # ===========================================================================
+
 
 class TestBPETokenizerRoundtrip:
     """encode(text) followed by decode must recover the original string exactly."""
@@ -436,9 +434,7 @@ class TestBPETokenizerRoundtrip:
             "résumé",
         ],
     )
-    def test_roundtrip_unicode(
-        self, text: str, tiny_tokenizer: BPETokenizer
-    ) -> None:
+    def test_roundtrip_unicode(self, text: str, tiny_tokenizer: BPETokenizer) -> None:
         assert tiny_tokenizer.decode(tiny_tokenizer.encode(text)) == text
 
     def test_roundtrip_empty_string(self, tiny_tokenizer: BPETokenizer) -> None:
@@ -448,21 +444,15 @@ class TestBPETokenizerRoundtrip:
         text = "hello world " * 500
         assert tiny_tokenizer.decode(tiny_tokenizer.encode(text)) == text
 
-    def test_roundtrip_with_special_tokens(
-        self, default_tokenizer: BPETokenizer
-    ) -> None:
+    def test_roundtrip_with_special_tokens(self, default_tokenizer: BPETokenizer) -> None:
         text = "start<|endoftext|>end"
         assert default_tokenizer.decode(default_tokenizer.encode(text)) == text
 
-    def test_roundtrip_only_special_token(
-        self, default_tokenizer: BPETokenizer
-    ) -> None:
+    def test_roundtrip_only_special_token(self, default_tokenizer: BPETokenizer) -> None:
         text = "<|endoftext|>"
         assert default_tokenizer.decode(default_tokenizer.encode(text)) == text
 
-    def test_roundtrip_multiple_special_tokens(
-        self, default_tokenizer: BPETokenizer
-    ) -> None:
+    def test_roundtrip_multiple_special_tokens(self, default_tokenizer: BPETokenizer) -> None:
         text = "<|endoftext|><|pad|><|endoftext|>"
         assert default_tokenizer.decode(default_tokenizer.encode(text)) == text
 
@@ -471,24 +461,19 @@ class TestBPETokenizerRoundtrip:
 # BPETokenizer — save / load
 # ===========================================================================
 
+
 class TestBPETokenizerSaveLoad:
-    def test_save_creates_file(
-        self, tiny_tokenizer: BPETokenizer, tmp_path: Path
-    ) -> None:
+    def test_save_creates_file(self, tiny_tokenizer: BPETokenizer, tmp_path: Path) -> None:
         path = tmp_path / "tok.json"
         tiny_tokenizer.save(path)
         assert path.exists()
 
-    def test_save_creates_parent_dirs(
-        self, tiny_tokenizer: BPETokenizer, tmp_path: Path
-    ) -> None:
+    def test_save_creates_parent_dirs(self, tiny_tokenizer: BPETokenizer, tmp_path: Path) -> None:
         path = tmp_path / "nested" / "deep" / "tok.json"
         tiny_tokenizer.save(path)
         assert path.exists()
 
-    def test_saved_file_is_valid_json(
-        self, tiny_tokenizer: BPETokenizer, tmp_path: Path
-    ) -> None:
+    def test_saved_file_is_valid_json(self, tiny_tokenizer: BPETokenizer, tmp_path: Path) -> None:
         path = tmp_path / "tok.json"
         tiny_tokenizer.save(path)
         with open(path) as f:
@@ -497,9 +482,7 @@ class TestBPETokenizerSaveLoad:
         assert "merges" in data
         assert "vocab" in data
 
-    def test_load_roundtrip_vocab_size(
-        self, tiny_tokenizer: BPETokenizer, tmp_path: Path
-    ) -> None:
+    def test_load_roundtrip_vocab_size(self, tiny_tokenizer: BPETokenizer, tmp_path: Path) -> None:
         path = tmp_path / "tok.json"
         tiny_tokenizer.save(path)
         loaded = BPETokenizer.load(path)
@@ -513,9 +496,7 @@ class TestBPETokenizerSaveLoad:
         loaded = BPETokenizer.load(path)
         assert loaded.special_tokens == tiny_tokenizer.special_tokens
 
-    def test_load_roundtrip_merges(
-        self, tiny_tokenizer: BPETokenizer, tmp_path: Path
-    ) -> None:
+    def test_load_roundtrip_merges(self, tiny_tokenizer: BPETokenizer, tmp_path: Path) -> None:
         path = tmp_path / "tok.json"
         tiny_tokenizer.save(path)
         loaded = BPETokenizer.load(path)
@@ -531,9 +512,7 @@ class TestBPETokenizerSaveLoad:
         for text in ["hello world", "the cat sat on the mat", "abracadabra"]:
             assert loaded.encode(text) == tiny_tokenizer.encode(text)
 
-    def test_save_is_deterministic(
-        self, tiny_tokenizer: BPETokenizer, tmp_path: Path
-    ) -> None:
+    def test_save_is_deterministic(self, tiny_tokenizer: BPETokenizer, tmp_path: Path) -> None:
         """Two saves of the same tokenizer produce identical bytes."""
         path1 = tmp_path / "tok1.json"
         path2 = tmp_path / "tok2.json"

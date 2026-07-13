@@ -20,10 +20,10 @@ from torch import nn
 
 from kamui.model.normalization import LayerNorm, RMSNorm
 
-
 # ===========================================================================
 # LayerNorm
 # ===========================================================================
+
 
 class TestLayerNorm:
     def test_weight_and_bias_shape(self) -> None:
@@ -166,6 +166,7 @@ class TestLayerNorm:
 # RMSNorm
 # ===========================================================================
 
+
 class TestRMSNorm:
     def test_weight_shape_and_init(self) -> None:
         rms = RMSNorm(normalized_shape=16)
@@ -214,7 +215,7 @@ class TestRMSNorm:
         rms = RMSNorm(normalized_shape=64)
         x = torch.randn(8, 64) * 10
         out = rms(x)
-        out_rms = torch.sqrt((out ** 2).mean(dim=-1))
+        out_rms = torch.sqrt((out**2).mean(dim=-1))
         assert torch.allclose(out_rms, torch.ones(8), atol=1e-3)
 
     def test_numerical_stability_zero_input(self) -> None:

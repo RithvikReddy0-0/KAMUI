@@ -114,10 +114,10 @@ class FeedForward(nn.Module):
                 f"d_model ({self.config.d_model})"
             )
 
-        h = self.fc_in(x)          # (..., d_ff)  expansion
-        h = self.activation(h)     # (..., d_ff)  GELU
-        h = self.dropout(h)        # (..., d_ff)  hidden dropout
-        return self.fc_out(h)      # (..., d_model)  projection
+        h = self.fc_in(x)  # (..., d_ff)  expansion
+        h = self.activation(h)  # (..., d_ff)  GELU
+        h = self.dropout(h)  # (..., d_ff)  hidden dropout
+        return self.fc_out(h)  # (..., d_model)  projection
 
     def __repr__(self) -> str:
         return (
