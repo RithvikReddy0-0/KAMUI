@@ -38,11 +38,21 @@ Implemented in: Phase 4, Weeks 15–22
 """
 
 # from kamui.mechinterp.attention_viz import AttentionVisualizer
+from kamui.mechinterp.activation_patch import (
+    ActivationPatcher,
+    HeadPatchingResult,
+    PatchingResult,
+)
 from kamui.mechinterp.logit_lens import LogitLens, LogitLensResult
 
 # from kamui.mechinterp.probing import LinearProbe
-# from kamui.mechinterp.activation_patch import ActivationPatcher
 # from kamui.mechinterp.induction import InductionHeadDetector
 # from kamui.mechinterp.circuits import CircuitAblator
 
-__all__: list[str] = ["LogitLens", "LogitLensResult"]
+__all__: list[str] = [
+    "LogitLens",
+    "LogitLensResult",
+    "ActivationPatcher",
+    "PatchingResult",
+    "HeadPatchingResult",
+]

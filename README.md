@@ -61,7 +61,7 @@ Training Pipeline        ██████████  ✅ complete
 Hook System              ██████████  ✅ complete
 Evaluation (ppl + gen)   ██████████  ✅ complete
 Logit Lens               ██████████  ✅ complete
-Activation Patching      ░░░░░░░░░░  ⏳ planned
+Activation Patching      ██████████  ✅ complete
 ```
 
 The [roadmap](#roadmap) and [issue tracker](https://github.com/RithvikReddy0-0/kamui/issues) reflect active development.

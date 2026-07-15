@@ -17,6 +17,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   No behaviour changes; all 507 tests pass at 98% coverage.
 
 ### Added
+- Mechinterp: activation patching (`kamui.mechinterp.ActivationPatcher`): causal
+  localisation by caching a clean activation and patching it into a corrupted
+  run, scored by logit-difference recovery (0 = no effect, 1 = fully restores
+  clean behaviour). `patch_single` (any embed/attn/ffn output point),
+  `patch_all_layers` → `PatchingResult`, and `patch_all_heads` →
+  `HeadPatchingResult` (per-head via `out_proj`-input swap), each with a
+  `.plot()`. Patching uses the hook system's output-replacement path, so the
+  model stays untouched. A deterministic test anchors the method: patching
+  `embed.output` yields exactly 1.0 recovery. 22-test suite at 100% coverage.
 - Mechinterp: logit lens (`kamui.mechinterp.LogitLens`): projects the residual
   stream to vocabulary at every layer via `final_ln + unembed`, revealing at
   which depth each prediction emerges. Reconstructs per-layer residual streams
