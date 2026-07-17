@@ -17,6 +17,33 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   No behaviour changes; all 507 tests pass at 98% coverage.
 
 ### Added
+- v0.1 feature-complete — the remaining four interpretability tools, the
+  calibration metrics, and the shared utilities:
+  - `AttentionVisualizer` (`kamui.mechinterp.attention_viz`): captures every
+    head's attention pattern in one hooked forward pass; matplotlib single-head
+    and grid heatmaps, an interactive plotly view with a layer/head selector,
+    and `head_summary_stats` (entropy, self-attention and previous-token
+    fractions) for identifying head types.
+  - `LinearProbe` (`kamui.mechinterp.probing`): from-scratch logistic
+    regression on cached last-position activations at any hook point, plus
+    `probe_all_layers` over the reconstructed per-depth residual stream with
+    an accuracy-by-depth plot. Verified on a linearly separable task.
+  - `InductionHeadDetector` (`kamui.mechinterp.induction`): Olsson-et-al.
+    repeated-sequence induction scores for every (layer, head), a score
+    heatmap, and `ablate_and_measure` — zero-ablating chosen heads and
+    measuring the rise in second-half in-context loss.
+  - `CircuitAblator` + `find_minimal_circuit` (`kamui.mechinterp.circuits`):
+    zero- and mean-ablation of attn/ffn components with a metric-delta
+    result, and a greedy minimal-circuit search. Anchored by an exact test:
+    ablating every component reduces the model to embed → final_ln → unembed.
+  - Calibration (`kamui.evaluate.calibration`): `expected_calibration_error`
+    (known-value tested), `reliability_diagram`, and grid-search
+    `temperature_scaling`.
+  - Utilities (`kamui.utils`): seeding/determinism/device helpers, the
+    structured `TrainingLogger` with parseable `key=value` lines, and shared
+    heatmap/layer/token plotting functions with `save_figure`.
+  All six v0.1 interpretability tools are now implemented; 100% line coverage
+  on every new module (81 new tests; suite total 611).
 - Mechinterp: activation patching (`kamui.mechinterp.ActivationPatcher`): causal
   localisation by caching a clean activation and patching it into a corrupted
   run, scored by logit-difference recovery (0 = no effect, 1 = fully restores

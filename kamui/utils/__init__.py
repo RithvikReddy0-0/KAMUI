@@ -13,4 +13,20 @@ Design constraint:
 Implemented in: Phase 0 (stubs), progressively during Phases 1–4
 """
 
-__all__: list[str] = []
+from kamui.utils.logging import TrainingLogger, get_logger, log_model_stats, parse_log_line
+from kamui.utils.plotting import heatmap, layer_plot, save_figure, token_heatmap
+from kamui.utils.reproducibility import get_device, set_deterministic, set_seed
+
+__all__: list[str] = [
+    "get_logger",
+    "TrainingLogger",
+    "log_model_stats",
+    "parse_log_line",
+    "heatmap",
+    "layer_plot",
+    "token_heatmap",
+    "save_figure",
+    "set_seed",
+    "set_deterministic",
+    "get_device",
+]

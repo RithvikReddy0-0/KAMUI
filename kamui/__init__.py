@@ -57,18 +57,16 @@ from kamui.evaluate.generation import generate
 from kamui.evaluate.perplexity import compute_perplexity
 from kamui.hooks.manager import HookManager
 from kamui.mechinterp.activation_patch import ActivationPatcher
+from kamui.mechinterp.attention_viz import AttentionVisualizer
+from kamui.mechinterp.circuits import CircuitAblator
+from kamui.mechinterp.induction import InductionHeadDetector
 from kamui.mechinterp.logit_lens import LogitLens
+from kamui.mechinterp.probing import LinearProbe
 from kamui.model.config import ModelConfig
 from kamui.model.transformer import KAMUITransformer
 from kamui.tokenizer.bpe import BPETokenizer
 from kamui.tokenizer.vocab import Vocabulary
 from kamui.training.trainer import Trainer, TrainingConfig
-
-# Not yet implemented (future mechinterp tools):
-# from kamui.mechinterp.attention_viz import AttentionVisualizer
-# from kamui.mechinterp.probing import LinearProbe
-# from kamui.mechinterp.induction import InductionHeadDetector
-# from kamui.mechinterp.circuits import CircuitAblator
 
 __all__: list[str] = [
     "__version__",
@@ -81,6 +79,10 @@ __all__: list[str] = [
     "generate",
     "Trainer",
     "TrainingConfig",
+    "AttentionVisualizer",
     "LogitLens",
+    "LinearProbe",
     "ActivationPatcher",
+    "InductionHeadDetector",
+    "CircuitAblator",
 ]

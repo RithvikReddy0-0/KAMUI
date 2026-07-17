@@ -13,6 +13,11 @@ Implemented in: Phase 4, Weeks 11–12 (training evaluation) and
                 Phase 4, Week 15 (generation, calibration)
 """
 
+from kamui.evaluate.calibration import (
+    expected_calibration_error,
+    reliability_diagram,
+    temperature_scaling,
+)
 from kamui.evaluate.generation import (
     GenerationResult,
     generate,
@@ -31,4 +36,7 @@ __all__: list[str] = [
     "generate",
     "generate_with_probs",
     "GenerationResult",
+    "expected_calibration_error",
+    "reliability_diagram",
+    "temperature_scaling",
 ]

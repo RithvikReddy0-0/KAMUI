@@ -37,22 +37,35 @@ Dependency:
 Implemented in: Phase 4, Weeks 15–22
 """
 
-# from kamui.mechinterp.attention_viz import AttentionVisualizer
 from kamui.mechinterp.activation_patch import (
     ActivationPatcher,
     HeadPatchingResult,
     PatchingResult,
 )
+from kamui.mechinterp.attention_viz import (
+    AttentionResult,
+    AttentionVisualizer,
+    head_summary_stats,
+)
+from kamui.mechinterp.circuits import AblationResult, CircuitAblator, find_minimal_circuit
+from kamui.mechinterp.induction import InductionHeadDetector
 from kamui.mechinterp.logit_lens import LogitLens, LogitLensResult
-
-# from kamui.mechinterp.probing import LinearProbe
-# from kamui.mechinterp.induction import InductionHeadDetector
-# from kamui.mechinterp.circuits import CircuitAblator
+from kamui.mechinterp.probing import LayerProbeResult, LinearProbe, ProbeResult
 
 __all__: list[str] = [
+    "AttentionVisualizer",
+    "AttentionResult",
+    "head_summary_stats",
     "LogitLens",
     "LogitLensResult",
+    "LinearProbe",
+    "ProbeResult",
+    "LayerProbeResult",
     "ActivationPatcher",
     "PatchingResult",
     "HeadPatchingResult",
+    "InductionHeadDetector",
+    "CircuitAblator",
+    "AblationResult",
+    "find_minimal_circuit",
 ]
