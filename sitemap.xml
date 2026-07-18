@@ -1,51 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/architecture/hooks/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/architecture/hooks/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/architecture/training/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/architecture/training/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/architecture/transformer/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/architecture/transformer/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/mechinterp/activation_patching/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/activation_patching/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/mechinterp/circuits/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/circuits/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/mechinterp/induction_heads/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/induction_heads/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/mechinterp/logit_lens/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/logit_lens/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/mechinterp/overview/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/overview/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/tutorials/quickstart/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/tutorials/quickstart/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/tutorials/training_your_first_model/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/tutorials/training_your_first_model/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
-         <loc>https://rithvikreddy0-0.github.io/kamui/tutorials/your_first_interpretability_experiment/</loc>
+         <loc>https://rithvikreddy0-0.github.io/KAMUI/tutorials/your_first_interpretability_experiment/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
 </urlset>
