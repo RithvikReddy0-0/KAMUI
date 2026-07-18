@@ -25,5 +25,8 @@ jobs:
       - name: Install package + docs dependencies
         run: pip install -e ".[dev]"
 
-      - name: Build and deploy
+      - name: Build (strict — fail on any missing page or broken link)
+        run: mkdocs build --strict
+
+      - name: Deploy
         run: mkdocs gh-deploy --force

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="KAMUI logo">
+  <rect width="64" height="64" rx="14" fill="#1a1a2e"/>
+  <path d="M18 14 v36 M18 32 L42 14 M22 29 L44 50" stroke="#7986cb" stroke-width="7"
+        stroke-linecap="round" fill="none"/>
+</svg>

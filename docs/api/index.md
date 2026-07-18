@@ -1,0 +1,50 @@
+# API Reference
+
+The complete public API, generated from the source docstrings.
+Everything below is importable from the top-level `kamui` package.
+
+## Configuration & Model
+
+::: kamui.model.config.ModelConfig
+
+::: kamui.model.transformer.KAMUITransformer
+
+## Tokenizer
+
+::: kamui.tokenizer.bpe.BPETokenizer
+
+::: kamui.tokenizer.vocab.Vocabulary
+
+## Training
+
+::: kamui.training.trainer.TrainingConfig
+
+::: kamui.training.trainer.Trainer
+
+## Hooks
+
+::: kamui.hooks.manager.HookManager
+
+::: kamui.hooks.registry.HookRegistry
+
+## Interpretability Tools
+
+::: kamui.mechinterp.attention_viz.AttentionVisualizer
+
+::: kamui.mechinterp.logit_lens.LogitLens
+
+::: kamui.mechinterp.probing.LinearProbe
+
+::: kamui.mechinterp.activation_patch.ActivationPatcher
+
+::: kamui.mechinterp.induction.InductionHeadDetector
+
+::: kamui.mechinterp.circuits.CircuitAblator
+
+## Evaluation
+
+::: kamui.evaluate.perplexity.compute_perplexity
+
+::: kamui.evaluate.generation.generate
+
+::: kamui.evaluate.calibration.expected_calibration_error

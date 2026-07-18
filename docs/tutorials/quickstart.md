@@ -99,4 +99,4 @@ Expected: high scores (> 0.5) at layer 1, heads 2–5.
 - [Train the small model](training_your_first_model.md) for better results
 - [Run your first interpretability experiment](your_first_interpretability_experiment.md)
 - [Read the architecture docs](../architecture/transformer.md)
-- [Browse the educational notebooks](../../notebooks/)
+- [Browse the educational notebooks](https://github.com/RithvikReddy0-0/KAMUI/tree/main/notebooks)

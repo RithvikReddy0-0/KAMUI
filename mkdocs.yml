@@ -3,8 +3,8 @@ site_description: >-
   Knowledge Activation Mapping & Understanding Interface —
   A transformer interpretability framework built entirely from scratch.
 site_url: https://rithvikreddy0-0.github.io/KAMUI
-repo_url: https://github.com/RithvikReddy0-0/kamui
-repo_name: RithvikReddy0-0/kamui
+repo_url: https://github.com/RithvikReddy0-0/KAMUI
+repo_name: RithvikReddy0-0/KAMUI
 copyright: "Copyright &copy; 2025 Rithvik Reddy Mukkara — MIT License"
 
 theme:
@@ -57,9 +57,9 @@ nav:
       - Train Your First Model: tutorials/training_your_first_model.md
       - First Interpretability Experiment: tutorials/your_first_interpretability_experiment.md
   - Research:
-      - Research Log: ../research/RESEARCH_LOG.md
-      - v0.2 — SAE Design: ../research/future/sae_design.md
-  - API Reference: api/
+      - Research Log: https://github.com/RithvikReddy0-0/KAMUI/blob/main/research/RESEARCH_LOG.md
+      - v0.2 — SAE Design: https://github.com/RithvikReddy0-0/KAMUI/blob/main/research/future/sae_design.md
+  - API Reference: api/index.md
 
 plugins:
   - search:
@@ -116,13 +116,10 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/RithvikReddy0-0/kamui
+      link: https://github.com/RithvikReddy0-0/KAMUI
     - icon: fontawesome/brands/linkedin
       link: https://linkedin.com/in/rithvik-reddy-911b6b279
-  version:
-    provider: mike
 
 extra_javascript:
   - javascripts/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

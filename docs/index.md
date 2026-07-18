@@ -17,14 +17,14 @@ is exposed and documented.
 
 **If you want to understand transformers:**
 → Start with [Architecture Overview](architecture/transformer.md)
-→ Then work through the [Notebooks](../notebooks/) in order
+→ Then work through the [Notebooks](https://github.com/RithvikReddy0-0/KAMUI/tree/main/notebooks) in order
 
 **If you want to run interpretability experiments:**
 → Start with the [Quickstart](tutorials/quickstart.md)
 → Then read [Logit Lens](mechinterp/logit_lens.md) and [Activation Patching](mechinterp/activation_patching.md)
 
 **If you want to contribute:**
-→ Read [CONTRIBUTING.md](../CONTRIBUTING.md)
+→ Read [CONTRIBUTING.md](https://github.com/RithvikReddy0-0/KAMUI/blob/main/CONTRIBUTING.md)
 → Find a `good-first-issue` on GitHub
 
 ## Architecture in one diagram
