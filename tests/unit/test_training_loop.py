@@ -52,8 +52,11 @@ def test_loss_decreases_on_single_fixed_batch() -> None:
 def test_gradient_accumulation_matches_large_batch() -> None:
     """2 accumulation steps over two half-batches must equal 1 full-batch step.
 
-    Same data, same init: after one optimiser update the parameters must
-    match to numerical precision.
+    Same data, same init: the accumulated *gradients* must match the
+    full-batch gradients to numerical precision.  (Gradients, not post-step
+    parameters: Adam's first update is ~``lr * sign(g)``, so a float-rounding
+    difference in a near-zero gradient would flip an entire update — that
+    comparison is flaky by construction across platforms.)
     """
     ids, targets = _fixed_batch()
     half_a = (ids[:4], targets[:4])
@@ -74,11 +77,15 @@ def test_gradient_accumulation_matches_large_batch() -> None:
     )
     trainer_full = Trainer(model_full, train_loader=[(ids, targets)], config=config)
 
+    # train(1) computes gradients on the identical initial parameters; .grad
+    # is populated before the optimiser step and not cleared until the next
+    # update, so it can be compared directly afterwards.
     trainer_accum.train(1)
     trainer_full.train(1)
 
     for p_a, p_f in zip(model_accum.parameters(), model_full.parameters(), strict=True):
-        assert torch.allclose(p_a, p_f, atol=1e-6)
+        assert p_a.grad is not None and p_f.grad is not None
+        assert torch.allclose(p_a.grad, p_f.grad, atol=1e-6)
 
 
 def test_lr_warmup_ramps_inside_loop() -> None:

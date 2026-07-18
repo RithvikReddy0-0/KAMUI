@@ -48,11 +48,9 @@ class TokenizerLike(Protocol):
 
     def encode(self, text: str) -> list[int]:
         """Convert a string to token IDs."""
-        ...
 
     def decode(self, ids: list[int]) -> str:
         """Convert token IDs back to a string."""
-        ...
 
 
 @dataclass

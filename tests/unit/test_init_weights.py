@@ -89,6 +89,15 @@ class TestInitWeights:
         # out_proj std must be clearly smaller than q_proj std.
         assert block.attn.out_proj.weight.std().item() < block.attn.q_proj.weight.std().item()
 
+    def test_rmsnorm_scale_reset_to_ones(self) -> None:
+        from kamui.model.normalization import RMSNorm
+
+        net = nn.Sequential(RMSNorm(8), nn.Linear(8, 8))
+        with torch.no_grad():
+            net[0].weight.fill_(5.0)
+        init_weights(net, n_layers=2)
+        assert torch.all(net[0].weight == 1.0)  # RMSNorm has no bias to reset
+
     def test_works_on_plain_linear_tree(self) -> None:
         # A module with no custom types still initialises (Linear branch only).
         net = nn.Sequential(nn.Linear(8, 8), nn.Linear(8, 8))
