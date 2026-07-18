@@ -9,13 +9,13 @@
 *"To understand a model, you must first see what it sees."*
 
 [![Tests](https://github.com/RithvikReddy0-0/kamui/actions/workflows/ci.yml/badge.svg)](https://github.com/RithvikReddy0-0/kamui/actions)
-[![Docs](https://github.com/RithvikReddy0-0/kamui/actions/workflows/docs.yml/badge.svg)](https://rithvikreddy0-0.github.io/kamui)
+[![Docs](https://github.com/RithvikReddy0-0/kamui/actions/workflows/docs.yml/badge.svg)](https://rithvikreddy0-0.github.io/KAMUI)
 [![PyPI version](https://badge.fury.io/py/kamui.svg)](https://badge.fury.io/py/kamui)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-[Documentation](https://rithvikreddy0-0.github.io/kamui) •
+[Documentation](https://rithvikreddy0-0.github.io/KAMUI) •
 [Quickstart](#quickstart) •
 [Notebooks](notebooks/) •
 [Research](research/) •
@@ -119,28 +119,36 @@ pip install -e ".[all]"
 pytest
 ```
 
-This clones the repo, installs all dependencies in editable mode, and runs the test suite.
-The tests cover the components that are implemented so far — config, vocabulary, and tokenizer infrastructure.
+This clones the repo, installs all dependencies in editable mode, and runs
+the full test suite (642 tests, ~99% coverage).
 
 ### API (v0.1)
 
-**Train a model**
+**Train a model** (or simply: `kamui-train --config configs/nano.yaml --corpus data/corpus.txt`)
 
 ```python
 import kamui
+from kamui.training import DataLoader, TextDataset
 
-model     = kamui.KAMUITransformer.from_config("configs/small.yaml")
-tokenizer = kamui.BPETokenizer.train("data/tinystories.txt", vocab_size=8192)
-trainer   = kamui.Trainer(model, tokenizer, config="configs/small.yaml")
-trainer.train()
+config    = kamui.ModelConfig.from_yaml("configs/nano.yaml")
+model     = kamui.KAMUITransformer(config)
+tokenizer = kamui.BPETokenizer.train("data/corpus.txt", vocab_size=config.vocab_size)
+
+tokens  = tokenizer.encode(open("data/corpus.txt", encoding="utf-8").read())
+loader  = DataLoader(TextDataset(tokens, config.context_length), batch_size=16)
+trainer = kamui.Trainer(model, loader, config=kamui.TrainingConfig(max_steps=2000))
+trainer.train(2000)
 ```
 
 **Run logit lens**
 
 ```python
+import torch
+
+ids    = torch.tensor(tokenizer.encode("The Eiffel Tower is located in the city of"))
 lens   = kamui.LogitLens(model, tokenizer)
-result = lens.run("The Eiffel Tower is located in the city of")
-result.plot()   # layer × token heatmap — watch "Paris" emerge
+result = lens.run(ids)
+result.plot()   # layer × token heatmap — watch the prediction emerge with depth
 ```
 
 **Find induction heads**
@@ -148,19 +156,17 @@ result.plot()   # layer × token heatmap — watch "Paris" emerge
 ```python
 detector = kamui.InductionHeadDetector(model)
 scores   = detector.score_all_heads()
-detector.plot_scores(scores)
-# Expect high scores at layer 1, heads 2 and 5
+detector.plot_scores(scores)   # induction heads typically emerge at layers 1-2
 ```
 
 **Causal intervention**
 
 ```python
-patcher = kamui.ActivationPatcher(model)
-effect  = patcher.patch_all_layers(
-    clean="The Eiffel Tower is in Paris",
-    corrupted="The Eiffel Tower is in Berlin",
-)
-effect.plot()   # which layer stores "Paris"?
+patcher   = kamui.ActivationPatcher(model)
+clean     = torch.tensor(tokenizer.encode("The Eiffel Tower is in Paris"))
+corrupted = torch.tensor(tokenizer.encode("The Eiffel Tower is in Berlin"))
+effect    = patcher.patch_all_layers(clean, corrupted)
+effect.plot()   # which layer stores the fact?
 ```
 
 ---

@@ -68,7 +68,7 @@ all = [
 
 [project.urls]
 Homepage      = "https://github.com/RithvikReddy0-0/kamui"
-Documentation = "https://rithvikreddy0-0.github.io/kamui"
+Documentation = "https://rithvikreddy0-0.github.io/KAMUI"
 Repository    = "https://github.com/RithvikReddy0-0/kamui"
 Issues        = "https://github.com/RithvikReddy0-0/kamui/issues"
 Changelog     = "https://github.com/RithvikReddy0-0/kamui/blob/main/CHANGELOG.md"
