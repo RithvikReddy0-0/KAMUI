@@ -28,10 +28,13 @@ Implemented in: Phase 4.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 
 import torch
 import torch.nn.functional as F
-from torch import Tensor, nn
+from torch import Tensor
+
+from kamui.model.transformer import KAMUITransformer
 
 
 def _as_sequence(token_ids: Tensor) -> Tensor:
@@ -50,7 +53,7 @@ def _as_sequence(token_ids: Tensor) -> Tensor:
 
 
 @torch.no_grad()
-def compute_token_loss(model: nn.Module, token_ids: Tensor) -> Tensor:
+def compute_token_loss(model: KAMUITransformer, token_ids: Tensor) -> Tensor:
     """Return the per-token next-token cross-entropy loss for one sequence.
 
     Args:
@@ -84,7 +87,7 @@ def compute_token_loss(model: nn.Module, token_ids: Tensor) -> Tensor:
 
 @torch.no_grad()
 def compute_sequence_perplexity(
-    model: nn.Module, token_ids: Tensor, stride: int | None = None
+    model: KAMUITransformer, token_ids: Tensor, stride: int | None = None
 ) -> float:
     """Compute perplexity for a single sequence.
 
@@ -146,7 +149,7 @@ def compute_sequence_perplexity(
     return math.exp(nll_sum / n_counted)
 
 
-def _split_batch(batch: object) -> tuple[Tensor, Tensor]:
+def _split_batch(batch: tuple[Tensor, Tensor] | list[Tensor] | Tensor) -> tuple[Tensor, Tensor]:
     """Return ``(inputs, targets)`` from a batch.
 
     A ``(inputs, targets)`` pair is used directly; a single ``(B, S)`` tensor
@@ -160,7 +163,9 @@ def _split_batch(batch: object) -> tuple[Tensor, Tensor]:
 
 
 @torch.no_grad()
-def compute_perplexity(model: nn.Module, dataloader: object) -> float:
+def compute_perplexity(
+    model: KAMUITransformer, dataloader: Iterable[tuple[Tensor, Tensor] | Tensor]
+) -> float:
     """Compute token-level perplexity over a dataset.
 
     Args:

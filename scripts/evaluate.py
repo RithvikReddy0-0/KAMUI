@@ -1,16 +1,14 @@
 """Evaluate a trained KAMUI checkpoint.
 
 Usage:
-    python scripts/evaluate.py --checkpoint checkpoints/small/best.pt
-    python scripts/evaluate.py --checkpoint checkpoints/small/best.pt --generate "Once upon a time"
-    kamui-eval --checkpoint checkpoints/small/best.pt
+    python scripts/evaluate.py --checkpoint checkpoints/run/step_0000200.pt \
+        --config configs/nano.yaml
+    kamui-eval --checkpoint ... --config ... --tokenizer ... --generate "Once upon a time"
 
-Implemented in: Phase 2
+All logic lives in ``kamui.scripts.evaluate`` so it is importable and testable.
 """
 
-# Implementation begins in Phase 2.
-# This script will:
-#   1. Load a checkpoint
-#   2. Compute validation perplexity
-#   3. Optionally generate text from a prompt
-#   4. Print a summary of model stats
+from kamui.scripts.evaluate import main
+
+if __name__ == "__main__":
+    main()

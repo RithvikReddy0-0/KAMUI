@@ -41,6 +41,7 @@ import torch.nn.functional as F
 from torch import Tensor, nn
 
 from kamui.hooks.manager import HookManager
+from kamui.model.transformer import KAMUITransformer
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -132,7 +133,7 @@ class LinearProbe:
         model: A trained ``KAMUITransformer``.
     """
 
-    def __init__(self, model: nn.Module) -> None:
+    def __init__(self, model: KAMUITransformer) -> None:
         """Create a prober over ``model``.
 
         Args:

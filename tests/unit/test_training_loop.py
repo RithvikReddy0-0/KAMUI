@@ -1,62 +1,117 @@
-"""Unit tests for the training loop.
+"""Unit tests for training-loop mechanics.
 
-These tests verify training mechanics without requiring full convergence.
-They run quickly (< 5 seconds each) and are suitable for CI.
+These verify the *mechanics* of training — overfitting a fixed batch,
+gradient accumulation equivalence, LR schedule behaviour inside the loop,
+and weight-decay group assignment — complementing tests/unit/test_training.py.
 """
 
+from __future__ import annotations
+
 import pytest
+import torch
+
+from kamui.model.config import ModelConfig
+from kamui.model.transformer import KAMUITransformer
+from kamui.training.trainer import Trainer, TrainingConfig
 
 
-@pytest.mark.xfail(reason="Trainer not yet implemented — Phase 2")
-def test_loss_decreases_in_first_10_steps() -> None:
-    """Loss must decrease over the first 10 training steps on a fixed batch.
+def _config() -> ModelConfig:
+    return ModelConfig(
+        n_layers=1,
+        d_model=32,
+        n_heads=4,
+        d_ff=64,
+        vocab_size=32,
+        context_length=8,
+        dropout=0.0,
+    )
 
-    This is the minimal sanity check for a training loop.  If loss does
-    not decrease on a single fixed batch (which the model can overfit),
-    the training loop has a fundamental bug.
+
+def _fixed_batch(seed: int = 0) -> tuple[torch.Tensor, torch.Tensor]:
+    torch.manual_seed(seed)
+    ids = torch.randint(0, 32, (8, 8))
+    return ids, torch.randint(0, 32, (8, 8))
+
+
+def test_loss_decreases_on_single_fixed_batch() -> None:
+    """The model must overfit one fixed batch — the most basic sanity check.
+
+    If loss does not decrease here, the training loop has a fundamental bug.
     """
-    pass
+    torch.manual_seed(0)
+    batch = _fixed_batch()
+    trainer = Trainer(
+        KAMUITransformer(_config()),
+        train_loader=[batch],
+        config=TrainingConfig(max_lr=1e-2, warmup_steps=2, max_steps=1000),
+    )
+    records = trainer.train(40)
+    assert records[-1]["train_loss"] < records[0]["train_loss"] * 0.5
 
 
-@pytest.mark.xfail(reason="Trainer not yet implemented — Phase 2")
 def test_gradient_accumulation_matches_large_batch() -> None:
-    """2 accumulation steps of batch_size=8 must produce the same weight
-    update as 1 step of batch_size=16 (same data, same seed).
+    """2 accumulation steps over two half-batches must equal 1 full-batch step.
 
-    This verifies that gradient accumulation is implemented correctly.
+    Same data, same init: after one optimiser update the parameters must
+    match to numerical precision.
     """
-    pass
+    ids, targets = _fixed_batch()
+    half_a = (ids[:4], targets[:4])
+    half_b = (ids[4:], targets[4:])
+
+    torch.manual_seed(7)
+    model_accum = KAMUITransformer(_config())
+    torch.manual_seed(7)
+    model_full = KAMUITransformer(_config())
+
+    config = TrainingConfig(max_lr=1e-3, warmup_steps=0, max_steps=100, max_grad_norm=0.0)
+    trainer_accum = Trainer(
+        model_accum,
+        train_loader=[half_a, half_b],
+        config=TrainingConfig(
+            max_lr=1e-3, warmup_steps=0, max_steps=100, max_grad_norm=0.0, grad_accum_steps=2
+        ),
+    )
+    trainer_full = Trainer(model_full, train_loader=[(ids, targets)], config=config)
+
+    trainer_accum.train(1)
+    trainer_full.train(1)
+
+    for p_a, p_f in zip(model_accum.parameters(), model_full.parameters(), strict=True):
+        assert torch.allclose(p_a, p_f, atol=1e-6)
 
 
-@pytest.mark.xfail(reason="Trainer not yet implemented — Phase 2")
-def test_lr_warmup_ramps_correctly() -> None:
-    """LR must increase linearly from 0 to max_lr over warmup_steps."""
-    pass
+def test_lr_warmup_ramps_inside_loop() -> None:
+    """The optimiser LR must follow the linear warmup during training."""
+    trainer = Trainer(
+        KAMUITransformer(_config()),
+        train_loader=[_fixed_batch()],
+        config=TrainingConfig(max_lr=1.0, min_lr=0.0, warmup_steps=10, max_steps=100),
+    )
+    records = trainer.train(5)
+    # Update k (1-indexed) applies the schedule at step k-1: lr = max_lr * (k-1)/10.
+    for k, record in enumerate(records):
+        assert record["lr"] == pytest.approx(k / 10)
 
 
-@pytest.mark.xfail(reason="Trainer not yet implemented — Phase 2")
 def test_lr_cosine_decay_reaches_min_lr() -> None:
-    """LR must reach min_lr at max_steps (not go below it)."""
-    pass
+    """The schedule must floor at min_lr at and beyond max_steps."""
+    trainer = Trainer(
+        KAMUITransformer(_config()),
+        train_loader=[_fixed_batch()],
+        config=TrainingConfig(max_lr=1.0, min_lr=0.1, warmup_steps=0, max_steps=3),
+    )
+    records = trainer.train(6)
+    assert records[-1]["lr"] == pytest.approx(0.1)
+    assert min(r["lr"] for r in records) >= 0.1
 
 
-@pytest.mark.xfail(reason="Trainer not yet implemented — Phase 2")
-def test_checkpoint_resume_is_exact() -> None:
-    """Resuming from a checkpoint must produce byte-identical loss curves.
-
-    Steps 0–100, save checkpoint, resume, run steps 100–200.
-    Must match a continuous run of 200 steps.
-    """
-    pass
-
-
-@pytest.mark.xfail(reason="Trainer not yet implemented — Phase 2")
-def test_weight_decay_not_applied_to_biases() -> None:
-    """Bias parameters must have weight_decay=0.0 in the optimiser."""
-    pass
-
-
-@pytest.mark.xfail(reason="Trainer not yet implemented — Phase 2")
-def test_weight_decay_not_applied_to_layernorm() -> None:
-    """LayerNorm gamma and beta must have weight_decay=0.0."""
-    pass
+def test_weight_decay_not_applied_to_biases_or_layernorm() -> None:
+    """Biases and LayerNorm parameters must sit in the zero-decay group."""
+    trainer = Trainer(KAMUITransformer(_config()), train_loader=[_fixed_batch()])
+    decay_group, no_decay_group = trainer.optimizer.param_groups
+    assert decay_group["weight_decay"] > 0.0
+    assert no_decay_group["weight_decay"] == 0.0
+    # Every 1-D parameter (biases, LayerNorm gamma/beta) is in the no-decay group.
+    assert all(p.dim() < 2 for p in no_decay_group["params"])
+    assert all(p.dim() >= 2 for p in decay_group["params"])

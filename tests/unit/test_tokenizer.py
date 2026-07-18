@@ -285,6 +285,16 @@ class TestBPETokenizerTrain:
         with pytest.raises(ValueError, match="vocab_size"):
             BPETokenizer.train(_SMALL_CORPUS, vocab_size=257)
 
+    def test_train_stops_when_no_pair_repeats(self) -> None:
+        # "abcdefg" contains only count-1 pairs.  Merging those would merely
+        # memorise the corpus (and can snowball into one giant token on a
+        # periodic corpus), so training stops early: the vocabulary may be
+        # smaller than requested, and the round-trip still holds.
+        tok = BPETokenizer.train("abcdefg", vocab_size=300)
+        assert len(tok._merges) == 0
+        assert tok.vocab_size == 258  # 256 bytes + 2 specials, no merges
+        assert tok.decode(tok.encode("abcdefg")) == "abcdefg"
+
     def test_default_special_tokens(self, tiny_tokenizer: BPETokenizer) -> None:
         assert "<|endoftext|>" in tiny_tokenizer.special_tokens
         assert "<|pad|>" in tiny_tokenizer.special_tokens

@@ -12,7 +12,7 @@ import pytest
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(reason="GPT-2 weight loading not yet implemented — Phase 4")
+@pytest.mark.skip(reason="requires GPT-2 weight loading — planned for v0.2")
 def test_logit_lens_gpt2_eiffel_tower() -> None:
     """LogitLens on GPT-2 small for 'The Eiffel Tower is located in the city of'
     must show 'Paris' emerging as the top prediction by layer 7 or earlier.
@@ -23,7 +23,7 @@ def test_logit_lens_gpt2_eiffel_tower() -> None:
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(reason="GPT-2 weight loading not yet implemented — Phase 4")
+@pytest.mark.skip(reason="requires GPT-2 weight loading — planned for v0.2")
 def test_induction_heads_in_gpt2_small() -> None:
     """InductionHeadDetector on GPT-2 small must find high-scoring induction
     heads at layers 1 and 2, consistent with Olsson et al. (2022).

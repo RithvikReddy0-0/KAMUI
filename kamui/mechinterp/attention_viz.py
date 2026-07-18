@@ -39,9 +39,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 
 from kamui.hooks.manager import HookManager
+from kamui.model.transformer import KAMUITransformer
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -194,7 +195,7 @@ class AttentionVisualizer:
         tokenizer: A tokenizer with ``decode`` (for axis labels).
     """
 
-    def __init__(self, model: nn.Module, tokenizer: Any) -> None:
+    def __init__(self, model: KAMUITransformer, tokenizer: Any) -> None:
         """Create a visualizer over ``model``.
 
         Args:

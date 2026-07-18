@@ -71,8 +71,9 @@ Shared Utilities         ██████████  ✅ complete
 ```
 
 **All v0.1 components are implemented** — the six-tool interpretability
-toolkit, the full transformer, and the training pipeline, at ~99% test
-coverage with `ruff` + `black` clean.
+toolkit, the full transformer, the training pipeline, working CLI entry
+points, and 7 runnable notebooks — at ~99% test coverage with `ruff`,
+`black`, and `mypy` all clean.
 
 The [roadmap](#roadmap) and [issue tracker](https://github.com/RithvikReddy0-0/kamui/issues) reflect active development.
 

@@ -41,6 +41,7 @@ Implemented in: Phase 4.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -48,6 +49,7 @@ import torch
 from torch import Tensor, nn
 
 from kamui.hooks.manager import HookManager
+from kamui.model.transformer import KAMUITransformer
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -129,7 +131,7 @@ class ActivationPatcher:
         model: A trained ``KAMUITransformer``.
     """
 
-    def __init__(self, model: nn.Module) -> None:
+    def __init__(self, model: KAMUITransformer) -> None:
         """Create a patcher over ``model``.
 
         Args:
@@ -341,8 +343,8 @@ class ActivationPatcher:
         for i in range(n_layers):
             out_proj = self._resolve(f"blocks.{i}.attn.out_proj")
 
-            def _capture(layer: int) -> object:
-                def pre_hook(_m: nn.Module, inp: tuple) -> None:
+            def _capture(layer: int) -> Callable[[nn.Module, tuple[Tensor, ...]], None]:
+                def pre_hook(_m: nn.Module, inp: tuple[Tensor, ...]) -> None:
                     clean_head_inputs[layer] = inp[0].detach()
 
                 return pre_hook

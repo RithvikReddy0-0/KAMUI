@@ -48,6 +48,8 @@ from dataclasses import dataclass
 import torch
 from torch import Tensor, nn
 
+from kamui.model.transformer import KAMUITransformer
+
 #: A metric maps logits ``(1, S, V)`` to a scalar (higher = better).
 Metric = Callable[[Tensor], float]
 
@@ -72,7 +74,7 @@ class AblationResult:
         return self.value - self.baseline
 
 
-def _validate_components(model: nn.Module, components: list[str]) -> list[str]:
+def _validate_components(model: KAMUITransformer, components: list[str]) -> list[str]:
     """Check each component is an ablatable output point; return module paths."""
     if not components:
         raise ValueError("components must be a non-empty list of hook points")
@@ -104,7 +106,7 @@ class CircuitAblator:
         model: A trained ``KAMUITransformer``.
     """
 
-    def __init__(self, model: nn.Module) -> None:
+    def __init__(self, model: KAMUITransformer) -> None:
         """Create an ablator over ``model``.
 
         Args:
@@ -217,7 +219,7 @@ class CircuitAblator:
 
 
 def find_minimal_circuit(
-    model: nn.Module,
+    model: KAMUITransformer,
     task_ids: Tensor,
     task_metric: Metric,
     threshold: float = 0.95,

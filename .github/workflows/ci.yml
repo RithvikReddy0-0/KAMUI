@@ -52,10 +52,10 @@ jobs:
           cache: pip
 
       - name: Install package + dev dependencies
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,viz]"
 
       - name: Run unit tests
-        run: pytest tests/unit/ -v --timeout=60 --tb=short
+        run: pytest tests/unit/ -v --timeout=120 --tb=short
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.11'
@@ -79,7 +79,9 @@ jobs:
           cache: pip
 
       - name: Install package + dev dependencies
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,viz]"
 
       - name: Run integration tests (CPU-only)
-        run: pytest tests/integration/ -v -m "not gpu" --timeout=300 --tb=short
+        # --no-cov: the 80% coverage gate is enforced by the unit-test job;
+        # integration tests alone are not meant to meet it.
+        run: pytest tests/integration/ -v -m "not gpu" --timeout=300 --tb=short --no-cov

@@ -32,6 +32,7 @@ Implemented in: Phase 4.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import torch
@@ -39,6 +40,7 @@ import torch.nn.functional as F
 from torch import Tensor, nn
 
 from kamui.hooks.manager import HookManager
+from kamui.model.transformer import KAMUITransformer
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -51,7 +53,7 @@ class InductionHeadDetector:
         model: A trained ``KAMUITransformer``.
     """
 
-    def __init__(self, model: nn.Module) -> None:
+    def __init__(self, model: KAMUITransformer) -> None:
         """Create a detector over ``model``.
 
         Args:
@@ -218,8 +220,10 @@ class InductionHeadDetector:
         for layer, layer_heads in by_layer.items():
             out_proj = modules[f"blocks.{layer}.attn.out_proj"]
 
-            def _make(layer_heads: list[int]) -> object:
-                def pre_hook(_m: nn.Module, inp: tuple) -> tuple:
+            def _make(
+                layer_heads: list[int],
+            ) -> Callable[[nn.Module, tuple[Tensor, ...]], tuple[Tensor]]:
+                def pre_hook(_m: nn.Module, inp: tuple[Tensor, ...]) -> tuple[Tensor]:
                     x = inp[0]
                     b, s, _ = x.shape
                     x = x.clone().view(b, s, n_heads, d_head)

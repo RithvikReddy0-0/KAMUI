@@ -233,6 +233,12 @@ class BPETokenizer:
 
             # Choose the most frequent pair; break ties deterministically by pair value
             best_pair = max(stats, key=lambda p: (stats[p], p))
+            if stats[best_pair] < 2:
+                # Only unique pairs remain.  Merging count-1 pairs would just
+                # memorise the corpus (on a degenerate corpus it snowballs
+                # into a single token spanning the whole text), so stop here;
+                # the resulting vocabulary may be smaller than requested.
+                break
             new_id = min_vocab + merge_idx
 
             # Perform the merge across all sequences
@@ -304,28 +310,16 @@ class BPETokenizer:
         Returns:
             Merged token ID sequence.
         """
-        # Keep applying merges until no more are possible
-        while True:
-            # Find the earliest applicable merge (by merge priority = training order)
-            best_pos = -1
-            best_priority = len(self._merges)  # sentinel: higher than any valid index
-
-            for i in range(len(ids) - 1):
-                pair = (ids[i], ids[i + 1])
-                if pair in self._merge_map:
-                    # Priority = index in self._merges (lower index = higher priority)
-                    priority = self._merges.index(pair)
-                    if priority < best_priority:
-                        best_priority = priority
-                        best_pos = i
-
-            if best_pos == -1:
-                break  # no more merges possible
-
-            pair = (ids[best_pos], ids[best_pos + 1])
-            new_id = self._merge_map[pair]
-            ids = ids[:best_pos] + [new_id] + ids[best_pos + 2 :]
-
+        # One pass per merge rule, in training order, replacing every
+        # occurrence.  This is equivalent to repeatedly applying the highest-
+        # priority applicable merge: a pair learned at training step k can only
+        # involve tokens created by earlier merges, so by the time rule k is
+        # applied every occurrence of its pair already exists.  O(merges × S)
+        # instead of O(S) rescans per single replacement.
+        for pair, new_id in self._merge_map.items():
+            if len(ids) < 2:
+                break
+            ids = merge_pair(ids, pair, new_id)
         return ids
 
     # ------------------------------------------------------------------

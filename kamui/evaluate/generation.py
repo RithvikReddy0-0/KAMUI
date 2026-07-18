@@ -31,13 +31,28 @@ Implemented in: Phase 4.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Protocol
 
 import torch
 import torch.nn.functional as F
-from torch import Tensor, nn
+from torch import Tensor
+
+from kamui.model.transformer import KAMUITransformer
 
 #: Supported sampling strategies.
 _STRATEGIES: tuple[str, ...] = ("greedy", "top_k", "nucleus", "temperature")
+
+
+class TokenizerLike(Protocol):
+    """The minimal tokenizer interface generation needs (e.g. ``BPETokenizer``)."""
+
+    def encode(self, text: str) -> list[int]:
+        """Convert a string to token IDs."""
+        ...
+
+    def decode(self, ids: list[int]) -> str:
+        """Convert token IDs back to a string."""
+        ...
 
 
 @dataclass
@@ -100,8 +115,8 @@ def _sample_next(
 
 @torch.no_grad()
 def generate(
-    model: nn.Module,
-    tokenizer: object,
+    model: KAMUITransformer,
+    tokenizer: TokenizerLike,
     prompt: str,
     max_new_tokens: int = 50,
     strategy: str = "greedy",
@@ -164,8 +179,8 @@ def generate(
 
 @torch.no_grad()
 def generate_with_probs(
-    model: nn.Module,
-    tokenizer: object,
+    model: KAMUITransformer,
+    tokenizer: TokenizerLike,
     prompt: str,
     n_tokens: int = 20,
 ) -> GenerationResult:

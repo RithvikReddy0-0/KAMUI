@@ -30,11 +30,14 @@ Implemented in: Phase 4.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 import torch
 import torch.nn.functional as F
-from torch import Tensor, nn
+from torch import Tensor
+
+from kamui.model.transformer import KAMUITransformer
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -135,8 +138,8 @@ def reliability_diagram(probs: Tensor, labels: Tensor, n_bins: int = 15) -> Figu
 
 @torch.no_grad()
 def temperature_scaling(
-    model: nn.Module,
-    val_dataloader: object,
+    model: KAMUITransformer,
+    val_dataloader: Iterable[tuple[Tensor, Tensor] | Tensor],
     temperatures: Tensor | None = None,
 ) -> float:
     """Find the temperature that minimises validation NLL.

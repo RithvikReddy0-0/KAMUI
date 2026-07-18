@@ -88,10 +88,11 @@ def init_weights(model: nn.Module, n_layers: int, std: float = _BASE_STD) -> nn.
                 nn.init.zeros_(module.bias)
         elif isinstance(module, (TokenEmbedding, LearnedPositionalEncoding)):
             nn.init.normal_(module.weight, mean=0.0, std=std)
-        elif isinstance(module, (LayerNorm, RMSNorm)):
+        elif isinstance(module, LayerNorm):
             nn.init.ones_(module.weight)
-            if hasattr(module, "bias"):
-                nn.init.zeros_(module.bias)
+            nn.init.zeros_(module.bias)
+        elif isinstance(module, RMSNorm):
+            nn.init.ones_(module.weight)  # RMSNorm has no bias
 
     # Pass 2: depth-scaled init for residual output projections.
     residual_std = std / math.sqrt(2 * n_layers)

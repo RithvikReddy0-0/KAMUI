@@ -9,12 +9,60 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [0.1.0] — 2026-07-18
+
+The first release: the complete from-scratch transformer, training pipeline,
+hook system, and all six interpretability tools, at ~99% test coverage with
+`ruff`, `black`, and `mypy` all clean.
+
+### Fixed
+- BPE training now stops when the most frequent remaining pair occurs fewer
+  than twice.  Merging count-1 pairs merely memorises the corpus — on a
+  degenerate (periodic) corpus it snowballed into a single token spanning the
+  entire text.  On such corpora the vocabulary may now be smaller than
+  requested; normal corpora are unaffected.
+- `BPETokenizer.encode` now applies merge rules in one pass per rule in
+  training order (equivalent output, since a pair learned at step k can only
+  involve tokens created earlier) instead of rescanning the whole sequence
+  after every single replacement — encoding long texts is now O(merges × S).
+
+### Added
+- Type-checked codebase: `mypy` passes on the entire `kamui` package under a
+  strong configuration (untyped defs disallowed; only the rules that conflict
+  with PyTorch's `Any`-typed stubs are relaxed).  Interpretability tools and
+  evaluation functions are now typed against `KAMUITransformer`, generation
+  accepts any `TokenizerLike` protocol, and CI enforces the check.
+- Working CLI entry points: `kamui-train` and `kamui-eval` (backed by the new
+  `kamui.scripts` package) plus `scripts/tokenize_corpus.py` and
+  `scripts/inspect_checkpoint.py` — the console scripts declared in
+  `pyproject.toml` now exist and are exercised by an integration test.
+- Real integration suite: `tests/integration/` now trains a small model
+  end-to-end on CPU (< 1 min) and verifies ≥30% loss reduction, checkpoint
+  round-trip logit equality, generation, the `kamui-train` CLI, and all six
+  interpretability tools on a trained model.  The former placeholder stubs in
+  `test_model_shapes.py` / `test_training_loop.py` are real tests (including
+  gradient-accumulation ≡ large-batch equivalence), and GPT-2 parity stubs are
+  explicit skips pending v0.2 weight loading.
+- All 7 educational notebooks (`notebooks/00`–`06`) are now valid, runnable
+  `.ipynb` files — previously malformed JSON — covering BPE, attention
+  mechanics, training dynamics, logit lens, activation patching, induction
+  heads, and circuit analysis; each is smoke-executed against the current API.
+- Shipped configs (`configs/*.yaml`) are validated by a unit test;
+  `pytest-timeout` added to dev dependencies (CI requires it).
+
 ### Changed
 - Quality pass across all phases: the full `kamui` package and test suite now
   pass `ruff` (E/F/W/I/N/UP/ANN/B/SIM/C90) and `black` cleanly — PEP 604 union
   syntax, sorted imports, `OSError` over the `IOError` alias, complete return-type
   annotations, and `N812` allowed for the conventional `torch.nn.functional as F`.
-  No behaviour changes; all 507 tests pass at 98% coverage.
+  No behaviour changes.
+- CI: unit and integration jobs install the `viz` extra (tests import
+  matplotlib/plotly); the integration job no longer applies the unit-suite
+  coverage gate.
 
 ### Added
 - v0.1 feature-complete — the remaining four interpretability tools, the
@@ -154,25 +202,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (100% coverage).
 - Phase 0 scaffold: complete repository structure, all placeholder modules,
   documentation pages, CI pipeline, pre-commit hooks, and architecture diagrams
-
----
-
-## [0.1.0] — Planned
-
-### Will include
-- BPE tokeniser from scratch (`kamui.tokenizer`)
-- Decoder-only transformer with Pre-LN and weight tying (`kamui.model`)
-- Explicit training loop with warmup + cosine decay (`kamui.training`)
-- Context-managed hook system (`kamui.hooks`)
-- Logit lens (`kamui.mechinterp.LogitLens`)
-- Attention visualisation (`kamui.mechinterp.AttentionVisualizer`)
-- Linear probing (`kamui.mechinterp.LinearProbe`)
-- Activation patching (`kamui.mechinterp.ActivationPatcher`)
-- Induction head detection (`kamui.mechinterp.InductionHeadDetector`)
-- Circuit ablation (`kamui.mechinterp.CircuitAblator`)
-- Perplexity evaluation and text generation (`kamui.evaluate`)
-- 7 educational Jupyter notebooks
-- Full documentation site (mkdocs-material)
 
 ---
 

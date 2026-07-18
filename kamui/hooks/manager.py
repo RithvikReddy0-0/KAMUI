@@ -65,12 +65,13 @@ Implemented in: Phase 3.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 from torch import Tensor, nn
 
 from kamui.hooks.registry import HookRegistry
 from kamui.hooks.types import ActivationCache
+from kamui.model.config import ModelConfig
 
 
 class HookManager:
@@ -95,9 +96,8 @@ class HookManager:
     def __enter__(self) -> HookManager:
         return self
 
-    def __exit__(self, *exc: object) -> bool:
+    def __exit__(self, *exc: object) -> None:
         self.remove()
-        return False  # never suppress exceptions
 
     # ------------------------------------------------------------------
     # Attaching
@@ -117,9 +117,11 @@ class HookManager:
             ValueError: If the resulting hook point is not valid for this model.
         """
         hook_point = f"{module_path}.{point}"
-        if not HookRegistry.validate(hook_point, self.model.config):
-            valid = HookRegistry.all_points(self.model.config)
-            raise ValueError(f"'{hook_point}' is not a valid hook point. " f"Valid points: {valid}")
+        # HookManager works on any nn.Module exposing a ModelConfig at .config.
+        config = cast(ModelConfig, self.model.config)
+        if not HookRegistry.validate(hook_point, config):
+            valid = HookRegistry.all_points(config)
+            raise ValueError(f"'{hook_point}' is not a valid hook point. Valid points: {valid}")
 
         if point == "output":
             module = self._resolve(module_path)

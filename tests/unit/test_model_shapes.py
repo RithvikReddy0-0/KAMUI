@@ -4,131 +4,104 @@ Shape tests are the fastest and most valuable tests in an ML codebase.
 A wrong shape silently produces wrong results; these tests catch that
 immediately.
 
-Every public-facing module in kamui.model must have shape tests here.
-Tests are marked xfail until Phase 1 implementation is complete.
-
 Shape contract reference (from kamui.model.config):
     B  = batch size
     S  = sequence length
     D  = d_model
     H  = n_heads
     Dh = d_head = D / H
-    F  = d_ff = 4 * D
+    F  = d_ff
     V  = vocab_size
 """
 
+from __future__ import annotations
+
+import math
+
 import pytest
+import torch
 
-# ---------------------------------------------------------------------------
-# Attention shape tests
-# ---------------------------------------------------------------------------
+from kamui.model.attention import MultiHeadAttention
+from kamui.model.config import ModelConfig
+from kamui.model.embedding import Embedding
+from kamui.model.feedforward import FeedForward
+from kamui.model.transformer import KAMUITransformer
+
+_B, _S, _D, _H, _F, _V = 2, 10, 32, 4, 64, 100
 
 
-@pytest.mark.xfail(reason="MultiHeadAttention not yet implemented — Phase 1")
+def _config() -> ModelConfig:
+    return ModelConfig(
+        n_layers=2,
+        d_model=_D,
+        n_heads=_H,
+        d_ff=_F,
+        vocab_size=_V,
+        context_length=16,
+        dropout=0.0,
+    )
+
+
 def test_attention_output_shape() -> None:
-    """Attention output must be (B, S, D)."""
-    # import torch
-    # from kamui.model.attention import MultiHeadAttention
-    # attn = MultiHeadAttention(d_model=64, n_heads=4)
-    # x = torch.randn(2, 10, 64)  # B=2, S=10, D=64
-    # out, weights = attn(x)
-    # assert out.shape == (2, 10, 64)
-    pass
+    attn = MultiHeadAttention(_config())
+    out = attn(torch.randn(_B, _S, _D))
+    assert isinstance(out, torch.Tensor)
+    assert out.shape == (_B, _S, _D)
 
 
-@pytest.mark.xfail(reason="MultiHeadAttention not yet implemented — Phase 1")
 def test_attention_weights_shape() -> None:
-    """Attention weight matrix must be (B, H, S, S)."""
-    # out, weights = attn(x)
-    # assert weights.shape == (2, 4, 10, 10)  # B, H, S, S
-    pass
+    attn = MultiHeadAttention(_config())
+    _, weights = attn(torch.randn(_B, _S, _D), return_weights=True)
+    assert weights.shape == (_B, _H, _S, _S)
 
 
-@pytest.mark.xfail(reason="MultiHeadAttention not yet implemented — Phase 1")
 def test_attention_weights_sum_to_one() -> None:
-    """Attention weights must sum to 1.0 over the last dimension."""
-    # import torch
-    # assert weights.sum(dim=-1).allclose(torch.ones(2, 4, 10))
-    pass
+    attn = MultiHeadAttention(_config())
+    _, weights = attn(torch.randn(_B, _S, _D), return_weights=True)
+    sums = weights.sum(dim=-1)
+    assert torch.allclose(sums, torch.ones_like(sums), atol=1e-5)
 
 
-@pytest.mark.xfail(reason="MultiHeadAttention not yet implemented — Phase 1")
 def test_causal_mask_no_future_leakage() -> None:
-    """Changing future tokens must not change past token outputs.
-
-    This is the most critical correctness test in the entire test suite.
-    If this fails, the model is cheating during training.
-    """
-    # import torch
-    # from kamui.model.transformer import KAMUITransformer
-    # from kamui.model.config import ModelConfig
-    # model = KAMUITransformer(ModelConfig(n_layers=2, d_model=64, n_heads=4,
-    #                                      d_ff=256, vocab_size=100, context_length=32))
-    # ids = torch.randint(0, 100, (1, 16))
-    # out1 = model(ids)
-    # ids_mod = ids.clone()
-    # ids_mod[0, 8:] = torch.randint(0, 100, (8,))   # change future tokens
-    # out2 = model(ids_mod)
-    # assert out1[:, :8, :].allclose(out2[:, :8, :], atol=1e-5), \
-    #     "Causal mask is broken: future tokens affect past positions"
-    pass
+    attn = MultiHeadAttention(_config())
+    _, weights = attn(torch.randn(1, _S, _D), return_weights=True)
+    mask = torch.triu(torch.ones(_S, _S, dtype=torch.bool), diagonal=1)
+    assert torch.all(weights[0, :, mask] == 0.0)
 
 
-# ---------------------------------------------------------------------------
-# FFN shape tests
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.xfail(reason="FeedForward not yet implemented — Phase 1")
 def test_ffn_output_shape() -> None:
-    """FFN output must be (B, S, D) — same as input."""
-    pass
+    ffn = FeedForward(_config())
+    assert ffn(torch.randn(_B, _S, _D)).shape == (_B, _S, _D)
 
 
-@pytest.mark.xfail(reason="FeedForward not yet implemented — Phase 1")
 def test_ffn_hidden_shape() -> None:
-    """FFN hidden activation must be (B, S, 4*D)."""
-    pass
+    ffn = FeedForward(_config())
+    hidden = ffn.activation(ffn.fc_in(torch.randn(_B, _S, _D)))
+    assert hidden.shape == (_B, _S, _F)
 
 
-# ---------------------------------------------------------------------------
-# Full model shape tests
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.xfail(reason="KAMUITransformer not yet implemented — Phase 1")
-def test_model_logits_shape() -> None:
-    """Model logits must be (B, S, V)."""
-    pass
-
-
-@pytest.mark.xfail(reason="KAMUITransformer not yet implemented — Phase 1")
-def test_model_loss_is_scalar() -> None:
-    """When targets are provided, model output must be a scalar loss."""
-    pass
-
-
-@pytest.mark.xfail(reason="KAMUITransformer not yet implemented — Phase 1")
-def test_model_loss_near_log_vocab_size_at_init() -> None:
-    """At random initialisation, loss must be close to log(vocab_size).
-
-    A randomly initialised model should predict all tokens with ~equal
-    probability, so the cross-entropy should be approximately log(V).
-    A large deviation indicates a broken initialisation strategy.
-    """
-    # import math
-    # expected = math.log(config.vocab_size)
-    # assert abs(initial_loss - expected) < 0.5, \
-    #     f"Initial loss {initial_loss:.3f} is far from log(V)={expected:.3f}"
-    pass
-
-
-# ---------------------------------------------------------------------------
-# Embedding shape tests
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.xfail(reason="Embedding not yet implemented — Phase 1")
 def test_embedding_output_shape() -> None:
-    """Embedding output must be (B, S, D)."""
-    pass
+    embed = Embedding(_config())
+    ids = torch.randint(0, _V, (_B, _S))
+    assert embed(ids).shape == (_B, _S, _D)
+
+
+def test_model_logits_shape() -> None:
+    model = KAMUITransformer(_config())
+    ids = torch.randint(0, _V, (_B, _S))
+    assert model(ids).shape == (_B, _S, _V)
+
+
+def test_model_loss_is_scalar() -> None:
+    model = KAMUITransformer(_config())
+    ids = torch.randint(0, _V, (_B, _S))
+    loss = model(ids, targets=torch.randint(0, _V, (_B, _S)))
+    assert loss.ndim == 0
+
+
+def test_model_loss_near_log_vocab_size_at_init() -> None:
+    torch.manual_seed(0)
+    model = KAMUITransformer(_config()).eval()
+    ids = torch.randint(0, _V, (4, _S))
+    loss = model(ids, targets=torch.randint(0, _V, (4, _S)))
+    assert loss.item() == pytest.approx(math.log(_V), abs=0.6)
