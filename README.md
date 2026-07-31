@@ -8,9 +8,9 @@
 
 *"To understand a model, you must first see what it sees."*
 
-[![Tests](https://github.com/RithvikReddy0-0/kamui/actions/workflows/ci.yml/badge.svg)](https://github.com/RithvikReddy0-0/kamui/actions)
-[![Docs](https://github.com/RithvikReddy0-0/kamui/actions/workflows/docs.yml/badge.svg)](https://rithvikreddy0-0.github.io/KAMUI)
-[![PyPI version](https://badge.fury.io/py/kamui.svg)](https://badge.fury.io/py/kamui)
+[![Tests](https://github.com/RithvikReddy0-0/KAMUI/actions/workflows/ci.yml/badge.svg)](https://github.com/RithvikReddy0-0/KAMUI/actions/workflows/ci.yml)
+[![Docs](https://github.com/RithvikReddy0-0/KAMUI/actions/workflows/docs.yml/badge.svg)](https://rithvikreddy0-0.github.io/KAMUI)
+[![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/RithvikReddy0-0/KAMUI/releases)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -75,7 +75,7 @@ toolkit, the full transformer, the training pipeline, working CLI entry
 points, and 7 runnable notebooks — at ~99% test coverage with `ruff`,
 `black`, and `mypy` all clean.
 
-The [roadmap](#roadmap) and [issue tracker](https://github.com/RithvikReddy0-0/kamui/issues) reflect active development.
+The [roadmap](#roadmap) and [issue tracker](https://github.com/RithvikReddy0-0/KAMUI/issues) reflect active development.
 
 ---
 
@@ -113,7 +113,7 @@ You read every line of every tool.
 ## Quickstart
 
 ```bash
-git clone https://github.com/RithvikReddy0-0/kamui
+git clone https://github.com/RithvikReddy0-0/KAMUI
 cd kamui
 pip install -e ".[all]"
 pytest
@@ -256,19 +256,18 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
 ## Installation
 
+KAMUI is not yet on PyPI — install from source:
+
 ```bash
-# Minimal install (training + inference)
-pip install kamui
+# Minimal install (training + inference), pinned to a release
+pip install "git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.1.0"
 
-# With visualisation tools
-pip install "kamui[viz]"
-
-# With Jupyter notebooks
-pip install "kamui[notebooks]"
+# With visualisation extras (matplotlib, plotly)
+pip install "kamui[viz] @ git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.1.0"
 
 # Full development install
-git clone https://github.com/RithvikReddy0-0/kamui
-cd kamui
+git clone https://github.com/RithvikReddy0-0/KAMUI
+cd KAMUI
 pip install -e ".[all]"
 pre-commit install
 ```
@@ -285,7 +284,7 @@ The easiest first contribution is adding a new interpretability tool to
 `kamui/mechinterp/` — the hook system handles activation capture, you only
 write the analysis logic.
 
-Find open issues on [GitHub Issues](https://github.com/RithvikReddy0-0/kamui/issues).
+Find open issues on [GitHub Issues](https://github.com/RithvikReddy0-0/KAMUI/issues).
 
 ---
 
@@ -315,7 +314,7 @@ If you use KAMUI in research, please cite:
   title     = {{KAMUI}: {K}nowledge {A}ctivation {M}apping \& {U}nderstanding {I}nterface},
   year      = {2026},
   publisher = {GitHub},
-  url       = {https://github.com/RithvikReddy0-0/kamui},
+  url       = {https://github.com/RithvikReddy0-0/KAMUI},
   license   = {MIT},
 }
 ```

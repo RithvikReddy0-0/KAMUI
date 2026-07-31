@@ -221,7 +221,7 @@ hook system, and all six interpretability tools, at ~99% test coverage with
 **[Unreleased]** — changes committed but not yet in a PyPI release.
 
 **[x.y.z]** — a tagged release. Download from PyPI (`pip install kamui==x.y.z`)
-or from the [GitHub releases](https://github.com/RithvikReddy0-0/kamui/releases) page.
+or from the [GitHub releases](https://github.com/RithvikReddy0-0/KAMUI/releases) page.
 
 ### Change categories
 

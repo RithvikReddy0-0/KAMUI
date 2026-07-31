@@ -14,7 +14,7 @@ pip install kamui
 Or from source (recommended for development):
 
 ```bash
-git clone https://github.com/RithvikReddy0-0/kamui
+git clone https://github.com/RithvikReddy0-0/KAMUI
 cd kamui
 pip install -e ".[all]"
 ```

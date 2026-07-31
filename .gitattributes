@@ -1,0 +1,29 @@
+# Normalise line endings: store everything with LF in the repo and check out
+# LF on every platform.  This ends the "LF will be replaced by CRLF" warnings
+# on Windows and keeps diffs deterministic across contributors.
+* text=auto eol=lf
+
+# Explicit text types (documentation, code, config, notebooks).
+*.py    text eol=lf
+*.pyi   text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.toml  text eol=lf
+*.cfg   text eol=lf
+*.ini   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.ipynb text eol=lf
+*.svg   text eol=lf
+
+# Binary assets — never touch these.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pt   binary
+*.bin  binary
+*.npy  binary
+*.npz  binary
