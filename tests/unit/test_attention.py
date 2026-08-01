@@ -286,3 +286,44 @@ class TestMultiHeadAttentionArchitecture:
         assert "MultiHeadAttention" in r
         assert "n_heads=4" in r
         assert "d_head=4" in r
+
+
+# ===========================================================================
+# MultiHeadAttention — rotary positional encoding (RoPE)
+# ===========================================================================
+
+
+class TestMultiHeadAttentionRoPE:
+    def test_rope_module_built_only_for_rope_config(self) -> None:
+        assert MultiHeadAttention(_small_config(positional_encoding="rope")).rope is not None
+        assert MultiHeadAttention(_small_config(positional_encoding="learned")).rope is None
+
+    def test_rope_output_shape(self) -> None:
+        mha = MultiHeadAttention(_small_config(d_model=16, positional_encoding="rope"))
+        assert mha(torch.randn(2, 7, 16)).shape == (2, 7, 16)
+
+    def test_rope_is_still_causal(self) -> None:
+        mha = MultiHeadAttention(_small_config(positional_encoding="rope"))
+        _, weights = mha(torch.randn(1, 6, 16), return_weights=True)
+        mask = torch.triu(torch.ones(6, 6, dtype=torch.bool), diagonal=1)
+        assert torch.all(weights[0, :, mask] == 0.0)
+
+    def test_rope_changes_attention_vs_no_rope(self) -> None:
+        # With the same weights and input, rotating Q/K must change attention.
+        torch.manual_seed(0)
+        rope_mha = MultiHeadAttention(_small_config(positional_encoding="rope")).eval()
+        plain_mha = MultiHeadAttention(_small_config(positional_encoding="learned")).eval()
+        # Copy the projections so the only difference is RoPE.
+        plain_mha.load_state_dict(
+            {k: v for k, v in rope_mha.state_dict().items() if "rope" not in k},
+            strict=False,
+        )
+        x = torch.randn(1, 6, 16)
+        assert not torch.allclose(rope_mha(x), plain_mha(x), atol=1e-5)
+
+    def test_rope_gradient_flow(self) -> None:
+        mha = MultiHeadAttention(_small_config(positional_encoding="rope"))
+        x = torch.randn(2, 6, 16, requires_grad=True)
+        mha(x).sum().backward()
+        assert x.grad is not None
+        assert mha.q_proj.weight.grad is not None

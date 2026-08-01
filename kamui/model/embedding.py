@@ -283,19 +283,128 @@ class LearnedPositionalEncoding(nn.Module):
         )
 
 
+class RotaryPositionalEncoding(nn.Module):
+    """Rotary positional encoding (RoPE; Su et al. 2021), applied to Q/K.
+
+    Instead of *adding* a positional vector to the embedding, RoPE *rotates*
+    each query/key vector by an angle proportional to its position.  The dot
+    product between a rotated query at position ``m`` and a rotated key at
+    position ``n`` then depends only on the relative offset ``m - n``, giving
+    the model translation-equivariant positional information that extrapolates
+    better than learned embeddings.  This is the scheme used by LLaMA / Mistral.
+
+    Operates on tensors of shape ``(..., S, d_head)`` with an even ``d_head``.
+    The cos/sin tables are precomputed once up to ``context_length`` and stored
+    as non-learnable buffers.
+
+    Key equations (half-split layout):
+        θ_i        = base^(-2i / d_head),  i = 0 .. d_head/2 - 1
+        RoPE(x)_p  = x_p · cos(p·θ) + rotate_half(x_p) · sin(p·θ)
+        rotate_half([x1, x2]) = [-x2, x1]   (x1, x2 the two halves of d_head)
+
+    Attributes:
+        d_head:         Per-head dimension (must be even).
+        context_length: Number of precomputed positions.
+        cos, sin:       ``(context_length, d_head)`` angle buffers.
+
+    References:
+        Su, J. et al. (2021). RoFormer: Enhanced Transformer with Rotary
+        Position Embedding. https://arxiv.org/abs/2104.09864
+    """
+
+    cos: Tensor
+    sin: Tensor
+
+    def __init__(self, d_head: int, context_length: int, base: float = _SINUSOID_BASE) -> None:
+        """Precompute the rotary angle tables.
+
+        Args:
+            d_head:         Per-head dimension.  Must be > 0 and even.
+            context_length: Maximum sequence length.  Must be > 0.
+            base:           Rotary base wavelength (default 10000).
+
+        Raises:
+            ValueError: If ``d_head`` is not a positive even integer, or
+                ``context_length`` is not positive.
+        """
+        super().__init__()
+        if d_head <= 0 or d_head % 2 != 0:
+            raise ValueError(f"d_head must be a positive even integer, got {d_head}")
+        if context_length <= 0:
+            raise ValueError(f"context_length must be > 0, got {context_length}")
+
+        self.d_head = d_head
+        self.context_length = context_length
+
+        # One inverse frequency per rotation plane (there are d_head / 2 planes).
+        inv_freq = 1.0 / (
+            base ** (torch.arange(0, d_head, 2, dtype=torch.float32) / d_head)
+        )  # (d_head / 2,)
+        positions = torch.arange(context_length, dtype=torch.float32)  # (S,)
+        angles = torch.outer(positions, inv_freq)  # (S, d_head / 2)
+        emb = torch.cat([angles, angles], dim=-1)  # (S, d_head) — half-split layout
+        self.register_buffer("cos", emb.cos())
+        self.register_buffer("sin", emb.sin())
+
+    @staticmethod
+    def _rotate_half(x: Tensor) -> Tensor:
+        """Return ``[-x2, x1]`` where ``x1, x2`` are the two halves of the last dim."""
+        half = x.shape[-1] // 2
+        x1, x2 = x[..., :half], x[..., half:]
+        return torch.cat([-x2, x1], dim=-1)
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Rotate ``x`` by its per-position angle.
+
+        Args:
+            x: Tensor of shape ``(..., S, d_head)`` (typically ``(B, H, S, Dh)``).
+
+        Returns:
+            The rotated tensor, same shape as ``x``.
+
+        Raises:
+            ValueError: If the last dim is not ``d_head`` or ``S`` exceeds
+                ``context_length``.
+        """
+        if x.shape[-1] != self.d_head:
+            raise ValueError(
+                f"last dimension of x ({x.shape[-1]}) does not match d_head ({self.d_head})"
+            )
+        seq_len = x.shape[-2]
+        if seq_len > self.context_length:
+            raise ValueError(
+                f"sequence length ({seq_len}) exceeds context_length ({self.context_length})"
+            )
+        cos = self.cos[:seq_len]  # (S, d_head), broadcasts over leading dims
+        sin = self.sin[:seq_len]
+        return x * cos + self._rotate_half(x) * sin
+
+    def __repr__(self) -> str:
+        return (
+            f"RotaryPositionalEncoding(d_head={self.d_head}, "
+            f"context_length={self.context_length})"
+        )
+
+
 class Embedding(nn.Module):
     """Combined token + positional embedding for the transformer input.
 
     Adds a token embedding and a positional encoding, then applies dropout.
-    The positional-encoding variant (``"learned"`` or ``"sinusoidal"``) is
-    selected by ``ModelConfig.positional_encoding``.  Output is the residual
-    stream tensor of shape ``(B, S, D)``.
+    The positional-encoding variant is selected by
+    ``ModelConfig.positional_encoding``:
+
+    - ``"learned"`` / ``"sinusoidal"``: a positional vector is added here.
+    - ``"rope"``: no positional vector is added — rotary encoding is applied to
+      Q/K inside attention instead, so this module only embeds tokens.
+
+    Output is the residual-stream tensor of shape ``(B, S, D)``.
 
     Attributes:
         token_embedding:     The ``TokenEmbedding`` lookup table.
-        positional_encoding: A ``LearnedPositionalEncoding`` or
-                             ``SinusoidalPositionalEncoding`` module.
-        dropout:             ``nn.Dropout`` applied to the summed embeddings.
+        positional_encoding: A ``LearnedPositionalEncoding`` /
+                             ``SinusoidalPositionalEncoding`` module, or ``None``
+                             for RoPE.
+        dropout:             ``nn.Dropout`` applied to the (summed) embeddings.
     """
 
     def __init__(self, config: ModelConfig) -> None:
@@ -310,14 +419,17 @@ class Embedding(nn.Module):
         self.config = config
         self.token_embedding = TokenEmbedding(config.vocab_size, config.d_model)
 
+        self.positional_encoding: nn.Module | None
         if config.positional_encoding == "learned":
-            self.positional_encoding: nn.Module = LearnedPositionalEncoding(
+            self.positional_encoding = LearnedPositionalEncoding(
                 config.context_length, config.d_model
             )
-        else:  # "sinusoidal" — the only other value ModelConfig permits.
+        elif config.positional_encoding == "sinusoidal":
             self.positional_encoding = SinusoidalPositionalEncoding(
                 config.context_length, config.d_model
             )
+        else:  # "rope" — positions are injected in attention, not added here.
+            self.positional_encoding = None
 
         self.dropout = nn.Dropout(config.dropout)
 
@@ -347,8 +459,11 @@ class Embedding(nn.Module):
                 f"({self.config.context_length})"
             )
 
+        tok = self.token_embedding(token_ids)  # (B, S, D)
+        if self.positional_encoding is None:
+            # RoPE: positions are injected in attention, so nothing is added here.
+            return self.dropout(tok)
         # (B, S, D) token vectors plus (S, D) position vectors, broadcast over batch.
-        tok = self.token_embedding(token_ids)
         pos = self.positional_encoding(seq_len)
         return self.dropout(tok + pos)
 

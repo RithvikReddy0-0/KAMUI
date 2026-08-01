@@ -9,7 +9,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- Rotary positional encoding (RoPE; Su et al. 2021) as a third
+  `positional_encoding` option (`"rope"`, alongside `"learned"` /
+  `"sinusoidal"`) — the scheme used by LLaMA / Mistral. `RotaryPositionalEncoding`
+  (in `kamui.model.embedding`) rotates Q/K by their position inside attention
+  rather than adding a positional vector, so the query·key dot product depends
+  only on the *relative* offset. It adds zero parameters, requires an even
+  `d_head` (validated by `ModelConfig`), and leaves the embedding purely
+  token-level. Full model, causality, norm-preservation, and relative-position
+  invariance are covered by tests at 100% on the touched modules.
 
 ---
 
@@ -211,7 +220,7 @@ hook system, and all six interpretability tools, at ~99% test coverage with
 - Sparse autoencoders for feature decomposition
   (see `research/future/sae_design.md`)
 - Gradient-based attribution methods
-- RoPE positional encoding
+- ~~RoPE positional encoding~~ — shipped (see [Unreleased])
 - Multi-GPU training support
 
 ---

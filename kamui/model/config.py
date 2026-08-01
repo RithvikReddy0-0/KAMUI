@@ -24,7 +24,9 @@ class ModelConfig:
         d_ff: Feed-forward network hidden layer dimension.
         vocab_size: Size of the token vocabulary.
         context_length: Maximum sequence length.
-        positional_encoding: Type of positional encoding ('learned' or 'sinusoidal').
+        positional_encoding: Type of positional encoding ('learned', 'sinusoidal',
+            or 'rope'). 'rope' (rotary) is applied to Q/K inside attention and
+            requires an even d_head.
         dropout: Dropout rate (must be in [0, 1]).
     """
 
@@ -37,7 +39,7 @@ class ModelConfig:
     positional_encoding: str = "learned"
     dropout: float = 0.0
 
-    def __post_init__(self) -> None:
+    def __post_init__(self) -> None:  # noqa: C901 — flat list of independent guards
         """Enforces tensor dimension and hyperparameter sanity checks.
 
         Raises:
@@ -65,10 +67,17 @@ class ModelConfig:
         if not (0.0 <= self.dropout <= 1.0):
             raise ValueError(f"dropout must be in [0, 1], got {self.dropout}")
 
-        if self.positional_encoding not in ("learned", "sinusoidal"):
+        if self.positional_encoding not in ("learned", "sinusoidal", "rope"):
             raise ValueError(
-                f"positional_encoding must be 'learned' or 'sinusoidal', "
+                f"positional_encoding must be 'learned', 'sinusoidal', or 'rope', "
                 f"got '{self.positional_encoding}'"
+            )
+
+        # RoPE rotates the head dimension in 2-D planes, so d_head must be even.
+        if self.positional_encoding == "rope" and self.d_head % 2 != 0:
+            raise ValueError(
+                f"positional_encoding='rope' requires an even d_head, got "
+                f"d_head={self.d_head} (d_model={self.d_model}, n_heads={self.n_heads})"
             )
 
     @property
@@ -115,8 +124,8 @@ class ModelConfig:
             - Token embedding matrix of shape (vocab_size, d_model).
             - If `positional_encoding` is "learned", a learned positional embedding
               matrix of shape (context_length, d_model) is present.
-            - If `positional_encoding` is "sinusoidal", positional encodings are fixed
-              and add 0 trainable parameters.
+            - If `positional_encoding` is "sinusoidal" or "rope", positional
+              encodings are fixed and add 0 trainable parameters.
             - Formula: (vocab_size * d_model) + (context_length * d_model if learned else 0)
         """
         pos_params = (

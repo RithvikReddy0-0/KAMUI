@@ -24,6 +24,7 @@ from kamui.model.config import ModelConfig
 from kamui.model.embedding import (
     Embedding,
     LearnedPositionalEncoding,
+    RotaryPositionalEncoding,
     SinusoidalPositionalEncoding,
     TokenEmbedding,
 )
@@ -363,3 +364,90 @@ class TestEmbeddingCombined:
         r = repr(emb)
         assert "Embedding" in r
         assert "positional_encoding='sinusoidal'" in r
+
+    def test_rope_path_has_no_positional_module(self) -> None:
+        # Under RoPE the embedding adds no positional vector; positions are
+        # injected in attention instead.
+        emb = Embedding(_small_config(positional_encoding="rope"))
+        assert emb.positional_encoding is None
+
+    def test_rope_forward_is_token_embedding_only(self) -> None:
+        emb = Embedding(_small_config(positional_encoding="rope"))
+        emb.eval()
+        ids = torch.randint(0, 50, (2, 7))
+        assert torch.allclose(emb(ids), emb.token_embedding(ids))
+
+    def test_rope_output_shape(self) -> None:
+        emb = Embedding(_small_config(positional_encoding="rope"))
+        assert emb(torch.randint(0, 50, (3, 9))).shape == (3, 9, 16)
+
+
+# ===========================================================================
+# RotaryPositionalEncoding
+# ===========================================================================
+
+
+class TestRotaryPositionalEncoding:
+    def test_buffers_shape_and_not_parameters(self) -> None:
+        rope = RotaryPositionalEncoding(d_head=8, context_length=16)
+        assert rope.cos.shape == (16, 8)
+        assert rope.sin.shape == (16, 8)
+        assert list(rope.parameters()) == []  # cos/sin are buffers, not params
+
+    def test_output_shape_preserved(self) -> None:
+        rope = RotaryPositionalEncoding(d_head=8, context_length=16)
+        x = torch.randn(2, 4, 10, 8)  # (B, H, S, Dh)
+        assert rope(x).shape == x.shape
+
+    def test_rotation_preserves_norm(self) -> None:
+        # A rotation is orthogonal → per-position vector norms are unchanged.
+        rope = RotaryPositionalEncoding(d_head=8, context_length=16)
+        x = torch.randn(2, 4, 10, 8)
+        assert torch.allclose(x.norm(dim=-1), rope(x).norm(dim=-1), atol=1e-5)
+
+    def test_position_zero_is_identity(self) -> None:
+        # At position 0 the angle is 0, so RoPE leaves the vector unchanged.
+        rope = RotaryPositionalEncoding(d_head=8, context_length=16)
+        x = torch.randn(1, 1, 1, 8)
+        assert torch.allclose(rope(x), x, atol=1e-6)
+
+    def test_relative_position_invariance(self) -> None:
+        # The defining RoPE property: <rope(q)_m, rope(k)_n> depends only on m-n.
+        rope = RotaryPositionalEncoding(d_head=8, context_length=32)
+        q = torch.randn(1, 1, 1, 8)
+        k = torch.randn(1, 1, 1, 8)
+
+        def rotated_dot(m: int, n: int) -> float:
+            qm = rope(q.expand(1, 1, m + 1, 8))[0, 0, m]
+            kn = rope(k.expand(1, 1, n + 1, 8))[0, 0, n]
+            return float((qm * kn).sum())
+
+        assert rotated_dot(5, 2) == pytest.approx(rotated_dot(8, 5), abs=1e-4)
+
+    def test_odd_d_head_raises(self) -> None:
+        with pytest.raises(ValueError, match="positive even integer"):
+            RotaryPositionalEncoding(d_head=7, context_length=16)
+
+    def test_nonpositive_d_head_raises(self) -> None:
+        with pytest.raises(ValueError, match="positive even integer"):
+            RotaryPositionalEncoding(d_head=0, context_length=16)
+
+    def test_invalid_context_length_raises(self) -> None:
+        with pytest.raises(ValueError, match="context_length must be > 0"):
+            RotaryPositionalEncoding(d_head=8, context_length=0)
+
+    def test_dim_mismatch_raises(self) -> None:
+        rope = RotaryPositionalEncoding(d_head=8, context_length=16)
+        with pytest.raises(ValueError, match="does not match d_head"):
+            rope(torch.randn(1, 1, 4, 6))
+
+    def test_seq_len_too_long_raises(self) -> None:
+        rope = RotaryPositionalEncoding(d_head=8, context_length=4)
+        with pytest.raises(ValueError, match="exceeds context_length"):
+            rope(torch.randn(1, 1, 5, 8))
+
+    def test_repr(self) -> None:
+        rope = RotaryPositionalEncoding(d_head=8, context_length=16)
+        r = repr(rope)
+        assert "RotaryPositionalEncoding" in r
+        assert "d_head=8" in r

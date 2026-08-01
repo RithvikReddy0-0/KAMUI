@@ -96,6 +96,20 @@ def test_invalid_positional_encoding() -> None:
         ModelConfig(positional_encoding="rotary")
 
 
+def test_rope_positional_encoding_is_valid() -> None:
+    """'rope' is an accepted positional encoding (even d_head)."""
+    config = ModelConfig(d_model=64, n_heads=4, positional_encoding="rope")  # d_head=16
+    assert config.positional_encoding == "rope"
+    # RoPE adds no positional parameters (like sinusoidal).
+    assert config.embedding_parameters == config.vocab_size * config.d_model
+
+
+def test_rope_requires_even_d_head() -> None:
+    """'rope' with an odd d_head raises (rotation needs 2-D planes)."""
+    with pytest.raises(ValueError, match="rope.*even d_head"):
+        ModelConfig(d_model=24, n_heads=8, positional_encoding="rope")  # d_head=3
+
+
 def test_computed_properties() -> None:
     """Verifies all computed properties return correct values."""
     config = ModelConfig(

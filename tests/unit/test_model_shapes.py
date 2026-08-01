@@ -105,3 +105,27 @@ def test_model_loss_near_log_vocab_size_at_init() -> None:
     ids = torch.randint(0, _V, (4, _S))
     loss = model(ids, targets=torch.randint(0, _V, (4, _S)))
     assert loss.item() == pytest.approx(math.log(_V), abs=0.6)
+
+
+def test_rope_model_forward_shape_and_causality() -> None:
+    """A full model using RoPE produces correct-shape logits and stays causal."""
+    config = ModelConfig(
+        n_layers=2,
+        d_model=_D,
+        n_heads=_H,
+        d_ff=_F,
+        vocab_size=_V,
+        context_length=16,
+        dropout=0.0,
+        positional_encoding="rope",
+    )
+    model = KAMUITransformer(config).eval()
+    ids = torch.randint(0, _V, (1, 12))
+    assert model(ids).shape == (1, 12, _V)
+
+    # Perturbing a later token must not change earlier positions' logits.
+    logits_a = model(ids)
+    ids2 = ids.clone()
+    ids2[0, 8] = (ids2[0, 8] + 1) % _V
+    logits_b = model(ids2)
+    assert torch.allclose(logits_a[0, :8], logits_b[0, :8], atol=1e-5)

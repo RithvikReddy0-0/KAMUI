@@ -69,6 +69,7 @@ from einops import rearrange
 from torch import Tensor, nn
 
 from kamui.model.config import ModelConfig
+from kamui.model.embedding import RotaryPositionalEncoding
 
 
 def scaled_dot_product_attention(
@@ -127,6 +128,8 @@ class MultiHeadAttention(nn.Module):
         v_proj:     Value projection ``d_model -> d_model``.
         out_proj:   Output projection ``d_model -> d_model`` (W_O).
         dropout:    Dropout applied to the projected output.
+        rope:       A ``RotaryPositionalEncoding`` applied to Q/K when
+            ``config.positional_encoding == "rope"``, else ``None``.
         causal_mask: Boolean ``(context_length, context_length)`` buffer,
             ``True`` above the diagonal (future positions).
     """
@@ -152,6 +155,14 @@ class MultiHeadAttention(nn.Module):
         self.v_proj = nn.Linear(config.d_model, config.d_model)
         self.out_proj = nn.Linear(config.d_model, config.d_model)
         self.dropout = nn.Dropout(config.dropout)
+
+        # Rotary positional encoding (RoPE) is applied to Q/K when selected;
+        # otherwise positions come from the additive embedding (learned/sinusoidal).
+        self.rope: RotaryPositionalEncoding | None
+        if config.positional_encoding == "rope":
+            self.rope = RotaryPositionalEncoding(self.d_head, config.context_length)
+        else:
+            self.rope = None
 
         # Precompute the causal mask once: True above the diagonal means a
         # query at position i may not attend to key positions j > i.
@@ -199,6 +210,11 @@ class MultiHeadAttention(nn.Module):
         q = rearrange(self.q_proj(x), "b s (h dh) -> b h s dh", h=self.n_heads)
         k = rearrange(self.k_proj(x), "b s (h dh) -> b h s dh", h=self.n_heads)
         v = rearrange(self.v_proj(x), "b s (h dh) -> b h s dh", h=self.n_heads)
+
+        # Rotary encoding rotates Q and K by their position (V is left untouched).
+        if self.rope is not None:
+            q = self.rope(q)
+            k = self.rope(k)
 
         # Slice the causal mask to the current sequence length; broadcasts over
         # batch and heads inside scaled_dot_product_attention.
