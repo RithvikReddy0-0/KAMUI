@@ -248,7 +248,7 @@ becomes the experiments section of your paper.
 | Version | Scope | Status |
 |---------|-------|--------|
 | **v0.1** | Core transformer + 6 interpretability tools | ✅ Implemented |
-| **v0.2** | Sparse autoencoders, gradient attribution, RoPE ✅ | 🔄 In progress |
+| **v0.2** | Sparse autoencoders, gradient attribution ✅, RoPE ✅ | 🔄 In progress |
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 

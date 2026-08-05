@@ -12,9 +12,11 @@ v0.1 scope (six tools):
     5. InductionHeadDetector— score all (layer, head) pairs for induction behaviour
     6. CircuitAblator       — zero-ablate components and measure output change
 
-v0.2 scope (not in this module):
+v0.2 scope (in progress):
+    GradientAttribution     — attribute a prediction to input tokens via
+                              input×gradient / integrated gradients
     SparseAutoencoder       — feature decomposition via sparse dictionary learning
-                              See research/future/sae_design.md
+                              (planned; see research/future/sae_design.md)
 
 Design principle:
     Every tool is a standalone class that depends only on:
@@ -47,6 +49,7 @@ from kamui.mechinterp.attention_viz import (
     AttentionVisualizer,
     head_summary_stats,
 )
+from kamui.mechinterp.attribution import AttributionResult, GradientAttribution
 from kamui.mechinterp.circuits import AblationResult, CircuitAblator, find_minimal_circuit
 from kamui.mechinterp.induction import InductionHeadDetector
 from kamui.mechinterp.logit_lens import LogitLens, LogitLensResult
@@ -68,4 +71,6 @@ __all__: list[str] = [
     "CircuitAblator",
     "AblationResult",
     "find_minimal_circuit",
+    "GradientAttribution",
+    "AttributionResult",
 ]

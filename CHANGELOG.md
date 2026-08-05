@@ -10,6 +10,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Gradient-based input attribution (`kamui.mechinterp.GradientAttribution`):
+  attributes a target-token prediction to each input token in a single backward
+  pass (vs. activation patching's many forward passes). Supports **input×gradient**
+  (Simonyan et al. 2014) and **integrated gradients** (Sundararajan et al. 2017)
+  against a zero-embedding baseline; `AttributionResult` exposes the input and
+  baseline metrics so the IG **completeness axiom** (Σ attributions =
+  f(input) − f(baseline)) is directly checkable — and is asserted by a test.
+  `.plot()` renders a diverging token heatmap. 17-test suite at 100% coverage.
 - Rotary positional encoding (RoPE; Su et al. 2021) as a third
   `positional_encoding` option (`"rope"`, alongside `"learned"` /
   `"sinusoidal"`) — the scheme used by LLaMA / Mistral. `RotaryPositionalEncoding`

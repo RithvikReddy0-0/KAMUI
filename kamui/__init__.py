@@ -58,6 +58,7 @@ from kamui.evaluate.perplexity import compute_perplexity
 from kamui.hooks.manager import HookManager
 from kamui.mechinterp.activation_patch import ActivationPatcher
 from kamui.mechinterp.attention_viz import AttentionVisualizer
+from kamui.mechinterp.attribution import GradientAttribution
 from kamui.mechinterp.circuits import CircuitAblator
 from kamui.mechinterp.induction import InductionHeadDetector
 from kamui.mechinterp.logit_lens import LogitLens
@@ -85,4 +86,5 @@ __all__: list[str] = [
     "ActivationPatcher",
     "InductionHeadDetector",
     "CircuitAblator",
+    "GradientAttribution",
 ]
