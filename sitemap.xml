@@ -2,54 +2,54 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/api/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/architecture/hooks/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/architecture/training/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/architecture/transformer/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/activation_patching/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/circuits/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/induction_heads/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/logit_lens/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/mechinterp/overview/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/tutorials/quickstart/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/tutorials/training_your_first_model/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
     <url>
          <loc>https://rithvikreddy0-0.github.io/KAMUI/tutorials/your_first_interpretability_experiment/</loc>
-         <lastmod>2026-08-01</lastmod>
+         <lastmod>2026-08-05</lastmod>
     </url>
 </urlset>
