@@ -16,7 +16,7 @@ v0.2 scope (in progress):
     GradientAttribution     — attribute a prediction to input tokens via
                               input×gradient / integrated gradients
     SparseAutoencoder       — feature decomposition via sparse dictionary learning
-                              (planned; see research/future/sae_design.md)
+                              (see research/future/sae_design.md)
 
 Design principle:
     Every tool is a standalone class that depends only on:
@@ -54,6 +54,14 @@ from kamui.mechinterp.circuits import AblationResult, CircuitAblator, find_minim
 from kamui.mechinterp.induction import InductionHeadDetector
 from kamui.mechinterp.logit_lens import LogitLens, LogitLensResult
 from kamui.mechinterp.probing import LayerProbeResult, LinearProbe, ProbeResult
+from kamui.mechinterp.superposition import (
+    SAELoss,
+    SAEMetrics,
+    SparseAutoencoder,
+    collect_activations,
+    sae_feature_metrics,
+    train_sae,
+)
 
 __all__: list[str] = [
     "AttentionVisualizer",
@@ -73,4 +81,10 @@ __all__: list[str] = [
     "find_minimal_circuit",
     "GradientAttribution",
     "AttributionResult",
+    "SparseAutoencoder",
+    "SAELoss",
+    "SAEMetrics",
+    "collect_activations",
+    "train_sae",
+    "sae_feature_metrics",
 ]

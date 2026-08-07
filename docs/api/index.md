@@ -41,6 +41,12 @@ Everything below is importable from the top-level `kamui` package.
 
 ::: kamui.mechinterp.circuits.CircuitAblator
 
+## Interpretability Tools (v0.2)
+
+::: kamui.mechinterp.attribution.GradientAttribution
+
+::: kamui.mechinterp.superposition.SparseAutoencoder
+
 ## Evaluation
 
 ::: kamui.evaluate.perplexity.compute_perplexity

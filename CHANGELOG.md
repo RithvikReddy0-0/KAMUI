@@ -10,6 +10,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Sparse autoencoders for superposition analysis (`kamui.mechinterp.superposition`)
+  — the flagship v0.2 feature (see `research/future/sae_design.md`).
+  `SparseAutoencoder` learns an overcomplete, unit-norm feature dictionary
+  (Anthropic "Towards Monosemanticity" architecture: decoder pre-bias, ReLU
+  encoder, MSE + L1 objective). Plus `collect_activations` (cache any hook
+  point's activations via `HookManager`, one row per token), `train_sae` (Adam
+  with per-step decoder renormalisation), and `sae_feature_metrics`
+  (reconstruction MSE, dead-feature fraction, mean L0/L1). Correctness anchored
+  by tests: exact dictionary-atom decoding, the loss decomposition, and
+  reconstruction dropping from 2.19 → 0.05 on structured data. 24-test suite at
+  100% coverage.
 - Gradient-based input attribution (`kamui.mechinterp.GradientAttribution`):
   attributes a target-token prediction to each input token in a single backward
   pass (vs. activation patching's many forward passes). Supports **input×gradient**
