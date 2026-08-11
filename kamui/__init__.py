@@ -46,7 +46,7 @@ Example:
 
 # Version follows semantic versioning: MAJOR.MINOR.PATCH
 # 0.x.y = pre-release; public API not yet stable
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Rithvik Reddy Mukkara"
 __email__ = "rithvikreddymukkara@gmail.com"
 __license__ = "MIT"

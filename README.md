@@ -10,7 +10,7 @@
 
 [![Tests](https://github.com/RithvikReddy0-0/KAMUI/actions/workflows/ci.yml/badge.svg)](https://github.com/RithvikReddy0-0/KAMUI/actions/workflows/ci.yml)
 [![Docs](https://github.com/RithvikReddy0-0/KAMUI/actions/workflows/docs.yml/badge.svg)](https://rithvikreddy0-0.github.io/KAMUI)
-[![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/RithvikReddy0-0/KAMUI/releases)
+[![Version 0.2.0](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/RithvikReddy0-0/KAMUI/releases)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -120,7 +120,7 @@ pytest
 ```
 
 This clones the repo, installs all dependencies in editable mode, and runs
-the full test suite (642 tests, ~99% coverage).
+the full test suite (706 tests, ~99% coverage).
 
 ### API (v0.1)
 
@@ -247,8 +247,9 @@ becomes the experiments section of your paper.
 
 | Version | Scope | Status |
 |---------|-------|--------|
-| **v0.1** | Core transformer + 6 interpretability tools | ✅ Implemented |
-| **v0.2** | Sparse autoencoders ✅, gradient attribution ✅, RoPE ✅ | 🔄 In progress |
+| **v0.1** | Core transformer + 6 interpretability tools | ✅ Released |
+| **v0.2** | Sparse autoencoders, gradient attribution, RoPE | ✅ Released |
+| **v0.3** | Multi-GPU training (DDP) | 🔜 Planned |
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
@@ -260,10 +261,10 @@ KAMUI is not yet on PyPI — install from source:
 
 ```bash
 # Minimal install (training + inference), pinned to a release
-pip install "git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.1.0"
+pip install "git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.2.0"
 
 # With visualisation extras (matplotlib, plotly)
-pip install "kamui[viz] @ git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.1.0"
+pip install "kamui[viz] @ git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.2.0"
 
 # Full development install
 git clone https://github.com/RithvikReddy0-0/KAMUI

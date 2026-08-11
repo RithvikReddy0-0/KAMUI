@@ -9,6 +9,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [0.2.0] — 2026-08-11
+
+The interpretability release: three new analysis capabilities — sparse
+autoencoders, gradient attribution, and rotary positional encoding — each
+shipped with a full test suite at 100% coverage on its modules, and `ruff`,
+`black`, `mypy`, and a strict docs build all clean. Multi-GPU training remains
+deferred (see below).
+
 ### Added
 - Sparse autoencoders for superposition analysis (`kamui.mechinterp.superposition`)
   — the flagship v0.2 feature (see `research/future/sae_design.md`).
@@ -233,14 +245,11 @@ hook system, and all six interpretability tools, at ~99% test coverage with
 
 ---
 
-## [0.2.0] — Future
+## [0.3.0] — Future
 
 ### Will include
-- Sparse autoencoders for feature decomposition
-  (see `research/future/sae_design.md`)
-- Gradient-based attribution methods
-- ~~RoPE positional encoding~~ — shipped (see [Unreleased])
-- Multi-GPU training support
+- Multi-GPU training support (DistributedDataParallel)
+- Additional roadmap items TBD
 
 ---
 
