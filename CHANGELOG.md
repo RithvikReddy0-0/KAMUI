@@ -9,7 +9,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- Distributed data-parallel (multi-GPU) training (`kamui.training.distributed`)
+  — the from-scratch DDP layer for the v0.3 roadmap. A thin, readable wrapper
+  over `torch.distributed`: process-group lifecycle (`init_process_group` /
+  `destroy_process_group` / `spawn_workers`), rank-aware queries
+  (`get_rank`, `get_world_size`, `is_main_process`, `barrier`), model wrapping
+  (`wrap_ddp`, `unwrap_model`), metric reduction (`all_reduce_mean`), and a
+  sharding data pipeline (`shard_indices`, `DistributedDataLoader`) that gives
+  every rank a disjoint, equal-sized slice of each epoch. Because `wrap_ddp`
+  preserves `model.parameters()` and the forward signature, the existing
+  `Trainer` and `build_optimizer` work on a wrapped model unchanged. The
+  defining DDP guarantee — that the all-reduce-averaged gradient equals the
+  single-process full-batch gradient — is proven by a test that spawns **two
+  real `gloo` processes on CPU** (max abs difference ~1e-8), so the code path
+  is genuinely exercised rather than GPU-gated. 34-test suite at 100% coverage.
 
 ---
 

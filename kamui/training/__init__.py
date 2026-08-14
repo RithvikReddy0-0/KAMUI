@@ -46,6 +46,21 @@ from kamui.training.data import (
     tokenise_corpus,
     train_val_split,
 )
+from kamui.training.distributed import (
+    DistributedDataLoader,
+    all_reduce_mean,
+    barrier,
+    destroy_process_group,
+    get_rank,
+    get_world_size,
+    init_process_group,
+    is_dist_available_and_initialized,
+    is_main_process,
+    shard_indices,
+    spawn_workers,
+    unwrap_model,
+    wrap_ddp,
+)
 from kamui.training.optimizer import build_optimizer
 from kamui.training.scheduler import CosineWithWarmup
 from kamui.training.trainer import Trainer, TrainingConfig
@@ -62,4 +77,18 @@ __all__: list[str] = [
     "save_checkpoint",
     "load_checkpoint",
     "load_model_only",
+    # Distributed data-parallel (v0.3)
+    "init_process_group",
+    "destroy_process_group",
+    "is_dist_available_and_initialized",
+    "get_rank",
+    "get_world_size",
+    "is_main_process",
+    "barrier",
+    "wrap_ddp",
+    "unwrap_model",
+    "all_reduce_mean",
+    "shard_indices",
+    "DistributedDataLoader",
+    "spawn_workers",
 ]

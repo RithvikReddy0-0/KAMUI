@@ -1,7 +1,8 @@
 # API Reference
 
 The complete public API, generated from the source docstrings.
-Everything below is importable from the top-level `kamui` package.
+Core symbols are importable from the top-level `kamui` package; the
+distributed-training helpers live in `kamui.training`.
 
 ## Configuration & Model
 
@@ -20,6 +21,16 @@ Everything below is importable from the top-level `kamui` package.
 ::: kamui.training.trainer.TrainingConfig
 
 ::: kamui.training.trainer.Trainer
+
+## Distributed Training (v0.3)
+
+::: kamui.training.distributed.wrap_ddp
+
+::: kamui.training.distributed.DistributedDataLoader
+
+::: kamui.training.distributed.spawn_workers
+
+::: kamui.training.distributed.all_reduce_mean
 
 ## Hooks
 

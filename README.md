@@ -249,7 +249,7 @@ becomes the experiments section of your paper.
 |---------|-------|--------|
 | **v0.1** | Core transformer + 6 interpretability tools | ✅ Released |
 | **v0.2** | Sparse autoencoders, gradient attribution, RoPE | ✅ Released |
-| **v0.3** | Multi-GPU training (DDP) | 🔜 Planned |
+| **v0.3** | Multi-GPU training (DDP) ✅ | 🔄 In progress |
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
