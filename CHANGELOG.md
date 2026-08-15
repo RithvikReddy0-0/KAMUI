@@ -9,6 +9,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [0.3.0] — 2026-08-15
+
+The scaling release: from-scratch distributed data-parallel (multi-GPU)
+training, with the core gradient-averaging guarantee proven by two real
+`gloo` processes on CPU — shipped at 100% coverage on the new module, with
+`ruff`, `black`, `mypy`, and a strict docs build all clean.
+
 ### Added
 - Distributed data-parallel (multi-GPU) training (`kamui.training.distributed`)
   — the from-scratch DDP layer for the v0.3 roadmap. A thin, readable wrapper
@@ -259,11 +270,10 @@ hook system, and all six interpretability tools, at ~99% test coverage with
 
 ---
 
-## [0.3.0] — Future
+## [0.4.0] — Future
 
 ### Will include
-- Multi-GPU training support (DistributedDataParallel)
-- Additional roadmap items TBD
+- To be determined
 
 ---
 
