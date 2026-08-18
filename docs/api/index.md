@@ -58,6 +58,8 @@ distributed-training helpers live in `kamui.training`.
 
 ::: kamui.mechinterp.superposition.SparseAutoencoder
 
+::: kamui.mechinterp.superposition.interpret_features
+
 ## Evaluation
 
 ::: kamui.evaluate.perplexity.compute_perplexity

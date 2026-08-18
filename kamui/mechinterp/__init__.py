@@ -55,10 +55,12 @@ from kamui.mechinterp.induction import InductionHeadDetector
 from kamui.mechinterp.logit_lens import LogitLens, LogitLensResult
 from kamui.mechinterp.probing import LayerProbeResult, LinearProbe, ProbeResult
 from kamui.mechinterp.superposition import (
+    FeatureProfile,
     SAELoss,
     SAEMetrics,
     SparseAutoencoder,
     collect_activations,
+    interpret_features,
     sae_feature_metrics,
     train_sae,
 )
@@ -87,4 +89,6 @@ __all__: list[str] = [
     "collect_activations",
     "train_sae",
     "sae_feature_metrics",
+    "interpret_features",
+    "FeatureProfile",
 ]

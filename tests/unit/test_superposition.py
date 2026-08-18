@@ -10,10 +10,12 @@ import pytest
 import torch
 
 from kamui.mechinterp.superposition import (
+    FeatureProfile,
     SAELoss,
     SAEMetrics,
     SparseAutoencoder,
     collect_activations,
+    interpret_features,
     sae_feature_metrics,
     train_sae,
 )
@@ -214,3 +216,85 @@ class TestSAEMetrics:
         sae = SparseAutoencoder(8, 32)
         with pytest.raises(ValueError, match="must be"):
             sae_feature_metrics(sae, torch.randn(10, 16))
+
+
+def _identity_sae(d: int) -> SparseAutoencoder:
+    """An SAE whose encode is exactly ReLU(x): feature f activation == relu(x[f])."""
+    sae = SparseAutoencoder(d_model=d, n_features=d, l1_coeff=0.0)
+    with torch.no_grad():
+        sae.W_enc.copy_(torch.eye(d))
+        sae.W_dec.copy_(torch.eye(d))
+        sae.b_enc.zero_()
+        sae.b_dec.zero_()
+    return sae
+
+
+# ===========================================================================
+# interpret_features
+# ===========================================================================
+
+
+class TestInterpretFeatures:
+    def test_top_activating_tokens_are_recovered_in_order(self) -> None:
+        # With the identity SAE, feature f activation == relu(activation[:, f]).
+        sae = _identity_sae(3)
+        activations = torch.tensor(
+            [
+                [5.0, 0.0, 0.0],  # token 7 — strongest on feature 0
+                [3.0, 0.0, 0.0],  # token 7 — weaker on feature 0
+                [0.0, 9.0, 0.0],  # token 2 — feature 1
+                [0.0, 0.0, 1.0],  # token 5 — feature 2
+            ]
+        )
+        tokens = torch.tensor([7, 7, 2, 5])
+
+        (profile,) = interpret_features(sae, activations, tokens, top_k=2, features=[0])
+        assert isinstance(profile, FeatureProfile)
+        assert profile.feature == 0
+        assert profile.top_token_ids == [7, 7]  # row 0 then row 1, descending
+        assert profile.top_activations == [5.0, 3.0]
+        assert profile.density == 2 / 4  # feature 0 fires on 2 of 4 tokens
+        assert profile.mean_activation == pytest.approx((5.0 + 3.0) / 2)
+
+    def test_dead_feature_reports_empty(self) -> None:
+        sae = _identity_sae(1)
+        activations = torch.tensor([[-1.0], [-2.0]])  # ReLU → always 0
+        tokens = torch.tensor([4, 9])
+        (profile,) = interpret_features(sae, activations, tokens, top_k=3, features=[0])
+        assert profile.density == 0.0
+        assert profile.mean_activation == 0.0
+        assert profile.top_token_ids == []
+        assert profile.top_activations == []
+
+    def test_top_k_clamps_to_active_count(self) -> None:
+        sae = _identity_sae(1)
+        activations = torch.tensor([[2.0], [0.0], [0.0]])  # only one active token
+        tokens = torch.tensor([1, 2, 3])
+        (profile,) = interpret_features(sae, activations, tokens, top_k=10, features=[0])
+        assert profile.top_token_ids == [1]  # never pads with inactive tokens
+        assert profile.density == pytest.approx(1 / 3)
+
+    def test_defaults_to_all_features(self) -> None:
+        sae = _identity_sae(4)
+        profiles = interpret_features(sae, torch.rand(6, 4), torch.arange(6), top_k=2)
+        assert [p.feature for p in profiles] == [0, 1, 2, 3]
+
+    def test_bad_activations_shape_raises(self) -> None:
+        sae = _identity_sae(3)
+        with pytest.raises(ValueError, match="activations must be"):
+            interpret_features(sae, torch.rand(5, 8), torch.arange(5))
+
+    def test_token_ids_length_mismatch_raises(self) -> None:
+        sae = _identity_sae(3)
+        with pytest.raises(ValueError, match="token_ids must be"):
+            interpret_features(sae, torch.rand(5, 3), torch.arange(4))
+
+    def test_bad_top_k_raises(self) -> None:
+        sae = _identity_sae(3)
+        with pytest.raises(ValueError, match="top_k must be"):
+            interpret_features(sae, torch.rand(5, 3), torch.arange(5), top_k=0)
+
+    def test_feature_out_of_range_raises(self) -> None:
+        sae = _identity_sae(3)
+        with pytest.raises(ValueError, match="feature must be"):
+            interpret_features(sae, torch.rand(5, 3), torch.arange(5), features=[9])

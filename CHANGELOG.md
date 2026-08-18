@@ -9,7 +9,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- SAE feature interpretation (`kamui.mechinterp.interpret_features` +
+  `FeatureProfile`): closes the loop on sparse autoencoders by revealing *what
+  each learned feature detects*. For every feature it reports the
+  strongest-activating tokens (pair `top_token_ids` with a tokenizer's
+  `decode` to read the meaning), the feature's firing **density**, and its mean
+  activation when active — the token-level form of Anthropic's "what does this
+  feature detect?" analysis, and the natural next step after `train_sae`.
+  Correctness is anchored exactly (via an identity SAE whose encode is `ReLU`):
+  the reported top tokens, ordering, density, and mean activation all match
+  hand-computed values, and dead features report empty. 8-test suite at 100%
+  coverage.
 
 ---
 

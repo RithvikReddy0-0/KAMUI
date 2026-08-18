@@ -23,6 +23,7 @@ Public API:
     - ``collect_activations``         — cache activations at a hook point via HookManager
     - ``train_sae``                   — train an SAE on cached activations
     - ``sae_feature_metrics``         — reconstruction, dead-feature %, mean L0/L1
+    - ``interpret_features``          — top-activating tokens per feature (what it detects)
 
 Reference:
     Anthropic (2023). Towards Monosemanticity: Decomposing Language Models
@@ -315,3 +316,104 @@ def sae_feature_metrics(sae: SparseAutoencoder, activations: Tensor) -> SAEMetri
         mean_l0=active.float().sum(dim=-1).mean().item(),
         mean_l1=features.abs().sum(dim=-1).mean().item(),
     )
+
+
+@dataclass
+class FeatureProfile:
+    """An interpretation summary for a single SAE feature.
+
+    Attributes:
+        feature:         The feature (dictionary-atom) index.
+        density:         Fraction of tokens on which the feature is active (> 0).
+        mean_activation: Mean activation over the tokens where it fires
+            (``0.0`` if the feature never fires).
+        top_token_ids:   Token IDs of the strongest-activating tokens, most
+            active first (up to ``top_k`` of them).
+        top_activations: The matching activation values, in descending order.
+    """
+
+    feature: int
+    density: float
+    mean_activation: float
+    top_token_ids: list[int]
+    top_activations: list[float]
+
+
+@torch.no_grad()
+def interpret_features(
+    sae: SparseAutoencoder,
+    activations: Tensor,
+    token_ids: Tensor,
+    top_k: int = 10,
+    features: Iterable[int] | None = None,
+) -> list[FeatureProfile]:
+    """Profile SAE features by the tokens that most strongly activate them.
+
+    A sparse autoencoder learns a dictionary of feature directions, but a
+    feature is only *interpretable* once you see what makes it fire.  For each
+    requested feature this returns the tokens whose encoded activation at that
+    feature is largest, along with how often the feature fires (density) and how
+    strongly (mean activation) — the token-level form of Anthropic's "what does
+    this feature detect?" analysis.  Pair ``top_token_ids`` with a tokenizer's
+    ``decode`` to read the feature's meaning.
+
+    Args:
+        sae:         A (typically trained) ``SparseAutoencoder``.
+        activations: ``(N, d_model)`` activations, one row per token.
+        token_ids:   ``(N,)`` token ID for each activation row (parallel to
+            ``activations`` — usually the tokens passed to ``collect_activations``).
+        top_k:       Number of top-activating tokens to keep per feature.
+        features:    Feature indices to profile (defaults to every feature).
+
+    Returns:
+        One ``FeatureProfile`` per requested feature, in the requested order.
+
+    Raises:
+        ValueError: If shapes are inconsistent, ``top_k < 1``, or a requested
+            feature index is out of range.
+    """
+    if activations.dim() != 2 or activations.shape[1] != sae.d_model:
+        raise ValueError(
+            f"activations must be (N, d_model={sae.d_model}), got {tuple(activations.shape)}"
+        )
+    if token_ids.dim() != 1 or token_ids.shape[0] != activations.shape[0]:
+        raise ValueError(
+            f"token_ids must be 1-D with length {activations.shape[0]}, "
+            f"got shape {tuple(token_ids.shape)}"
+        )
+    if top_k < 1:
+        raise ValueError(f"top_k must be >= 1, got {top_k}")
+
+    feature_list = list(range(sae.n_features)) if features is None else list(features)
+    coded = sae.encode(activations)  # (N, n_features)
+    n_rows = coded.shape[0]
+    ids = token_ids.tolist()
+
+    profiles: list[FeatureProfile] = []
+    for feature in feature_list:
+        if not (0 <= feature < sae.n_features):
+            raise ValueError(f"feature must be in [0, {sae.n_features}), got {feature}")
+        column = coded[:, feature]
+        active = column > 0
+        n_active = int(active.sum().item())
+        density = n_active / n_rows
+        mean_activation = float(column[active].mean().item()) if n_active > 0 else 0.0
+
+        k = min(top_k, n_active)  # never rank in inactive (zero) tokens
+        if k > 0:
+            values, indices = torch.topk(column, k)
+            top_token_ids = [ids[i] for i in indices.tolist()]
+            top_activations = [float(v) for v in values.tolist()]
+        else:
+            top_token_ids = []
+            top_activations = []
+        profiles.append(
+            FeatureProfile(
+                feature=feature,
+                density=density,
+                mean_activation=mean_activation,
+                top_token_ids=top_token_ids,
+                top_activations=top_activations,
+            )
+        )
+    return profiles
