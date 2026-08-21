@@ -1,0 +1,176 @@
+"""Unit tests for kamui.mechinterp.steering (activation / feature steering).
+
+Coverage target:
+    kamui/mechinterp/steering.py — 100%
+"""
+
+from __future__ import annotations
+
+import matplotlib
+import pytest
+import torch
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+
+from kamui.mechinterp.steering import (  # noqa: E402
+    FeatureSteerer,
+    SteeringResult,
+    _steering_hook,
+)
+from kamui.mechinterp.superposition import SparseAutoencoder  # noqa: E402
+from kamui.model.config import ModelConfig  # noqa: E402
+from kamui.model.transformer import KAMUITransformer  # noqa: E402
+
+
+def _tiny_model(seed: int = 0) -> KAMUITransformer:
+    torch.manual_seed(seed)
+    config = ModelConfig(
+        n_layers=2,
+        d_model=8,
+        n_heads=2,
+        d_ff=16,
+        vocab_size=16,
+        context_length=8,
+        dropout=0.0,
+    )
+    model = KAMUITransformer(config)
+    model.eval()
+    return model
+
+
+def _ids(length: int = 5) -> torch.Tensor:
+    torch.manual_seed(1)
+    return torch.randint(0, 16, (length,))
+
+
+# ===========================================================================
+# The intervention math (pure, model-free)
+# ===========================================================================
+
+
+class TestSteeringHook:
+    def test_adds_at_every_position(self) -> None:
+        add = torch.tensor([1.0, 2.0, 3.0, 4.0])
+        hook = _steering_hook(add, position=None)
+        out = torch.zeros(2, 3, 4)
+        result = hook(None, (), out)  # type: ignore[arg-type]
+        assert torch.equal(result, add.expand(2, 3, 4))
+
+    def test_adds_only_at_one_position(self) -> None:
+        add = torch.tensor([1.0, 2.0, 3.0, 4.0])
+        hook = _steering_hook(add, position=1)
+        out = torch.zeros(1, 3, 4)
+        result = hook(None, (), out)  # type: ignore[arg-type]
+        assert torch.equal(result[0, 1], add)
+        assert result[0, 0].abs().sum() == 0.0  # other positions untouched
+        assert result[0, 2].abs().sum() == 0.0
+        assert out.abs().sum() == 0.0  # input tensor was not mutated
+
+
+# ===========================================================================
+# SteeringResult
+# ===========================================================================
+
+
+class TestSteeringResult:
+    def _result(self) -> SteeringResult:
+        baseline = torch.zeros(1, 1, 5)
+        steered = torch.tensor([[[3.0, -2.0, 1.0, -4.0, 5.0]]])
+        return SteeringResult(baseline, steered, "embed.output", 2.0)
+
+    def test_logit_delta(self) -> None:
+        delta = self._result().logit_delta
+        assert torch.equal(delta, torch.tensor([3.0, -2.0, 1.0, -4.0, 5.0]))
+
+    def test_top_promoted(self) -> None:
+        assert self._result().top_promoted(2) == [(4, 5.0), (0, 3.0)]
+
+    def test_top_suppressed(self) -> None:
+        assert self._result().top_suppressed(2) == [(3, -4.0), (1, -2.0)]
+
+    def test_top_k_clamps_to_vocab(self) -> None:
+        assert len(self._result().top_promoted(100)) == 5
+
+    def test_plot_returns_figure(self) -> None:
+        fig = self._result().plot(k=3)
+        assert fig is not None
+        plt.close(fig)
+
+
+# ===========================================================================
+# FeatureSteerer.steer
+# ===========================================================================
+
+
+class TestSteer:
+    def test_zero_coefficient_is_identity(self) -> None:
+        model = _tiny_model()
+        steerer = FeatureSteerer(model)
+        direction = torch.randn(8)
+        result = steerer.steer(_ids(), "blocks.0.attn.output", direction, coefficient=0.0)
+        assert torch.equal(result.baseline_logits, result.steered_logits)
+
+    def test_nonzero_coefficient_changes_output(self) -> None:
+        model = _tiny_model()
+        steerer = FeatureSteerer(model)
+        direction = torch.randn(8)
+        result = steerer.steer(_ids(), "embed.output", direction, coefficient=5.0)
+        assert not torch.equal(result.baseline_logits, result.steered_logits)
+        assert result.hook_point == "embed.output"
+        assert result.coefficient == 5.0
+        assert result.steered_logits.shape == (1, 5, 16)
+
+    def test_accepts_1xs_input(self) -> None:
+        model = _tiny_model()
+        steerer = FeatureSteerer(model)
+        result = steerer.steer(_ids().unsqueeze(0), "blocks.1.ffn.output", torch.randn(8))
+        assert result.steered_logits.shape == (1, 5, 16)
+
+    def test_position_scoped_steer_changes_output(self) -> None:
+        model = _tiny_model()
+        steerer = FeatureSteerer(model)
+        result = steerer.steer(_ids(), "embed.output", torch.randn(8), coefficient=5.0, position=0)
+        assert not torch.equal(result.baseline_logits, result.steered_logits)
+
+    def test_invalid_hook_point_raises(self) -> None:
+        steerer = FeatureSteerer(_tiny_model())
+        with pytest.raises(ValueError, match="not a steerable point"):
+            steerer.steer(_ids(), "blocks.0.attn.weights", torch.randn(8))
+
+    def test_bad_direction_shape_raises(self) -> None:
+        steerer = FeatureSteerer(_tiny_model())
+        with pytest.raises(ValueError, match="direction must have shape"):
+            steerer.steer(_ids(), "embed.output", torch.randn(4))
+
+    def test_bad_input_shape_raises(self) -> None:
+        steerer = FeatureSteerer(_tiny_model())
+        with pytest.raises(ValueError, match="single sequence"):
+            steerer.steer(torch.randint(0, 16, (2, 5)), "embed.output", torch.randn(8))
+
+
+# ===========================================================================
+# FeatureSteerer.steer_with_feature
+# ===========================================================================
+
+
+class TestSteerWithFeature:
+    def test_matches_manual_decoder_direction(self) -> None:
+        model = _tiny_model()
+        sae = SparseAutoencoder(d_model=8, n_features=32)
+        steerer = FeatureSteerer(model, sae)
+
+        by_feature = steerer.steer_with_feature(_ids(), "embed.output", feature=3, coefficient=4.0)
+        by_direction = steerer.steer(_ids(), "embed.output", sae.W_dec[3].detach(), coefficient=4.0)
+        assert torch.equal(by_feature.steered_logits, by_direction.steered_logits)
+
+    def test_requires_sae(self) -> None:
+        steerer = FeatureSteerer(_tiny_model())  # no SAE
+        with pytest.raises(ValueError, match="requires an SAE"):
+            steerer.steer_with_feature(_ids(), "embed.output", feature=0)
+
+    def test_feature_out_of_range_raises(self) -> None:
+        sae = SparseAutoencoder(d_model=8, n_features=32)
+        steerer = FeatureSteerer(_tiny_model(), sae)
+        with pytest.raises(ValueError, match="feature must be"):
+            steerer.steer_with_feature(_ids(), "embed.output", feature=99)

@@ -60,6 +60,8 @@ distributed-training helpers live in `kamui.training`.
 
 ::: kamui.mechinterp.superposition.interpret_features
 
+::: kamui.mechinterp.steering.FeatureSteerer
+
 ## Evaluation
 
 ::: kamui.evaluate.perplexity.compute_perplexity

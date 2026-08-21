@@ -63,6 +63,7 @@ from kamui.mechinterp.circuits import CircuitAblator
 from kamui.mechinterp.induction import InductionHeadDetector
 from kamui.mechinterp.logit_lens import LogitLens
 from kamui.mechinterp.probing import LinearProbe
+from kamui.mechinterp.steering import FeatureSteerer
 from kamui.mechinterp.superposition import SparseAutoencoder
 from kamui.model.config import ModelConfig
 from kamui.model.transformer import KAMUITransformer
@@ -89,4 +90,5 @@ __all__: list[str] = [
     "CircuitAblator",
     "GradientAttribution",
     "SparseAutoencoder",
+    "FeatureSteerer",
 ]

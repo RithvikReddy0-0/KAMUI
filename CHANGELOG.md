@@ -10,6 +10,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Activation / feature steering (`kamui.mechinterp.FeatureSteerer` +
+  `SteeringResult`): the causal complement of `interpret_features`. After
+  reading *what* a feature detects, clamp it up or down and watch the output
+  move. `steer` adds `coefficient * direction` into a residual-stream point
+  (`embed.output` / `blocks.i.attn.output` / `blocks.i.ffn.output`) via a
+  forward hook and returns baseline vs. steered logits; `steer_with_feature`
+  uses an SAE feature's decoder direction (`W_dec[feature]`) as that direction.
+  `SteeringResult` exposes the last-position `logit_delta`, `top_promoted` /
+  `top_suppressed` tokens, and a `.plot()`. This is activation addition
+  (Turner et al. 2023) / feature clamping (Templeton et al. 2024) from scratch.
+  The intervention math and the feature/direction equivalence are asserted
+  exactly. 17-test suite at 100% coverage.
 - SAE feature interpretation (`kamui.mechinterp.interpret_features` +
   `FeatureProfile`): closes the loop on sparse autoencoders by revealing *what
   each learned feature detects*. For every feature it reports the

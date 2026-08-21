@@ -54,6 +54,7 @@ from kamui.mechinterp.circuits import AblationResult, CircuitAblator, find_minim
 from kamui.mechinterp.induction import InductionHeadDetector
 from kamui.mechinterp.logit_lens import LogitLens, LogitLensResult
 from kamui.mechinterp.probing import LayerProbeResult, LinearProbe, ProbeResult
+from kamui.mechinterp.steering import FeatureSteerer, SteeringResult
 from kamui.mechinterp.superposition import (
     FeatureProfile,
     SAELoss,
@@ -91,4 +92,6 @@ __all__: list[str] = [
     "sae_feature_metrics",
     "interpret_features",
     "FeatureProfile",
+    "FeatureSteerer",
+    "SteeringResult",
 ]
