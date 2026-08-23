@@ -26,6 +26,9 @@ Responsibilities:
         Steer along an arbitrary direction at a residual-stream point.
     - ``FeatureSteerer.steer_with_feature``:
         Steer along an SAE feature's decoder direction (``W_dec[feature]``).
+    - ``FeatureSteerer.generate_steered`` / ``generate_steered_with_feature``:
+        Autoregressively generate text with the intervention active at every
+        step — the tangible payoff (steer, then read the continuation).
 
 References:
     Turner, A. et al. (2023). Activation Addition: Steering Language Models
@@ -46,6 +49,7 @@ from typing import TYPE_CHECKING, Any
 import torch
 from torch import Tensor, nn
 
+from kamui.evaluate.generation import TokenizerLike, generate
 from kamui.mechinterp.superposition import SparseAutoencoder
 from kamui.model.transformer import KAMUITransformer
 
@@ -170,6 +174,27 @@ class FeatureSteerer:
     def _resolve(self, module_path: str) -> nn.Module:
         return dict(self.model.named_modules())[module_path]
 
+    def _validate(self, hook_point: str, direction: Tensor) -> None:
+        if not self._is_steerable(hook_point):
+            raise ValueError(
+                f"'{hook_point}' is not a steerable point "
+                f"(use embed.output / blocks.i.attn.output / blocks.i.ffn.output)"
+            )
+        d_model = self.model.config.d_model
+        if direction.shape != (d_model,):
+            raise ValueError(
+                f"direction must have shape (d_model={d_model},), got {tuple(direction.shape)}"
+            )
+
+    def _feature_direction(self, feature: int) -> Tensor:
+        if self.sae is None:
+            raise ValueError(
+                "steering with a feature requires an SAE; pass one to FeatureSteerer(...)"
+            )
+        if not (0 <= feature < self.sae.n_features):
+            raise ValueError(f"feature must be in [0, {self.sae.n_features}), got {feature}")
+        return self.sae.W_dec[feature].detach()
+
     @torch.no_grad()
     def steer(
         self,
@@ -198,16 +223,7 @@ class FeatureSteerer:
             ValueError: If ``hook_point`` is not steerable, ``input_ids`` is not
                 a single sequence, or ``direction`` is not shape ``(d_model,)``.
         """
-        if not self._is_steerable(hook_point):
-            raise ValueError(
-                f"'{hook_point}' is not a steerable point "
-                f"(use embed.output / blocks.i.attn.output / blocks.i.ffn.output)"
-            )
-        d_model = self.model.config.d_model
-        if direction.shape != (d_model,):
-            raise ValueError(
-                f"direction must have shape (d_model={d_model},), got {tuple(direction.shape)}"
-            )
+        self._validate(hook_point, direction)
 
         ids = self._as_batch(input_ids)
         self.model.eval()
@@ -246,9 +262,78 @@ class FeatureSteerer:
         Raises:
             ValueError: If no SAE was provided or ``feature`` is out of range.
         """
-        if self.sae is None:
-            raise ValueError("steer_with_feature requires an SAE; pass one to FeatureSteerer(...)")
-        if not (0 <= feature < self.sae.n_features):
-            raise ValueError(f"feature must be in [0, {self.sae.n_features}), got {feature}")
-        direction = self.sae.W_dec[feature].detach()
+        direction = self._feature_direction(feature)
         return self.steer(input_ids, hook_point, direction, coefficient, position)
+
+    @torch.no_grad()
+    def generate_steered(
+        self,
+        tokenizer: TokenizerLike,
+        prompt: str,
+        hook_point: str,
+        direction: Tensor,
+        coefficient: float = 1.0,
+        **generate_kwargs: Any,
+    ) -> str:
+        """Generate text while steering along ``direction`` at every step.
+
+        The direction is added at every position of every forward pass during
+        autoregressive generation, so the whole continuation is produced under
+        the intervention — the tangible payoff of steering (compare against a
+        plain ``generate`` call to see the effect on the text).
+
+        Args:
+            tokenizer:       An object with ``encode`` / ``decode``.
+            prompt:          The (non-empty) prompt string.
+            hook_point:      A steerable residual-stream point.
+            direction:       A ``(d_model,)`` direction to add.
+            coefficient:     The scalar the direction is multiplied by.
+            **generate_kwargs: Forwarded to ``kamui.evaluate.generate``
+                (``max_new_tokens``, ``strategy``, ``temperature``, ``top_k``,
+                ``top_p``, ``seed``).
+
+        Returns:
+            The full decoded string (prompt + steered continuation).
+
+        Raises:
+            ValueError: If ``hook_point`` is not steerable or ``direction`` is
+                not shape ``(d_model,)``.
+        """
+        self._validate(hook_point, direction)
+        add = coefficient * direction.detach().to(next(self.model.parameters()).dtype)
+        module = self._resolve(hook_point.rsplit(".", 1)[0])
+        handle = module.register_forward_hook(_steering_hook(add, position=None))
+        try:
+            return generate(self.model, tokenizer, prompt, **generate_kwargs)
+        finally:
+            handle.remove()
+
+    def generate_steered_with_feature(
+        self,
+        tokenizer: TokenizerLike,
+        prompt: str,
+        hook_point: str,
+        feature: int,
+        coefficient: float = 1.0,
+        **generate_kwargs: Any,
+    ) -> str:
+        """Generate text steered along an SAE feature's decoder direction.
+
+        Args:
+            tokenizer:       An object with ``encode`` / ``decode``.
+            prompt:          The (non-empty) prompt string.
+            hook_point:      A steerable residual-stream point.
+            feature:         The SAE feature index whose direction to add.
+            coefficient:     The scalar the direction is multiplied by.
+            **generate_kwargs: Forwarded to ``kamui.evaluate.generate``.
+
+        Returns:
+            The full decoded string (prompt + steered continuation).
+
+        Raises:
+            ValueError: If no SAE was provided or ``feature`` is out of range.
+        """
+        direction = self._feature_direction(feature)
+        return self.generate_steered(
+            tokenizer, prompt, hook_point, direction, coefficient, **generate_kwargs
+        )

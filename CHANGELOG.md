@@ -18,10 +18,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   forward hook and returns baseline vs. steered logits; `steer_with_feature`
   uses an SAE feature's decoder direction (`W_dec[feature]`) as that direction.
   `SteeringResult` exposes the last-position `logit_delta`, `top_promoted` /
-  `top_suppressed` tokens, and a `.plot()`. This is activation addition
-  (Turner et al. 2023) / feature clamping (Templeton et al. 2024) from scratch.
-  The intervention math and the feature/direction equivalence are asserted
-  exactly. 17-test suite at 100% coverage.
+  `top_suppressed` tokens, and a `.plot()`. `generate_steered` /
+  `generate_steered_with_feature` run the intervention through autoregressive
+  generation so you can read the steered continuation — the tangible payoff of
+  steering. This is activation addition (Turner et al. 2023) / feature clamping
+  (Templeton et al. 2024) from scratch. The intervention math, the
+  feature/direction equivalence, and hook cleanup after generation are all
+  asserted exactly. 24-test suite at 100% coverage.
 - SAE feature interpretation (`kamui.mechinterp.interpret_features` +
   `FeatureProfile`): closes the loop on sparse autoencoders by revealing *what
   each learned feature detects*. For every feature it reports the

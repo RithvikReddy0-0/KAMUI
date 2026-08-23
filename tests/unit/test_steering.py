@@ -13,6 +13,7 @@ import torch
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+from kamui.evaluate.generation import generate  # noqa: E402
 from kamui.mechinterp.steering import (  # noqa: E402
     FeatureSteerer,
     SteeringResult,
@@ -21,6 +22,16 @@ from kamui.mechinterp.steering import (  # noqa: E402
 from kamui.mechinterp.superposition import SparseAutoencoder  # noqa: E402
 from kamui.model.config import ModelConfig  # noqa: E402
 from kamui.model.transformer import KAMUITransformer  # noqa: E402
+
+
+class _CharTokenizer:
+    """A trivial tokenizer (encode/decode) for generation tests — vocab < 16."""
+
+    def encode(self, text: str) -> list[int]:
+        return [ord(c) % 16 for c in text] or [1]
+
+    def decode(self, ids: list[int]) -> str:
+        return " ".join(str(i) for i in ids)
 
 
 def _tiny_model(seed: int = 0) -> KAMUITransformer:
@@ -174,3 +185,70 @@ class TestSteerWithFeature:
         steerer = FeatureSteerer(_tiny_model(), sae)
         with pytest.raises(ValueError, match="feature must be"):
             steerer.steer_with_feature(_ids(), "embed.output", feature=99)
+
+
+# ===========================================================================
+# FeatureSteerer.generate_steered
+# ===========================================================================
+
+
+class TestGenerateSteered:
+    def test_zero_coefficient_matches_plain_generate(self) -> None:
+        model = _tiny_model()
+        tok = _CharTokenizer()
+        steerer = FeatureSteerer(model)
+        baseline = generate(model, tok, "hello", max_new_tokens=6)
+        steered = steerer.generate_steered(
+            tok, "hello", "embed.output", torch.randn(8), coefficient=0.0, max_new_tokens=6
+        )
+        assert steered == baseline
+
+    def test_strong_steering_changes_text(self) -> None:
+        model = _tiny_model()
+        tok = _CharTokenizer()
+        steerer = FeatureSteerer(model)
+        baseline = generate(model, tok, "hello", max_new_tokens=6)
+        torch.manual_seed(7)
+        steered = steerer.generate_steered(
+            tok, "hello", "embed.output", torch.randn(8), coefficient=1000.0, max_new_tokens=6
+        )
+        assert steered != baseline
+
+    def test_hook_is_removed_after_generation(self) -> None:
+        model = _tiny_model()
+        tok = _CharTokenizer()
+        steerer = FeatureSteerer(model)
+        baseline = generate(model, tok, "hello", max_new_tokens=6)
+        steerer.generate_steered(
+            tok, "hello", "embed.output", torch.randn(8), coefficient=500.0, max_new_tokens=6
+        )
+        # If the steering hook leaked, this plain call would differ.
+        assert generate(model, tok, "hello", max_new_tokens=6) == baseline
+
+    def test_with_feature_matches_manual_direction(self) -> None:
+        model = _tiny_model()
+        tok = _CharTokenizer()
+        sae = SparseAutoencoder(d_model=8, n_features=32)
+        steerer = FeatureSteerer(model, sae)
+        by_feature = steerer.generate_steered_with_feature(
+            tok, "hi", "embed.output", feature=5, coefficient=50.0, max_new_tokens=6
+        )
+        by_direction = steerer.generate_steered(
+            tok, "hi", "embed.output", sae.W_dec[5].detach(), coefficient=50.0, max_new_tokens=6
+        )
+        assert by_feature == by_direction
+
+    def test_invalid_hook_point_raises(self) -> None:
+        steerer = FeatureSteerer(_tiny_model())
+        with pytest.raises(ValueError, match="not a steerable point"):
+            steerer.generate_steered(_CharTokenizer(), "hi", "unembed.input", torch.randn(8))
+
+    def test_bad_direction_shape_raises(self) -> None:
+        steerer = FeatureSteerer(_tiny_model())
+        with pytest.raises(ValueError, match="direction must have shape"):
+            steerer.generate_steered(_CharTokenizer(), "hi", "embed.output", torch.randn(3))
+
+    def test_with_feature_requires_sae(self) -> None:
+        steerer = FeatureSteerer(_tiny_model())  # no SAE
+        with pytest.raises(ValueError, match="requires an SAE"):
+            steerer.generate_steered_with_feature(_CharTokenizer(), "hi", "embed.output", feature=0)
