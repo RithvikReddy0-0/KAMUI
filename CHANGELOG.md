@@ -10,6 +10,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Contrastive steering vectors (`kamui.mechinterp.build_steering_vector`):
+  the ActAdd (Turner et al. 2023) alternative to `steer_with_feature` for when
+  you have contrasting examples but no trained SAE. Returns the difference of
+  mean activations at a hook point — `mean(positive) - mean(negative)`, over
+  every token — as a `(d_model,)` direction (optionally unit-normalised) ready
+  to feed to `FeatureSteerer.steer`. Reuses the tested `collect_activations`,
+  and is anchored by exact algebraic properties: self-contrast is the zero
+  vector, `d(pos, neg) == -d(neg, pos)`, and the result equals the documented
+  mean-difference formula. 7-test suite at 100% coverage.
 - Activation / feature steering (`kamui.mechinterp.FeatureSteerer` +
   `SteeringResult`): the causal complement of `interpret_features`. After
   reading *what* a feature detects, clamp it up or down and watch the output

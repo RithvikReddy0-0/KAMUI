@@ -18,8 +18,12 @@ from kamui.mechinterp.steering import (  # noqa: E402
     FeatureSteerer,
     SteeringResult,
     _steering_hook,
+    build_steering_vector,
 )
-from kamui.mechinterp.superposition import SparseAutoencoder  # noqa: E402
+from kamui.mechinterp.superposition import (  # noqa: E402
+    SparseAutoencoder,
+    collect_activations,
+)
 from kamui.model.config import ModelConfig  # noqa: E402
 from kamui.model.transformer import KAMUITransformer  # noqa: E402
 
@@ -252,3 +256,63 @@ class TestGenerateSteered:
         steerer = FeatureSteerer(_tiny_model())  # no SAE
         with pytest.raises(ValueError, match="requires an SAE"):
             steerer.generate_steered_with_feature(_CharTokenizer(), "hi", "embed.output", feature=0)
+
+
+# ===========================================================================
+# build_steering_vector (ActAdd contrastive direction)
+# ===========================================================================
+
+
+class TestBuildSteeringVector:
+    def _seqs(self) -> tuple[list[torch.Tensor], list[torch.Tensor]]:
+        torch.manual_seed(3)
+        positive = [torch.randint(0, 16, (5,)), torch.randint(0, 16, (5,))]
+        negative = [torch.randint(0, 16, (5,))]
+        return positive, negative
+
+    def test_shape_is_d_model(self) -> None:
+        model = _tiny_model()
+        pos, neg = self._seqs()
+        assert build_steering_vector(model, "blocks.0.ffn.output", pos, neg).shape == (8,)
+
+    def test_matches_mean_activation_difference(self) -> None:
+        model = _tiny_model()
+        pos, neg = self._seqs()
+        expected = collect_activations(model, "blocks.0.ffn.output", pos).mean(0) - (
+            collect_activations(model, "blocks.0.ffn.output", neg).mean(0)
+        )
+        actual = build_steering_vector(model, "blocks.0.ffn.output", pos, neg)
+        assert torch.equal(actual, expected)
+
+    def test_self_contrast_is_zero(self) -> None:
+        model = _tiny_model()
+        pos, _ = self._seqs()
+        direction = build_steering_vector(model, "blocks.1.ffn.output", pos, pos)
+        assert torch.equal(direction, torch.zeros(8))
+
+    def test_antisymmetry(self) -> None:
+        model = _tiny_model()
+        pos, neg = self._seqs()
+        d_pn = build_steering_vector(model, "embed.output", pos, neg)
+        d_np = build_steering_vector(model, "embed.output", neg, pos)
+        assert torch.equal(d_pn, -d_np)
+
+    def test_normalize_gives_unit_norm(self) -> None:
+        model = _tiny_model()
+        pos, neg = self._seqs()
+        direction = build_steering_vector(model, "embed.output", pos, neg, normalize=True)
+        assert direction.norm().item() == pytest.approx(1.0, abs=1e-5)
+
+    def test_composes_with_steer(self) -> None:
+        model = _tiny_model()
+        pos, neg = self._seqs()
+        steerer = FeatureSteerer(model)
+        direction = build_steering_vector(model, "embed.output", pos, neg)
+        result = steerer.steer(_ids(), "embed.output", direction, coefficient=10.0)
+        assert not torch.equal(result.baseline_logits, result.steered_logits)
+
+    def test_empty_positive_raises(self) -> None:
+        model = _tiny_model()
+        _, neg = self._seqs()
+        with pytest.raises(ValueError, match="no activations"):
+            build_steering_vector(model, "embed.output", [], neg)

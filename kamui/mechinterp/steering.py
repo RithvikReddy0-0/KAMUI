@@ -29,6 +29,9 @@ Responsibilities:
     - ``FeatureSteerer.generate_steered`` / ``generate_steered_with_feature``:
         Autoregressively generate text with the intervention active at every
         step — the tangible payoff (steer, then read the continuation).
+    - ``build_steering_vector``:
+        Derive a steering direction from contrasting example sequences
+        (positive-minus-negative mean activations) — ActAdd, no SAE required.
 
 References:
     Turner, A. et al. (2023). Activation Addition: Steering Language Models
@@ -42,7 +45,7 @@ Implemented in: v0.4 (builds on kamui.mechinterp.superposition).
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -50,8 +53,11 @@ import torch
 from torch import Tensor, nn
 
 from kamui.evaluate.generation import TokenizerLike, generate
-from kamui.mechinterp.superposition import SparseAutoencoder
+from kamui.mechinterp.superposition import SparseAutoencoder, collect_activations
 from kamui.model.transformer import KAMUITransformer
+
+#: Floor for the steering-vector norm, to avoid divide-by-zero on normalisation.
+_NORM_EPS: float = 1e-8
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -337,3 +343,45 @@ class FeatureSteerer:
         return self.generate_steered(
             tokenizer, prompt, hook_point, direction, coefficient, **generate_kwargs
         )
+
+
+@torch.no_grad()
+def build_steering_vector(
+    model: KAMUITransformer,
+    hook_point: str,
+    positive: Iterable[Tensor],
+    negative: Iterable[Tensor],
+    normalize: bool = False,
+) -> Tensor:
+    """Build a contrastive steering direction (ActAdd) from example sequences.
+
+    The direction is the difference of mean activations at ``hook_point``::
+
+        d = mean_token(activation | positive) - mean_token(activation | negative)
+
+    where the mean is taken over every token of every sequence.  Added to the
+    residual stream (via ``FeatureSteerer.steer``), ``d`` pushes the model toward
+    whatever distinguishes the positive prompts from the negative ones — the
+    data-driven alternative to ``steer_with_feature`` when you have contrasting
+    examples rather than a trained SAE (Turner et al., 2023).
+
+    Args:
+        model:      A ``KAMUITransformer``.
+        hook_point: A residual-stream hook point, e.g. ``"blocks.3.ffn.output"``.
+        positive:   Sequences exhibiting the target behaviour (each ``(S,)`` or
+            ``(B, S)``).
+        negative:   Contrasting sequences.
+        normalize:  If True, return a unit-norm direction.
+
+    Returns:
+        A ``(d_model,)`` steering direction.
+
+    Raises:
+        ValueError: If ``positive`` or ``negative`` yields no activations.
+    """
+    positive_mean = collect_activations(model, hook_point, positive).mean(dim=0)
+    negative_mean = collect_activations(model, hook_point, negative).mean(dim=0)
+    direction = positive_mean - negative_mean
+    if normalize:
+        direction = direction / direction.norm().clamp_min(_NORM_EPS)
+    return direction
