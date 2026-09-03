@@ -218,6 +218,54 @@ class TestSAEMetrics:
             sae_feature_metrics(sae, torch.randn(10, 16))
 
 
+# ===========================================================================
+# save / load
+# ===========================================================================
+
+
+class TestSaveLoad:
+    def _trained_sae(self) -> SparseAutoencoder:
+        # Perturb the weights so a round-trip is not trivially matched by init.
+        sae = SparseAutoencoder(d_model=8, n_features=32, l1_coeff=5e-4)
+        with torch.no_grad():
+            sae.W_enc.add_(torch.randn_like(sae.W_enc))
+            sae.b_enc.add_(torch.randn_like(sae.b_enc))
+            sae.W_dec.add_(torch.randn_like(sae.W_dec))
+            sae.b_dec.add_(torch.randn_like(sae.b_dec))
+        return sae
+
+    def test_roundtrip_preserves_config(self, tmp_path) -> None:
+        sae = self._trained_sae()
+        sae.save(tmp_path / "sae.pt")
+        loaded = SparseAutoencoder.load(tmp_path / "sae.pt")
+        assert loaded.d_model == 8
+        assert loaded.n_features == 32
+        assert loaded.l1_coeff == pytest.approx(5e-4)
+
+    def test_roundtrip_preserves_weights(self, tmp_path) -> None:
+        sae = self._trained_sae()
+        sae.save(tmp_path / "sae.pt")
+        loaded = SparseAutoencoder.load(tmp_path / "sae.pt")
+        for (name, original), (_, restored) in zip(
+            sae.named_parameters(), loaded.named_parameters(), strict=True
+        ):
+            assert torch.equal(original, restored), name
+
+    def test_roundtrip_preserves_encoding(self, tmp_path) -> None:
+        sae = self._trained_sae()
+        x = torch.randn(10, 8)
+        expected = sae.encode(x)
+        sae.save(tmp_path / "sae.pt")
+        loaded = SparseAutoencoder.load(tmp_path / "sae.pt")
+        assert torch.equal(loaded.encode(x), expected)
+
+    def test_save_creates_parent_dirs(self, tmp_path) -> None:
+        sae = SparseAutoencoder(4, 8)
+        path = tmp_path / "nested" / "dir" / "sae.pt"
+        sae.save(path)
+        assert path.exists()
+
+
 def _identity_sae(d: int) -> SparseAutoencoder:
     """An SAE whose encode is exactly ReLU(x): feature f activation == relu(x[f])."""
     sae = SparseAutoencoder(d_model=d, n_features=d, l1_coeff=0.0)

@@ -19,7 +19,7 @@ hidden activation magnitude is the feature's true coefficient rather than an
 artefact of decoder scale.
 
 Public API:
-    - ``SparseAutoencoder``           — the model (encode / decode / forward / loss)
+    - ``SparseAutoencoder``           — the model (encode / decode / forward / loss / save / load)
     - ``collect_activations``         — cache activations at a hook point via HookManager
     - ``train_sae``                   — train an SAE on cached activations
     - ``sae_feature_metrics``         — reconstruction, dead-feature %, mean L0/L1
@@ -36,6 +36,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
@@ -182,6 +183,51 @@ class SparseAutoencoder(nn.Module):
             f"SparseAutoencoder(d_model={self.d_model}, "
             f"n_features={self.n_features}, l1_coeff={self.l1_coeff})"
         )
+
+    def save(self, path: str | Path) -> None:
+        """Save the SAE's config and weights to a ``.pt`` file.
+
+        Both the architecture (``d_model`` / ``n_features`` / ``l1_coeff``) and
+        the learned weights are stored, so ``SparseAutoencoder.load`` can rebuild
+        the model without the caller re-specifying its shape.  Parent directories
+        are created as needed.
+
+        Args:
+            path: Destination ``.pt`` file.
+        """
+        path_obj = Path(path)
+        path_obj.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(
+            {
+                "d_model": self.d_model,
+                "n_features": self.n_features,
+                "l1_coeff": self.l1_coeff,
+                "state_dict": self.state_dict(),
+            },
+            path_obj,
+        )
+
+    @classmethod
+    def load(cls, path: str | Path) -> SparseAutoencoder:
+        """Rebuild an SAE saved by :meth:`save`.
+
+        Loads with ``weights_only=True`` (no arbitrary-code execution — the file
+        holds only the config scalars and weight tensors).
+
+        Args:
+            path: A ``.pt`` file written by :meth:`save`.
+
+        Returns:
+            A ``SparseAutoencoder`` with the saved architecture and weights.
+        """
+        checkpoint = torch.load(Path(path), map_location="cpu", weights_only=True)
+        sae = cls(
+            d_model=int(checkpoint["d_model"]),
+            n_features=int(checkpoint["n_features"]),
+            l1_coeff=float(checkpoint["l1_coeff"]),
+        )
+        sae.load_state_dict(checkpoint["state_dict"])
+        return sae
 
 
 @torch.no_grad()

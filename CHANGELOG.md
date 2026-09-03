@@ -10,6 +10,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- SAE persistence (`SparseAutoencoder.save` / `SparseAutoencoder.load`): a
+  trained feature dictionary can now be written to a `.pt` file and rebuilt
+  later, so the compute spent on `train_sae` is not lost between sessions. The
+  checkpoint stores the architecture (`d_model` / `n_features` / `l1_coeff`)
+  alongside the weights, so `load` reconstructs the model without the caller
+  re-specifying its shape, and reads back with `weights_only=True` (no
+  arbitrary-code execution). Anchored by an exact round-trip: restored config,
+  every parameter, and the `encode` output all match bit-for-bit. 4-test suite
+  at 100% coverage.
 - Contrastive steering vectors (`kamui.mechinterp.build_steering_vector`):
   the ActAdd (Turner et al. 2023) alternative to `steer_with_feature` for when
   you have contrasting examples but no trained SAE. Returns the difference of
