@@ -24,6 +24,7 @@ Public API:
     - ``train_sae``                   — train an SAE on cached activations
     - ``sae_feature_metrics``         — reconstruction, dead-feature %, mean L0/L1
     - ``interpret_features``          — top-activating tokens per feature (what it detects)
+    - ``feature_cooccurrence``        — co-activation density matrix (which features fire together)
 
 Reference:
     Anthropic (2023). Towards Monosemanticity: Decomposing Language Models
@@ -463,3 +464,51 @@ def interpret_features(
             )
         )
     return profiles
+
+
+@torch.no_grad()
+def feature_cooccurrence(
+    sae: SparseAutoencoder,
+    activations: Tensor,
+    features: Iterable[int] | None = None,
+) -> Tensor:
+    """Compute how often pairs of SAE features co-activate.
+
+    Monosemantic features rarely fire in isolation — related features (e.g. the
+    products of feature splitting) tend to co-occur.  This returns the
+    **co-activation density** matrix ``M`` where::
+
+        M[i, j] = fraction of tokens on which features i and j are both active
+
+    ``M`` is symmetric and its diagonal ``M[i, i]`` is feature ``i``'s own firing
+    density (as in ``sae_feature_metrics``).  A dead feature yields a zero row and
+    column.  Read ``M`` alongside ``interpret_features``: the profiles say what
+    each feature detects, ``M`` says which detections travel together.
+
+    Args:
+        sae:         A (typically trained) ``SparseAutoencoder``.
+        activations: ``(N, d_model)`` activations, one row per token.
+        features:    Feature indices to include (defaults to every feature). The
+            returned matrix is ordered to match this list.
+
+    Returns:
+        A ``(k, k)`` co-activation density matrix for the ``k`` requested
+        features (``k == n_features`` by default).
+
+    Raises:
+        ValueError: If ``activations`` is not ``(N, d_model)`` matching the SAE,
+            or a requested feature index is out of range.
+    """
+    if activations.dim() != 2 or activations.shape[1] != sae.d_model:
+        raise ValueError(
+            f"activations must be (N, d_model={sae.d_model}), got {tuple(activations.shape)}"
+        )
+    feature_list = list(range(sae.n_features)) if features is None else list(features)
+    for feature in feature_list:
+        if not (0 <= feature < sae.n_features):
+            raise ValueError(f"feature must be in [0, {sae.n_features}), got {feature}")
+
+    active = (sae.encode(activations) > 0).float()  # (N, n_features)
+    selected = active[:, feature_list]  # (N, k)
+    n_rows = selected.shape[0]
+    return (selected.t() @ selected) / n_rows

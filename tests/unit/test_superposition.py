@@ -15,6 +15,7 @@ from kamui.mechinterp.superposition import (
     SAEMetrics,
     SparseAutoencoder,
     collect_activations,
+    feature_cooccurrence,
     interpret_features,
     sae_feature_metrics,
     train_sae,
@@ -346,3 +347,64 @@ class TestInterpretFeatures:
         sae = _identity_sae(3)
         with pytest.raises(ValueError, match="feature must be"):
             interpret_features(sae, torch.rand(5, 3), torch.arange(5), features=[9])
+
+
+# ===========================================================================
+# feature_cooccurrence
+# ===========================================================================
+
+
+class TestFeatureCooccurrence:
+    def test_constructed_cofiring(self) -> None:
+        # Identity SAE: feature f active iff activation[:, f] > 0.
+        sae = _identity_sae(3)
+        # Features 0 and 1 fire on every token; feature 2 never fires.
+        activations = torch.tensor([[1.0, 1.0, 0.0]] * 3)
+        m = feature_cooccurrence(sae, activations)
+        assert m[0, 1] == 1.0  # always co-fire
+        assert m[0, 0] == 1.0  # feature 0 density
+        assert m[1, 1] == 1.0
+        assert torch.equal(m[2], torch.zeros(3))  # dead feature: zero row
+        assert torch.equal(m[:, 2], torch.zeros(3))  # and zero column
+
+    def test_partial_cooccurrence_density(self) -> None:
+        sae = _identity_sae(3)
+        activations = torch.tensor(
+            [
+                [1.0, 0.0, 0.0],  # feat 0
+                [1.0, 1.0, 0.0],  # feat 0 and 1 (the only co-firing token)
+                [0.0, 1.0, 0.0],  # feat 1
+                [0.0, 0.0, 0.0],  # nothing
+            ]
+        )
+        m = feature_cooccurrence(sae, activations)
+        assert m[0, 0] == pytest.approx(0.5)  # feat 0 fires on 2/4
+        assert m[1, 1] == pytest.approx(0.5)
+        assert m[0, 1] == pytest.approx(0.25)  # both on 1/4
+
+    def test_matrix_is_symmetric(self) -> None:
+        sae = SparseAutoencoder(8, 16)
+        m = feature_cooccurrence(sae, torch.randn(64, 8))
+        assert torch.equal(m, m.t())
+
+    def test_diagonal_equals_density(self) -> None:
+        sae = SparseAutoencoder(8, 16)
+        activations = torch.randn(64, 8)
+        m = feature_cooccurrence(sae, activations)
+        active = (sae.encode(activations) > 0).float()
+        assert torch.allclose(m.diagonal(), active.mean(dim=0))
+
+    def test_feature_subset_shape_and_order(self) -> None:
+        sae = _identity_sae(4)
+        m = feature_cooccurrence(sae, torch.rand(10, 4), features=[0, 2])
+        assert m.shape == (2, 2)
+
+    def test_bad_shape_raises(self) -> None:
+        sae = SparseAutoencoder(8, 16)
+        with pytest.raises(ValueError, match="activations must be"):
+            feature_cooccurrence(sae, torch.randn(10, 4))
+
+    def test_feature_out_of_range_raises(self) -> None:
+        sae = _identity_sae(3)
+        with pytest.raises(ValueError, match="feature must be"):
+            feature_cooccurrence(sae, torch.rand(5, 3), features=[7])

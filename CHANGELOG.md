@@ -10,6 +10,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- SAE feature co-occurrence (`kamui.mechinterp.feature_cooccurrence`): the
+  companion to `interpret_features` — where the profiles say *what* each feature
+  detects, this says *which features fire together*. Returns the symmetric
+  co-activation density matrix `M[i, j] = fraction of tokens where features i
+  and j are both active`, whose diagonal is each feature's own firing density;
+  a dead feature yields a zero row/column. Useful for spotting related features
+  (e.g. feature splitting). Anchored exactly: symmetry, the diagonal matching
+  per-feature density, dead-feature zeros, and hand-computed co-firing
+  fractions. 7-test suite at 100% coverage.
 - SAE persistence (`SparseAutoencoder.save` / `SparseAutoencoder.load`): a
   trained feature dictionary can now be written to a `.pt` file and rebuilt
   later, so the compute spent on `train_sae` is not lost between sessions. The
