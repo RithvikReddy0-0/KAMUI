@@ -16,6 +16,7 @@ from kamui.mechinterp.superposition import (
     SparseAutoencoder,
     collect_activations,
     feature_cooccurrence,
+    feature_similarity,
     interpret_features,
     sae_feature_metrics,
     train_sae,
@@ -408,3 +409,52 @@ class TestFeatureCooccurrence:
         sae = _identity_sae(3)
         with pytest.raises(ValueError, match="feature must be"):
             feature_cooccurrence(sae, torch.rand(5, 3), features=[7])
+
+
+# ===========================================================================
+# feature_similarity
+# ===========================================================================
+
+
+class TestFeatureSimilarity:
+    def _sae_with_directions(self) -> SparseAutoencoder:
+        sae = SparseAutoencoder(d_model=4, n_features=4)
+        with torch.no_grad():
+            sae.W_dec.copy_(
+                torch.tensor(
+                    [
+                        [1.0, 0.0, 0.0, 0.0],  # feature 0
+                        [2.0, 0.0, 0.0, 0.0],  # same direction as 0 (magnitude differs)
+                        [-1.0, 0.0, 0.0, 0.0],  # opposite to 0
+                        [0.0, 1.0, 0.0, 0.0],  # orthogonal to 0
+                    ]
+                )
+            )
+        return sae
+
+    def test_known_similarities(self) -> None:
+        s = feature_similarity(self._sae_with_directions())
+        assert s[0, 1] == pytest.approx(1.0, abs=1e-6)  # same direction
+        assert s[0, 2] == pytest.approx(-1.0, abs=1e-6)  # opposite
+        assert s[0, 3] == pytest.approx(0.0, abs=1e-6)  # orthogonal
+
+    def test_diagonal_is_one(self) -> None:
+        s = feature_similarity(SparseAutoencoder(8, 16))
+        assert torch.allclose(s.diagonal(), torch.ones(16), atol=1e-6)
+
+    def test_matrix_is_symmetric(self) -> None:
+        s = feature_similarity(SparseAutoencoder(8, 16))
+        assert torch.allclose(s, s.t(), atol=1e-6)
+
+    def test_values_in_range(self) -> None:
+        s = feature_similarity(SparseAutoencoder(8, 16))
+        assert s.min() >= -1.0 - 1e-6
+        assert s.max() <= 1.0 + 1e-6
+
+    def test_feature_subset_shape(self) -> None:
+        s = feature_similarity(SparseAutoencoder(8, 16), features=[0, 5, 9])
+        assert s.shape == (3, 3)
+
+    def test_feature_out_of_range_raises(self) -> None:
+        with pytest.raises(ValueError, match="feature must be"):
+            feature_similarity(SparseAutoencoder(8, 16), features=[99])

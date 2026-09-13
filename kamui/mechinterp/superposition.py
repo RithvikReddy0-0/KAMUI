@@ -25,6 +25,7 @@ Public API:
     - ``sae_feature_metrics``         — reconstruction, dead-feature %, mean L0/L1
     - ``interpret_features``          — top-activating tokens per feature (what it detects)
     - ``feature_cooccurrence``        — co-activation density matrix (which features fire together)
+    - ``feature_similarity``          — decoder-direction cosine matrix (which features point alike)
 
 Reference:
     Anthropic (2023). Towards Monosemanticity: Decomposing Language Models
@@ -512,3 +513,45 @@ def feature_cooccurrence(
     selected = active[:, feature_list]  # (N, k)
     n_rows = selected.shape[0]
     return (selected.t() @ selected) / n_rows
+
+
+@torch.no_grad()
+def feature_similarity(
+    sae: SparseAutoencoder,
+    features: Iterable[int] | None = None,
+) -> Tensor:
+    """Cosine similarity between features' decoder directions.
+
+    Each SAE feature *is* a direction in activation space — a row of ``W_dec``.
+    This returns the symmetric matrix ``S`` of cosine similarities between those
+    directions::
+
+        S[i, j] = cos(W_dec[i], W_dec[j])  in [-1, 1]
+
+    The diagonal is ``1`` (a direction with itself).  Near-``1`` off-diagonal
+    entries flag features that point the same way — the geometric signature of
+    feature *splitting* (one concept spread over several near-parallel features);
+    near-``-1`` entries flag opposing features.  This is the geometric companion
+    to ``feature_cooccurrence``: co-occurrence asks whether two features *fire*
+    together, similarity asks whether they *point* the same way.
+
+    Args:
+        sae:      A (typically trained) ``SparseAutoencoder``.
+        features: Feature indices to include (defaults to every feature). The
+            returned matrix is ordered to match this list.
+
+    Returns:
+        A ``(k, k)`` cosine-similarity matrix for the ``k`` requested features
+        (``k == n_features`` by default).
+
+    Raises:
+        ValueError: If a requested feature index is out of range.
+    """
+    feature_list = list(range(sae.n_features)) if features is None else list(features)
+    for feature in feature_list:
+        if not (0 <= feature < sae.n_features):
+            raise ValueError(f"feature must be in [0, {sae.n_features}), got {feature}")
+
+    directions = sae.W_dec[feature_list]  # (k, d_model)
+    normed = directions / directions.norm(dim=1, keepdim=True).clamp_min(_NORM_EPS)
+    return normed @ normed.t()

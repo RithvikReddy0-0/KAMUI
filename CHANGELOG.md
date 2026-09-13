@@ -10,6 +10,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- SAE feature-direction similarity (`kamui.mechinterp.feature_similarity`): the
+  geometric companion to `feature_cooccurrence`. Where co-occurrence asks
+  whether two features *fire* together, this asks whether they *point* the same
+  way — returning the symmetric cosine-similarity matrix of the decoder
+  directions (`W_dec` rows), `S[i, j] = cos(W_dec[i], W_dec[j])`. Near-`1`
+  off-diagonal entries are the geometric signature of feature splitting (one
+  concept spread across near-parallel features); near-`-1` entries flag opposing
+  features. Anchored exactly: unit diagonal, symmetry, the `[-1, 1]` range, and
+  hand-set identical / opposite / orthogonal directions. 6-test suite at 100%
+  coverage.
 - SAE feature co-occurrence (`kamui.mechinterp.feature_cooccurrence`): the
   companion to `interpret_features` — where the profiles say *what* each feature
   detects, this says *which features fire together*. Returns the symmetric

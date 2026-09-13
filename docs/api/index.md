@@ -62,6 +62,8 @@ distributed-training helpers live in `kamui.training`.
 
 ::: kamui.mechinterp.superposition.feature_cooccurrence
 
+::: kamui.mechinterp.superposition.feature_similarity
+
 ::: kamui.mechinterp.steering.FeatureSteerer
 
 ::: kamui.mechinterp.steering.build_steering_vector
