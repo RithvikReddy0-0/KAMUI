@@ -10,6 +10,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Causal SAE feature ablation (`FeatureSteerer.ablate_features` +
+  `FeatureAblationResult`): the causal counterpart to the descriptive SAE tools.
+  Where steering *adds* a direction, this *removes* chosen features'
+  reconstruction contributions from the activation flowing through a
+  residual-stream point — an **error-corrected** ablation (only the ablated
+  features are subtracted, so the SAE's reconstruction error is left untouched,
+  making an empty ablation the exact identity) — then reruns the model to answer
+  the question the descriptive tools cannot: does the model actually *use* a
+  feature downstream? The removal math is anchored exactly via an identity SAE
+  (single- and multi-feature contributions subtract to hand-computed values),
+  and empty-ablation-equals-baseline is asserted bit-for-bit. 11-test suite at
+  100% coverage.
 - SAE feature-direction similarity (`kamui.mechinterp.feature_similarity`): the
   geometric companion to `feature_cooccurrence`. Where co-occurrence asks
   whether two features *fire* together, this asks whether they *point* the same

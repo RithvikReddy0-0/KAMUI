@@ -55,6 +55,7 @@ from kamui.mechinterp.induction import InductionHeadDetector
 from kamui.mechinterp.logit_lens import LogitLens, LogitLensResult
 from kamui.mechinterp.probing import LayerProbeResult, LinearProbe, ProbeResult
 from kamui.mechinterp.steering import (
+    FeatureAblationResult,
     FeatureSteerer,
     SteeringResult,
     build_steering_vector,
@@ -102,5 +103,6 @@ __all__: list[str] = [
     "FeatureProfile",
     "FeatureSteerer",
     "SteeringResult",
+    "FeatureAblationResult",
     "build_steering_vector",
 ]

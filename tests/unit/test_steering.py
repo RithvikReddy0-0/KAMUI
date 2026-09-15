@@ -316,3 +316,94 @@ class TestBuildSteeringVector:
         _, neg = self._seqs()
         with pytest.raises(ValueError, match="no activations"):
             build_steering_vector(model, "embed.output", [], neg)
+
+
+def _identity_sae(d: int) -> SparseAutoencoder:
+    """An SAE whose encode is exactly ReLU(x) and whose decoder is the identity."""
+    sae = SparseAutoencoder(d_model=d, n_features=d, l1_coeff=0.0)
+    with torch.no_grad():
+        sae.W_enc.copy_(torch.eye(d))
+        sae.W_dec.copy_(torch.eye(d))
+        sae.b_enc.zero_()
+        sae.b_dec.zero_()
+    return sae
+
+
+# ===========================================================================
+# _error_corrected_ablation (pure math, model-free)
+# ===========================================================================
+
+
+class TestErrorCorrectedAblation:
+    def test_empty_list_is_identity(self) -> None:
+        sae = _identity_sae(3)
+        act = torch.tensor([[2.0, -1.0, 3.0]])
+        result = FeatureSteerer._error_corrected_ablation(sae, act, [])
+        assert result is act  # unchanged object
+
+    def test_removes_single_feature_contribution(self) -> None:
+        # Identity SAE: feature f contributes relu(act[f]) along axis f.
+        sae = _identity_sae(3)
+        act = torch.tensor([[2.0, -1.0, 3.0]])  # relu -> [2, 0, 3]
+        result = FeatureSteerer._error_corrected_ablation(sae, act, [0])
+        assert torch.equal(result, torch.tensor([[0.0, -1.0, 3.0]]))
+
+    def test_removes_multiple_feature_contributions(self) -> None:
+        sae = _identity_sae(3)
+        act = torch.tensor([[2.0, -1.0, 3.0]])
+        result = FeatureSteerer._error_corrected_ablation(sae, act, [0, 2])
+        assert torch.equal(result, torch.tensor([[0.0, -1.0, 0.0]]))
+
+
+# ===========================================================================
+# FeatureSteerer.ablate_features
+# ===========================================================================
+
+
+class TestAblateFeatures:
+    def _steerer(self) -> FeatureSteerer:
+        return FeatureSteerer(_tiny_model(), SparseAutoencoder(d_model=8, n_features=32))
+
+    def test_empty_ablation_is_identity(self) -> None:
+        steerer = self._steerer()
+        result = steerer.ablate_features(_ids(), "blocks.0.ffn.output", features=[])
+        assert torch.equal(result.baseline_logits, result.ablated_logits)
+        assert result.ablated_features == []
+        assert result.hook_point == "blocks.0.ffn.output"
+
+    def test_ablation_changes_output(self) -> None:
+        steerer = self._steerer()
+        result = steerer.ablate_features(_ids(), "embed.output", features=list(range(32)))
+        assert not torch.equal(result.baseline_logits, result.ablated_logits)
+
+    def test_logit_delta_shape(self) -> None:
+        steerer = self._steerer()
+        result = steerer.ablate_features(_ids(), "embed.output", features=[0, 1])
+        assert result.logit_delta.shape == (16,)
+
+    def test_position_scoped_runs(self) -> None:
+        steerer = self._steerer()
+        result = steerer.ablate_features(
+            _ids(), "embed.output", features=list(range(32)), position=0
+        )
+        assert result.ablated_logits.shape == (1, 5, 16)
+
+    def test_requires_sae(self) -> None:
+        steerer = FeatureSteerer(_tiny_model())  # no SAE
+        with pytest.raises(ValueError, match="requires an SAE"):
+            steerer.ablate_features(_ids(), "embed.output", features=[0])
+
+    def test_invalid_hook_point_raises(self) -> None:
+        steerer = self._steerer()
+        with pytest.raises(ValueError, match="not a steerable point"):
+            steerer.ablate_features(_ids(), "unembed.input", features=[0])
+
+    def test_feature_out_of_range_raises(self) -> None:
+        steerer = self._steerer()
+        with pytest.raises(ValueError, match="feature must be"):
+            steerer.ablate_features(_ids(), "embed.output", features=[99])
+
+    def test_bad_input_shape_raises(self) -> None:
+        steerer = self._steerer()
+        with pytest.raises(ValueError, match="single sequence"):
+            steerer.ablate_features(torch.randint(0, 16, (2, 5)), "embed.output", features=[0])

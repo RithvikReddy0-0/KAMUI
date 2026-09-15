@@ -32,6 +32,9 @@ Responsibilities:
     - ``build_steering_vector``:
         Derive a steering direction from contrasting example sequences
         (positive-minus-negative mean activations) — ActAdd, no SAE required.
+    - ``FeatureSteerer.ablate_features``:
+        Remove SAE features' contributions from an activation and rerun — the
+        causal test of whether the model actually uses a feature downstream.
 
 References:
     Turner, A. et al. (2023). Activation Addition: Steering Language Models
@@ -53,6 +56,7 @@ import torch
 from torch import Tensor, nn
 
 from kamui.evaluate.generation import TokenizerLike, generate
+from kamui.hooks.manager import HookManager
 from kamui.mechinterp.superposition import SparseAutoencoder, collect_activations
 from kamui.model.transformer import KAMUITransformer
 
@@ -119,6 +123,29 @@ class SteeringResult:
         ax.axhline(0.0, color="black", linewidth=0.6)
         fig.tight_layout()
         return fig
+
+
+@dataclass
+class FeatureAblationResult:
+    """The effect of ablating SAE features from a residual-stream activation.
+
+    Attributes:
+        baseline_logits:  ``(1, S, V)`` logits with no ablation.
+        ablated_logits:   ``(1, S, V)`` logits after removing the features'
+            reconstruction contributions.
+        hook_point:       The residual-stream point that was ablated.
+        ablated_features: The feature indices that were removed.
+    """
+
+    baseline_logits: Tensor
+    ablated_logits: Tensor
+    hook_point: str
+    ablated_features: list[int]
+
+    @property
+    def logit_delta(self) -> Tensor:
+        """The change in final-position logits, ``ablated - baseline`` — shape ``(V,)``."""
+        return self.ablated_logits[0, -1] - self.baseline_logits[0, -1]
 
 
 def _steering_hook(
@@ -343,6 +370,92 @@ class FeatureSteerer:
         return self.generate_steered(
             tokenizer, prompt, hook_point, direction, coefficient, **generate_kwargs
         )
+
+    @staticmethod
+    def _error_corrected_ablation(
+        sae: SparseAutoencoder, activations: Tensor, feature_list: list[int]
+    ) -> Tensor:
+        """Subtract exactly the given features' decoder contributions from ``activations``.
+
+        Error-corrected: only the ablated features' reconstruction contributions
+        are removed, so the SAE's reconstruction error is left untouched (an empty
+        list is therefore the identity).
+        """
+        if not feature_list:
+            return activations
+        coded = sae.encode(activations)  # (..., n_features)
+        contribution = coded[..., feature_list] @ sae.W_dec[feature_list]  # (..., d_model)
+        return activations - contribution
+
+    @torch.no_grad()
+    def ablate_features(
+        self,
+        input_ids: Tensor,
+        hook_point: str,
+        features: Iterable[int],
+        position: int | None = None,
+    ) -> FeatureAblationResult:
+        """Ablate SAE features from a residual-stream point and measure the effect.
+
+        Where steering *adds* a direction, this *removes* the chosen features'
+        reconstruction contributions from the activation flowing through
+        ``hook_point`` (an error-corrected ablation that leaves the SAE's
+        reconstruction error untouched), then reruns the model.  It answers the
+        causal question the descriptive tools cannot: is a feature actually *used*
+        by the model downstream?
+
+        Args:
+            input_ids:  Token IDs ``(S,)`` or ``(1, S)``.
+            hook_point: A steerable residual-stream point.
+            features:   The SAE feature indices to remove.
+            position:   If given, ablate only this sequence position.
+
+        Returns:
+            A ``FeatureAblationResult`` with baseline and ablated logits.
+
+        Raises:
+            ValueError: If no SAE was provided, ``hook_point`` is not steerable,
+                ``input_ids`` is not a single sequence, or a feature is out of range.
+        """
+        if self.sae is None:
+            raise ValueError("ablate_features requires an SAE; pass one to FeatureSteerer(...)")
+        if not self._is_steerable(hook_point):
+            raise ValueError(
+                f"'{hook_point}' is not a steerable point "
+                f"(use embed.output / blocks.i.attn.output / blocks.i.ffn.output)"
+            )
+        feature_list = list(features)
+        for feature in feature_list:
+            if not (0 <= feature < self.sae.n_features):
+                raise ValueError(f"feature must be in [0, {self.sae.n_features}), got {feature}")
+
+        ids = self._as_batch(input_ids)
+        self.model.eval()
+        module_path = hook_point.rsplit(".", 1)[0]
+
+        with HookManager(self.model) as hooks:
+            hooks.attach(module_path, "output")
+            baseline_logits = self.model(ids)
+            activation = hooks.get(hook_point)  # (1, S, d_model)
+
+        ablated = self._error_corrected_ablation(self.sae, activation, feature_list)
+        if position is not None:
+            merged = activation.clone()
+            merged[:, position, :] = ablated[:, position, :]
+            ablated = merged
+
+        module = self._resolve(module_path)
+
+        def _replace(_module: nn.Module, _inputs: tuple[Any, ...], _output: Tensor) -> Tensor:
+            return ablated
+
+        handle = module.register_forward_hook(_replace)
+        try:
+            ablated_logits = self.model(ids)
+        finally:
+            handle.remove()
+
+        return FeatureAblationResult(baseline_logits, ablated_logits, hook_point, feature_list)
 
 
 @torch.no_grad()
