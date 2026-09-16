@@ -26,6 +26,7 @@ Public API:
     - ``interpret_features``          — top-activating tokens per feature (what it detects)
     - ``feature_cooccurrence``        — co-activation density matrix (which features fire together)
     - ``feature_similarity``          — decoder-direction cosine matrix (which features point alike)
+    - ``max_activating_examples``     — top activating tokens-in-context for one feature
 
 Reference:
     Anthropic (2023). Towards Monosemanticity: Decomposing Language Models
@@ -555,3 +556,113 @@ def feature_similarity(
     directions = sae.W_dec[feature_list]  # (k, d_model)
     normed = directions / directions.norm(dim=1, keepdim=True).clamp_min(_NORM_EPS)
     return normed @ normed.t()
+
+
+def _single_batch(ids: Tensor) -> Tensor:
+    """Return ``ids`` as a ``(1, S)`` batch, rejecting multi-row inputs."""
+    if ids.dim() == 1:
+        return ids.unsqueeze(0)
+    if ids.dim() == 2 and ids.shape[0] == 1:
+        return ids
+    raise ValueError(f"each sequence must be (S,) or (1, S), got shape {tuple(ids.shape)}")
+
+
+@dataclass
+class ActivatingExample:
+    """One place where a feature fired strongly, with its surrounding context.
+
+    Attributes:
+        sequence_index:    Index (into ``sequences``) of the sequence it came from.
+        position:          Position of the peak token within that sequence.
+        activation:        The feature's activation at that position.
+        context_token_ids: A window of token IDs around ``position``.
+        focus_offset:      Index of the peak token within ``context_token_ids``
+            (so ``context_token_ids[focus_offset]`` is the token at ``position``).
+    """
+
+    sequence_index: int
+    position: int
+    activation: float
+    context_token_ids: list[int]
+    focus_offset: int
+
+
+@torch.no_grad()
+def max_activating_examples(
+    model: KAMUITransformer,
+    sae: SparseAutoencoder,
+    hook_point: str,
+    sequences: Iterable[Tensor],
+    feature: int,
+    top_k: int = 5,
+    window: int = 4,
+) -> list[ActivatingExample]:
+    """Find the contexts in which one SAE feature fires most strongly.
+
+    This is the higher-fidelity companion to ``interpret_features``: rather than
+    isolated top-activating tokens, it returns each peak token *in its context
+    window* — the "max activating examples" view that makes a feature's meaning
+    legible.  Every position of every sequence is scored by the feature's encoded
+    activation at ``hook_point``; the strongest active positions are returned with
+    a window of surrounding tokens.
+
+    Args:
+        model:      A ``KAMUITransformer``.
+        sae:        A (typically trained) ``SparseAutoencoder``.
+        hook_point: A registry hook point, e.g. ``"blocks.0.ffn.output"``.
+        sequences:  Iterable of token-ID tensors, each ``(S,)`` or ``(1, S)``.
+        feature:    The feature index to inspect.
+        top_k:      Maximum number of examples to return.
+        window:     Number of context tokens to include on each side of the peak.
+
+    Returns:
+        Up to ``top_k`` ``ActivatingExample`` objects, strongest first; only
+        positions where the feature is active (> 0) are included.
+
+    Raises:
+        ValueError: If ``feature`` is out of range, ``top_k < 1``, ``window < 0``,
+            or ``sequences`` yields nothing.
+    """
+    if not (0 <= feature < sae.n_features):
+        raise ValueError(f"feature must be in [0, {sae.n_features}), got {feature}")
+    if top_k < 1:
+        raise ValueError(f"top_k must be >= 1, got {top_k}")
+    if window < 0:
+        raise ValueError(f"window must be >= 0, got {window}")
+
+    module_path, point = hook_point.rsplit(".", 1)
+    model.eval()
+
+    # (activation, sequence_index, position, sequence_token_ids)
+    scored: list[tuple[float, int, int, list[int]]] = []
+    for seq_index, ids in enumerate(sequences):
+        batch = _single_batch(ids)
+        with HookManager(model) as hooks:
+            hooks.attach(module_path, point)
+            model(batch)
+            activation = hooks.get(hook_point)  # (1, S, d_model)
+        column = sae.encode(activation)[0, :, feature]  # (S,)
+        tokens = batch[0].tolist()
+        for position, value in enumerate(column.tolist()):
+            scored.append((value, seq_index, position, tokens))
+
+    if not scored:
+        raise ValueError("sequences produced no activations")
+
+    scored.sort(key=lambda record: record[0], reverse=True)
+    examples: list[ActivatingExample] = []
+    for value, seq_index, position, tokens in scored[:top_k]:
+        if value <= 0:  # sorted descending: nothing active remains
+            break
+        low = max(0, position - window)
+        high = min(len(tokens), position + window + 1)
+        examples.append(
+            ActivatingExample(
+                sequence_index=seq_index,
+                position=position,
+                activation=value,
+                context_token_ids=tokens[low:high],
+                focus_offset=position - low,
+            )
+        )
+    return examples

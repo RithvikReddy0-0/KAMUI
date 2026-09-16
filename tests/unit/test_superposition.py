@@ -10,6 +10,7 @@ import pytest
 import torch
 
 from kamui.mechinterp.superposition import (
+    ActivatingExample,
     FeatureProfile,
     SAELoss,
     SAEMetrics,
@@ -18,6 +19,7 @@ from kamui.mechinterp.superposition import (
     feature_cooccurrence,
     feature_similarity,
     interpret_features,
+    max_activating_examples,
     sae_feature_metrics,
     train_sae,
 )
@@ -458,3 +460,132 @@ class TestFeatureSimilarity:
     def test_feature_out_of_range_raises(self) -> None:
         with pytest.raises(ValueError, match="feature must be"):
             feature_similarity(SparseAutoencoder(8, 16), features=[99])
+
+
+# ===========================================================================
+# max_activating_examples
+# ===========================================================================
+
+
+class TestMaxActivatingExamples:
+    def _model(self) -> KAMUITransformer:
+        torch.manual_seed(0)
+        config = ModelConfig(
+            n_layers=1, d_model=8, n_heads=2, d_ff=16, vocab_size=16, context_length=8, dropout=0.0
+        )
+        model = KAMUITransformer(config)
+        model.eval()
+        return model
+
+    def _sequences(self) -> list[torch.Tensor]:
+        torch.manual_seed(2)
+        return [torch.randint(0, 16, (6,)), torch.randint(0, 16, (6,))]
+
+    def test_top_example_matches_independent_argmax(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        seqs = self._sequences()
+        feature = 3
+        examples = max_activating_examples(
+            model, sae, "blocks.0.ffn.output", seqs, feature, top_k=3
+        )
+
+        # Independently find the global argmax activation for this feature.
+        best_val, best_seq, best_pos = float("-inf"), -1, -1
+        with torch.no_grad():
+            for i, ids in enumerate(seqs):
+                act = collect_activations(model, "blocks.0.ffn.output", [ids])
+                col = sae.encode(act)[:, feature]
+                pos = int(col.argmax())
+                if float(col[pos]) > best_val:
+                    best_val, best_seq, best_pos = float(col[pos]), i, pos
+
+        assert examples[0].sequence_index == best_seq
+        assert examples[0].position == best_pos
+        assert examples[0].activation == pytest.approx(best_val)
+
+    def test_sorted_descending(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        examples = max_activating_examples(
+            model, sae, "blocks.0.ffn.output", self._sequences(), feature=1, top_k=5
+        )
+        acts = [e.activation for e in examples]
+        assert acts == sorted(acts, reverse=True)
+
+    def test_context_window_and_focus(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        seqs = self._sequences()
+        examples = max_activating_examples(
+            model, sae, "blocks.0.ffn.output", seqs, feature=0, top_k=1, window=2
+        )
+        ex = examples[0]
+        assert isinstance(ex, ActivatingExample)
+        tokens = seqs[ex.sequence_index].tolist()
+        low = max(0, ex.position - 2)
+        assert ex.context_token_ids == tokens[low : ex.position + 3]
+        # focus_offset points back at the peak token
+        assert ex.context_token_ids[ex.focus_offset] == tokens[ex.position]
+
+    def test_window_zero_is_single_token(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        examples = max_activating_examples(
+            model, sae, "blocks.0.ffn.output", self._sequences(), feature=0, top_k=1, window=0
+        )
+        assert len(examples[0].context_token_ids) == 1
+        assert examples[0].focus_offset == 0
+
+    def test_respects_top_k(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        examples = max_activating_examples(
+            model, sae, "blocks.0.ffn.output", self._sequences(), feature=0, top_k=2
+        )
+        assert len(examples) <= 2
+
+    def test_dead_feature_returns_empty(self) -> None:
+        model = self._model()
+        sae = SparseAutoencoder(8, 16)
+        with torch.no_grad():
+            sae.b_enc.fill_(-1e9)  # force every ReLU off
+        examples = max_activating_examples(
+            model, sae, "blocks.0.ffn.output", self._sequences(), feature=0
+        )
+        assert examples == []
+
+    def test_accepts_1xs_sequence(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        examples = max_activating_examples(
+            model, sae, "blocks.0.ffn.output", [torch.randint(0, 16, (1, 6))], feature=0
+        )
+        assert all(e.sequence_index == 0 for e in examples)
+
+    def test_bad_sequence_shape_raises(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        with pytest.raises(ValueError, match="each sequence must be"):
+            max_activating_examples(
+                model, sae, "blocks.0.ffn.output", [torch.randint(0, 16, (2, 6))], feature=0
+            )
+
+    def test_empty_sequences_raises(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        with pytest.raises(ValueError, match="no activations"):
+            max_activating_examples(model, sae, "blocks.0.ffn.output", [], feature=0)
+
+    def test_feature_out_of_range_raises(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        with pytest.raises(ValueError, match="feature must be"):
+            max_activating_examples(
+                model, sae, "blocks.0.ffn.output", self._sequences(), feature=99
+            )
+
+    def test_bad_top_k_raises(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        with pytest.raises(ValueError, match="top_k must be"):
+            max_activating_examples(
+                model, sae, "blocks.0.ffn.output", self._sequences(), feature=0, top_k=0
+            )
+
+    def test_bad_window_raises(self) -> None:
+        model, sae = self._model(), SparseAutoencoder(8, 16)
+        with pytest.raises(ValueError, match="window must be"):
+            max_activating_examples(
+                model, sae, "blocks.0.ffn.output", self._sequences(), feature=0, window=-1
+            )

@@ -61,6 +61,7 @@ from kamui.mechinterp.steering import (
     build_steering_vector,
 )
 from kamui.mechinterp.superposition import (
+    ActivatingExample,
     FeatureProfile,
     SAELoss,
     SAEMetrics,
@@ -69,6 +70,7 @@ from kamui.mechinterp.superposition import (
     feature_cooccurrence,
     feature_similarity,
     interpret_features,
+    max_activating_examples,
     sae_feature_metrics,
     train_sae,
 )
@@ -100,6 +102,8 @@ __all__: list[str] = [
     "interpret_features",
     "feature_cooccurrence",
     "feature_similarity",
+    "max_activating_examples",
+    "ActivatingExample",
     "FeatureProfile",
     "FeatureSteerer",
     "SteeringResult",

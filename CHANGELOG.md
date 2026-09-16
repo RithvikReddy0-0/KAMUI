@@ -10,6 +10,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Max-activating examples (`kamui.mechinterp.max_activating_examples` +
+  `ActivatingExample`): the higher-fidelity companion to `interpret_features`.
+  Instead of isolated top-activating *tokens*, it returns each peak token *in
+  its surrounding context window* — the "max activating examples" view real SAE
+  dashboards use to make a feature's meaning legible. Every position of every
+  sequence is scored by the feature's encoded activation at a hook point; the
+  strongest active positions come back with a context window and a
+  `focus_offset` marking the peak token. Anchored by an independent argmax
+  cross-check (top example matches the hand-computed global max), plus exact
+  window/focus/ordering properties and a dead-feature-returns-empty case.
+  12-test suite at 100% coverage.
 - Causal SAE feature ablation (`FeatureSteerer.ablate_features` +
   `FeatureAblationResult`): the causal counterpart to the descriptive SAE tools.
   Where steering *adds* a direction, this *removes* chosen features'
