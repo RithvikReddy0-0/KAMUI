@@ -206,3 +206,27 @@ class RMSNorm(nn.Module):
 
     def __repr__(self) -> str:
         return f"RMSNorm(normalized_shape={self.normalized_shape}, eps={self.eps})"
+
+
+def build_norm(normalization: str, normalized_shape: int, eps: float = _DEFAULT_EPS) -> nn.Module:
+    """Construct the normalisation layer named by ``normalization``.
+
+    This is the single place the model chooses between norm variants, so
+    ``ModelConfig.normalization`` maps to the right ``nn.Module``.
+
+    Args:
+        normalization:    ``"layernorm"`` or ``"rmsnorm"``.
+        normalized_shape: Size of the feature dimension to normalise.
+        eps:              Numerical-stability epsilon.
+
+    Returns:
+        A ``LayerNorm`` or ``RMSNorm`` module.
+
+    Raises:
+        ValueError: If ``normalization`` is not a recognised name.
+    """
+    if normalization == "layernorm":
+        return LayerNorm(normalized_shape, eps)
+    if normalization == "rmsnorm":
+        return RMSNorm(normalized_shape, eps)
+    raise ValueError(f"normalization must be 'layernorm' or 'rmsnorm', got '{normalization}'")

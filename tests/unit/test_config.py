@@ -162,6 +162,31 @@ def test_repr() -> None:
     assert "n_layers=6" in rep
     assert "d_model=256" in rep
     assert "estimated_total_parameters=" in rep
+    assert "normalization='layernorm'" in rep
+
+
+def test_default_normalization_is_layernorm() -> None:
+    """The default norm is LayerNorm (unchanged behaviour)."""
+    assert ModelConfig().normalization == "layernorm"
+
+
+def test_invalid_normalization_raises() -> None:
+    with pytest.raises(ValueError, match="normalization must be"):
+        ModelConfig(normalization="batchnorm")
+
+
+def test_normalization_parameter_counts() -> None:
+    """RMSNorm is scale-only, so it has exactly half the norm parameters of LayerNorm."""
+    common = dict(n_layers=2, d_model=64, n_heads=4, d_ff=256, vocab_size=1000, context_length=32)
+    n_norms = 2 * 2 + 1  # two per block + one final
+
+    layernorm = ModelConfig(**common)  # type: ignore[arg-type]
+    rmsnorm = ModelConfig(**common, normalization="rmsnorm")  # type: ignore[arg-type]
+
+    assert layernorm.normalization_parameters == n_norms * 2 * 64
+    assert rmsnorm.normalization_parameters == n_norms * 64
+    # RMSNorm drops exactly the per-norm bias vectors from the total.
+    assert rmsnorm.estimated_total_parameters == layernorm.estimated_total_parameters - n_norms * 64
 
 
 def test_yaml_roundtrip(tmp_path: Path) -> None:

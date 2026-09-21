@@ -68,7 +68,7 @@ from kamui.model.block import TransformerBlock
 from kamui.model.config import ModelConfig
 from kamui.model.embedding import Embedding
 from kamui.model.init_weights import init_weights
-from kamui.model.normalization import LayerNorm
+from kamui.model.normalization import build_norm
 
 
 class KAMUITransformer(nn.Module):
@@ -98,7 +98,7 @@ class KAMUITransformer(nn.Module):
 
         self.embed = Embedding(config)
         self.blocks = nn.ModuleList(TransformerBlock(config) for _ in range(config.n_layers))
-        self.final_ln = LayerNorm(config.d_model)
+        self.final_ln = build_norm(config.normalization, config.d_model)
         self.unembed = nn.Linear(config.d_model, config.vocab_size, bias=False)
 
         # GPT-2-style scaled initialisation (before tying, so the shared

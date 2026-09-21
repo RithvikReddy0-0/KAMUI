@@ -10,6 +10,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Selectable normalization: RMSNorm as a model option
+  (`ModelConfig(normalization="rmsnorm")`). The `RMSNorm` layer already existed
+  but the model hardcoded `LayerNorm`; it is now wired through a `build_norm`
+  factory so both the per-block and final norms follow `config.normalization`
+  (`"layernorm"` default, or `"rmsnorm"` for the scale-only, bias-free LLaMA /
+  Mistral style). `ModelConfig` validates the choice, gains a
+  `normalization_parameters` property, and folds it into
+  `estimated_total_parameters` — the LayerNorm estimate is unchanged, and the
+  actual RMSNorm model's parameter count matches the new estimate exactly (an
+  end-to-end test asserts `num_parameters() == estimated_total_parameters` for
+  RMSNorm). Lets users build modern-style models and compare how the two norms
+  affect interpretability. Weight init already handled both norms.
 - Max-activating examples (`kamui.mechinterp.max_activating_examples` +
   `ActivatingExample`): the higher-fidelity companion to `interpret_features`.
   Instead of isolated top-activating *tokens*, it returns each peak token *in

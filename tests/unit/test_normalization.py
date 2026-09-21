@@ -18,7 +18,20 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from kamui.model.normalization import LayerNorm, RMSNorm
+from kamui.model.normalization import LayerNorm, RMSNorm, build_norm
+
+
+class TestBuildNorm:
+    def test_builds_layernorm(self) -> None:
+        assert isinstance(build_norm("layernorm", 8), LayerNorm)
+
+    def test_builds_rmsnorm(self) -> None:
+        assert isinstance(build_norm("rmsnorm", 8), RMSNorm)
+
+    def test_invalid_name_raises(self) -> None:
+        with pytest.raises(ValueError, match="normalization must be"):
+            build_norm("batchnorm", 8)
+
 
 # ===========================================================================
 # LayerNorm

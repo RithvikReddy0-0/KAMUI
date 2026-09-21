@@ -28,6 +28,9 @@ class ModelConfig:
             or 'rope'). 'rope' (rotary) is applied to Q/K inside attention and
             requires an even d_head.
         dropout: Dropout rate (must be in [0, 1]).
+        normalization: Normalisation layer type ('layernorm' or 'rmsnorm').
+            'rmsnorm' (LLaMA / Mistral style) is scale-only with no bias and
+            no mean-centering, so it has half the parameters of 'layernorm'.
     """
 
     n_layers: int = 6
@@ -38,6 +41,7 @@ class ModelConfig:
     context_length: int = 256
     positional_encoding: str = "learned"
     dropout: float = 0.0
+    normalization: str = "layernorm"
 
     def __post_init__(self) -> None:  # noqa: C901 — flat list of independent guards
         """Enforces tensor dimension and hyperparameter sanity checks.
@@ -71,6 +75,11 @@ class ModelConfig:
             raise ValueError(
                 f"positional_encoding must be 'learned', 'sinusoidal', or 'rope', "
                 f"got '{self.positional_encoding}'"
+            )
+
+        if self.normalization not in ("layernorm", "rmsnorm"):
+            raise ValueError(
+                f"normalization must be 'layernorm' or 'rmsnorm', got '{self.normalization}'"
             )
 
         # RoPE rotates the head dimension in 2-D planes, so d_head must be even.
@@ -134,28 +143,38 @@ class ModelConfig:
         return (self.vocab_size * self.d_model) + pos_params
 
     @property
+    def normalization_parameters(self) -> int:
+        """Estimates total normalization-layer parameters across the model.
+
+        Assumptions:
+            - There are ``2 * n_layers + 1`` normalization layers: two per block
+              (attention input, FFN input) plus one final norm before unembedding.
+            - A ``layernorm`` layer has a learnable scale (gamma) and bias (beta),
+              each of shape (d_model,) → ``2 * d_model`` parameters.
+            - An ``rmsnorm`` layer is scale-only (no bias) → ``d_model`` parameters.
+            - Formula: (2 * n_layers + 1) * (2 * d_model if layernorm else d_model).
+        """
+        per_norm = 2 * self.d_model if self.normalization == "layernorm" else self.d_model
+        return (2 * self.n_layers + 1) * per_norm
+
+    @property
     def estimated_total_parameters(self) -> int:
         """Estimates the total trainable parameter count of the model.
 
         Assumptions:
-            - Includes attention, feedforward, and embedding parameters.
-            - Includes normalization layer parameters:
-              - 2 LayerNorms per block (attention input, FFN input). Each LayerNorm has
-                learnable scale (gamma) and bias (beta) parameters of shape (d_model,).
-              - 1 final LayerNorm before unembedding, also with scale and bias (d_model,).
-              - LayerNorm parameters formula: n_layers * 4 * d_model + 2 * d_model.
+            - Includes attention, feedforward, embedding, and normalization
+              parameters (see ``normalization_parameters`` for the norm count).
             - Includes unembedding layer parameters:
                 - The weight matrix is tied to the token embedding matrix transpose, so it
                   adds 0 trainable parameters.
                 - The unembedding linear layer has NO learnable bias (bias=False), matching
                   standard GPT-2 weight-tying conventions.
         """
-        ln_params = (self.n_layers * 4 * self.d_model) + (2 * self.d_model)
         return (
             self.embedding_parameters
             + self.attention_parameters
             + self.feedforward_parameters
-            + ln_params
+            + self.normalization_parameters
         )
 
     def __repr__(self) -> str:
@@ -170,6 +189,7 @@ class ModelConfig:
             f"  context_length={self.context_length},\n"
             f"  positional_encoding='{self.positional_encoding}',\n"
             f"  dropout={self.dropout},\n"
+            f"  normalization='{self.normalization}',\n"
             f"  estimated_total_parameters={self.estimated_total_parameters:,}\n"
             f")"
         )

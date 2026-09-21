@@ -15,7 +15,7 @@ from torch import nn
 from kamui.model.block import TransformerBlock
 from kamui.model.config import ModelConfig
 from kamui.model.embedding import Embedding
-from kamui.model.normalization import LayerNorm
+from kamui.model.normalization import LayerNorm, RMSNorm
 from kamui.model.transformer import KAMUITransformer
 
 
@@ -185,6 +185,25 @@ class TestKAMUITransformerParameters:
         cfg = _config()
         model = KAMUITransformer(cfg)
         assert model.num_parameters() == cfg.estimated_total_parameters
+
+    def test_rmsnorm_model_uses_rmsnorm_everywhere(self) -> None:
+        model = KAMUITransformer(_config(normalization="rmsnorm"))
+        assert isinstance(model.final_ln, RMSNorm)
+        assert all(isinstance(b.ln1, RMSNorm) and isinstance(b.ln2, RMSNorm) for b in model.blocks)
+
+    def test_rmsnorm_param_count_matches_estimate(self) -> None:
+        # The end-to-end anchor: the actual RMSNorm model has exactly the
+        # parameter count the config estimates for it.
+        cfg = _config(normalization="rmsnorm")
+        model = KAMUITransformer(cfg)
+        assert model.num_parameters() == cfg.estimated_total_parameters
+        # ...and fewer parameters than the LayerNorm variant (no norm biases).
+        assert cfg.estimated_total_parameters < _config().estimated_total_parameters
+
+    def test_rmsnorm_model_forward(self) -> None:
+        model = KAMUITransformer(_config(normalization="rmsnorm")).eval()
+        logits = model(torch.randint(0, 100, (2, 8)))
+        assert logits.shape == (2, 8, 100)
 
     def test_trainable_only_flag(self) -> None:
         model = KAMUITransformer(_config())

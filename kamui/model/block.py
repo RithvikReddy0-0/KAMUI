@@ -57,7 +57,7 @@ from torch import Tensor, nn
 from kamui.model.attention import MultiHeadAttention
 from kamui.model.config import ModelConfig
 from kamui.model.feedforward import FeedForward
-from kamui.model.normalization import LayerNorm
+from kamui.model.normalization import build_norm
 
 
 class TransformerBlock(nn.Module):
@@ -88,9 +88,9 @@ class TransformerBlock(nn.Module):
         """
         super().__init__()
         self.config = config
-        self.ln1 = LayerNorm(config.d_model)
+        self.ln1 = build_norm(config.normalization, config.d_model)
         self.attn = MultiHeadAttention(config)
-        self.ln2 = LayerNorm(config.d_model)
+        self.ln2 = build_norm(config.normalization, config.d_model)
         self.ffn = FeedForward(config)
 
     def forward(self, x: Tensor, return_weights: bool = False) -> Tensor | tuple[Tensor, Tensor]:

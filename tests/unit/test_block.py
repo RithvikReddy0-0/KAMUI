@@ -19,7 +19,7 @@ from kamui.model.attention import MultiHeadAttention
 from kamui.model.block import TransformerBlock
 from kamui.model.config import ModelConfig
 from kamui.model.feedforward import FeedForward
-from kamui.model.normalization import LayerNorm
+from kamui.model.normalization import LayerNorm, RMSNorm
 
 
 def _small_config(**overrides: object) -> ModelConfig:
@@ -59,6 +59,12 @@ class TestTransformerBlockConstruction:
     def test_ln1_and_ln2_are_distinct(self) -> None:
         block = TransformerBlock(_small_config())
         assert block.ln1 is not block.ln2
+
+    def test_rmsnorm_config_uses_rmsnorm(self) -> None:
+        block = TransformerBlock(_small_config(normalization="rmsnorm"))
+        assert isinstance(block.ln1, RMSNorm)
+        assert isinstance(block.ln2, RMSNorm)
+        assert block(torch.randn(2, 7, 16)).shape == (2, 7, 16)
 
 
 # ===========================================================================
