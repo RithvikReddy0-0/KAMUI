@@ -22,6 +22,8 @@ distributed-training helpers live in `kamui.training`.
 
 ::: kamui.training.trainer.Trainer
 
+::: kamui.training.ema.EMA
+
 ## Distributed Training (v0.3)
 
 ::: kamui.training.distributed.wrap_ddp

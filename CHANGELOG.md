@@ -10,6 +10,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- EMA of weights (`kamui.training.EMA`): keeps a smoothed "shadow" copy of the
+  trainable parameters, `shadow <- decay * shadow + (1 - decay) * weights`,
+  updated explicitly after each optimiser step. `average_parameters(model)` is
+  a context manager that swaps the EMA weights in for evaluation or sampling
+  and always restores the raw weights on exit (even on an exception);
+  `copy_to` / `store` / `restore` expose the same steps individually, and
+  `state_dict` / `load_state_dict` let the shadow be checkpointed. It is a
+  standalone module — `Trainer` is unchanged. Tests assert the update formula,
+  that `decay=0` tracks the weights exactly, and the swap/restore round-trip.
+  16-test suite at 100% coverage.
 - Selectable normalization: RMSNorm as a model option
   (`ModelConfig(normalization="rmsnorm")`). The `RMSNorm` layer already existed
   but the model hardcoded `LayerNorm`; it is now wired through a `build_norm`

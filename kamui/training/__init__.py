@@ -23,6 +23,7 @@ Module layout:
     optimizer.py      — AdamW with correct weight decay separation
     data.py           — DataLoader, tokenisation, sequence packing
     checkpointing.py  — save/load model + optimiser + step state
+    ema.py            — exponential moving average of the weights
 
 Public API:
     Trainer           — main training loop
@@ -61,6 +62,7 @@ from kamui.training.distributed import (
     unwrap_model,
     wrap_ddp,
 )
+from kamui.training.ema import EMA
 from kamui.training.optimizer import build_optimizer
 from kamui.training.scheduler import CosineWithWarmup
 from kamui.training.trainer import Trainer, TrainingConfig
@@ -77,6 +79,7 @@ __all__: list[str] = [
     "save_checkpoint",
     "load_checkpoint",
     "load_model_only",
+    "EMA",
     # Distributed data-parallel (v0.3)
     "init_process_group",
     "destroy_process_group",
