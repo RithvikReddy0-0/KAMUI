@@ -16,6 +16,15 @@ Responsibilities:
         Temperature is applied to the logits before any top-k / nucleus
         filtering.
 
+    - Decoding controls (opt-in; the defaults change nothing):
+
+        ``repetition_penalty``: discourage tokens already in the sequence
+                      (Keskar et al., 2019).  A seen token's positive logit is
+                      divided by the penalty and its negative logit multiplied,
+                      so ``penalty > 1`` always makes it less likely.
+        ``stop_token_ids``: end generation as soon as one of these tokens is
+                      produced (the stop token is kept in the output).
+
     - ``generate_with_probs(model, tokenizer, prompt, n_tokens) -> GenerationResult``:
         Greedily generate ``n_tokens`` and return the decoded text together
         with the per-step probability distributions, for inspecting
@@ -24,12 +33,15 @@ Responsibilities:
 References:
     Holtzman, A. et al. (2019). The Curious Case of Neural Text Degeneration.
     ICLR 2020. https://arxiv.org/abs/1904.09751
+    Keskar, N. S. et al. (2019). CTRL: A Conditional Transformer Language Model
+    for Controllable Generation. https://arxiv.org/abs/1909.05858
 
-Implemented in: Phase 4.
+Implemented in: Phase 4 (decoding controls: v0.4).
 """
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -67,6 +79,42 @@ class GenerationResult:
     text: str
     token_ids: list[int]
     probs: Tensor
+
+
+def _apply_repetition_penalty(logits: Tensor, previous_ids: Tensor, penalty: float) -> Tensor:
+    """Penalise every token that already appears in ``previous_ids``.
+
+    Each distinct seen token is penalised once, however often it occurred: a
+    positive logit is divided by ``penalty`` and a negative one multiplied by
+    it, so for ``penalty > 1`` the token always becomes less likely.
+
+    Args:
+        logits:       ``(vocab,)`` next-token logits.
+        previous_ids: 1-D tensor of the token IDs generated so far (prompt included).
+        penalty:      The penalty factor (``1.0`` is a no-op).
+
+    Returns:
+        A new ``(vocab,)`` logit tensor (the input is not modified).
+    """
+    seen = torch.unique(previous_ids)
+    penalised = logits.clone()
+    values = penalised[seen]
+    penalised[seen] = torch.where(values > 0, values / penalty, values * penalty)
+    return penalised
+
+
+def _validate_sampling_args(
+    temperature: float, top_k: int, top_p: float, repetition_penalty: float
+) -> None:
+    """Raise ``ValueError`` if any sampling hyperparameter is out of range."""
+    if temperature <= 0:
+        raise ValueError(f"temperature must be > 0, got {temperature}")
+    if top_k < 1:
+        raise ValueError(f"top_k must be >= 1, got {top_k}")
+    if not (0.0 < top_p <= 1.0):
+        raise ValueError(f"top_p must be in (0, 1], got {top_p}")
+    if repetition_penalty <= 0:
+        raise ValueError(f"repetition_penalty must be > 0, got {repetition_penalty}")
 
 
 def _sample_next(
@@ -122,21 +170,27 @@ def generate(
     top_k: int = 50,
     top_p: float = 0.9,
     seed: int | None = None,
+    repetition_penalty: float = 1.0,
+    stop_token_ids: Iterable[int] | None = None,
 ) -> str:
     """Generate a continuation of ``prompt``.
 
     Args:
-        model:          A ``KAMUITransformer``.
-        tokenizer:      An object with ``encode(str) -> list[int]`` and
+        model:              A ``KAMUITransformer``.
+        tokenizer:          An object with ``encode(str) -> list[int]`` and
             ``decode(list[int]) -> str`` (e.g. ``BPETokenizer``).
-        prompt:         The (non-empty) prompt string.
-        max_new_tokens: Number of tokens to generate.
-        strategy:       ``"greedy"``, ``"top_k"``, ``"nucleus"``, or
+        prompt:             The (non-empty) prompt string.
+        max_new_tokens:     Maximum number of tokens to generate.
+        strategy:           ``"greedy"``, ``"top_k"``, ``"nucleus"``, or
             ``"temperature"``.
-        temperature:    Logit temperature (> 0), applied before filtering.
-        top_k:          k for ``top_k`` sampling (>= 1).
-        top_p:          p for ``nucleus`` sampling (in (0, 1]).
-        seed:           Optional RNG seed for reproducible sampling.
+        temperature:        Logit temperature (> 0), applied before filtering.
+        top_k:              k for ``top_k`` sampling (>= 1).
+        top_p:              p for ``nucleus`` sampling (in (0, 1]).
+        seed:               Optional RNG seed for reproducible sampling.
+        repetition_penalty: Factor (> 0) discouraging tokens already in the
+            sequence; ``1.0`` disables it.
+        stop_token_ids:     Optional token IDs that end generation as soon as
+            one is produced (it is kept in the output).
 
     Returns:
         The full decoded string (prompt + continuation).
@@ -145,12 +199,8 @@ def generate(
         ValueError: If ``prompt`` is empty, ``strategy`` is unknown, or a
             hyperparameter is out of range.
     """
-    if temperature <= 0:
-        raise ValueError(f"temperature must be > 0, got {temperature}")
-    if top_k < 1:
-        raise ValueError(f"top_k must be >= 1, got {top_k}")
-    if not (0.0 < top_p <= 1.0):
-        raise ValueError(f"top_p must be in (0, 1], got {top_p}")
+    _validate_sampling_args(temperature, top_k, top_p, repetition_penalty)
+    stop_ids = set(stop_token_ids) if stop_token_ids is not None else set()
 
     if seed is not None:
         torch.manual_seed(seed)
@@ -166,9 +216,13 @@ def generate(
     tokens = torch.tensor([ids], dtype=torch.long)  # (1, S)
     for _ in range(max_new_tokens):
         window = tokens[:, -ctx:]
-        logits = model(window)  # (1, s, V)
-        next_id = _sample_next(logits[0, -1], strategy, temperature, top_k, top_p)
+        next_logits = model(window)[0, -1]  # (V,)
+        if repetition_penalty != 1.0:
+            next_logits = _apply_repetition_penalty(next_logits, tokens[0], repetition_penalty)
+        next_id = _sample_next(next_logits, strategy, temperature, top_k, top_p)
         tokens = torch.cat([tokens, torch.tensor([[next_id]], dtype=torch.long)], dim=1)
+        if next_id in stop_ids:
+            break
 
     if was_training:
         model.train()

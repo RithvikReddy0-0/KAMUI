@@ -8,12 +8,15 @@ Coverage target:
 from __future__ import annotations
 
 import math
+from types import SimpleNamespace
 
 import pytest
 import torch
+from torch import nn
 
 from kamui.evaluate.generation import (
     GenerationResult,
+    _apply_repetition_penalty,
     generate,
     generate_with_probs,
 )
@@ -274,3 +277,94 @@ class TestGeneration:
         model.train()
         generate_with_probs(model, _ByteTokenizer(), "hi", n_tokens=2)
         assert model.training
+
+
+# ===========================================================================
+# Decoding controls: repetition penalty and stop tokens
+# ===========================================================================
+
+
+class _FixedLogitModel(nn.Module):
+    """Always predicts the same next-token logits, so decoding is exact to reason about."""
+
+    def __init__(self, logits: list[float], context_length: int = 16) -> None:
+        super().__init__()
+        self.config = SimpleNamespace(context_length=context_length)
+        self.register_buffer("row", torch.tensor(logits))
+
+    def forward(self, ids: torch.Tensor) -> torch.Tensor:
+        batch, seq = ids.shape
+        return self.row.expand(batch, seq, -1)
+
+
+class _DigitTokenizer:
+    """Single-digit token IDs: "5" <-> [5]."""
+
+    def encode(self, text: str) -> list[int]:
+        return [int(c) for c in text]
+
+    def decode(self, ids: list[int]) -> str:
+        return "".join(str(i) for i in ids)
+
+
+# Token 0 narrowly beats token 1; everything else is far behind (vocab of 8).
+_LOGITS = [1.0, 0.9, -10.0, -10.0, -10.0, -10.0, -10.0, -10.0]
+
+
+class TestRepetitionPenaltyMath:
+    def test_divides_positive_and_multiplies_negative(self) -> None:
+        logits = torch.tensor([2.0, -2.0, 1.0])
+        out = _apply_repetition_penalty(logits, torch.tensor([0, 1]), penalty=2.0)
+        assert torch.equal(out, torch.tensor([1.0, -4.0, 1.0]))
+
+    def test_repeated_token_penalised_once(self) -> None:
+        logits = torch.tensor([2.0, -2.0, 1.0])
+        out = _apply_repetition_penalty(logits, torch.tensor([0, 0, 0]), penalty=2.0)
+        assert torch.equal(out, torch.tensor([1.0, -2.0, 1.0]))
+
+    def test_input_not_mutated(self) -> None:
+        logits = torch.tensor([2.0, -2.0, 1.0])
+        _apply_repetition_penalty(logits, torch.tensor([0]), penalty=2.0)
+        assert torch.equal(logits, torch.tensor([2.0, -2.0, 1.0]))
+
+
+class TestDecodingControls:
+    def test_no_penalty_repeats_the_top_token(self) -> None:
+        model = _FixedLogitModel(_LOGITS)
+        out = generate(model, _DigitTokenizer(), "5", max_new_tokens=4)  # type: ignore[arg-type]
+        assert out == "50000"
+
+    def test_penalty_breaks_the_repetition(self) -> None:
+        # Step 1: 0 wins (1.0 vs 0.9). Step 2: 0 was seen -> 0.5 < 0.9, so 1.
+        # Steps 3-4: both seen -> 0.5 vs 0.45, so 0.
+        model = _FixedLogitModel(_LOGITS)
+        out = generate(
+            model, _DigitTokenizer(), "5", max_new_tokens=4, repetition_penalty=2.0  # type: ignore[arg-type]
+        )
+        assert out == "50100"
+
+    def test_stop_token_ends_generation(self) -> None:
+        model = _FixedLogitModel(_LOGITS)
+        out = generate(
+            model, _DigitTokenizer(), "5", max_new_tokens=4, stop_token_ids=[0]  # type: ignore[arg-type]
+        )
+        assert out == "50"  # stops right after producing token 0 (kept in output)
+
+    def test_unproduced_stop_token_has_no_effect(self) -> None:
+        model = _FixedLogitModel(_LOGITS)
+        out = generate(
+            model, _DigitTokenizer(), "5", max_new_tokens=4, stop_token_ids=[3]  # type: ignore[arg-type]
+        )
+        assert out == "50000"
+
+    def test_penalty_of_one_matches_default(self) -> None:
+        model = _model()
+        tok = _ByteTokenizer()
+        default = generate(model, tok, "hello", max_new_tokens=6)
+        explicit = generate(model, tok, "hello", max_new_tokens=6, repetition_penalty=1.0)
+        assert explicit == default
+
+    @pytest.mark.parametrize("penalty", [0.0, -1.0])
+    def test_bad_penalty_raises(self, penalty: float) -> None:
+        with pytest.raises(ValueError, match="repetition_penalty must be"):
+            generate(_model(), _ByteTokenizer(), "hi", repetition_penalty=penalty)

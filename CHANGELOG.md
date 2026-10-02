@@ -10,6 +10,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Decoding controls for `generate`: `repetition_penalty` (Keskar et al. 2019 —
+  a seen token's positive logit is divided by the penalty and its negative
+  logit multiplied, so `penalty > 1` always makes it less likely; each distinct
+  token is penalised once) and `stop_token_ids` (generation ends as soon as one
+  is produced, keeping it in the output). Both are opt-in: the defaults
+  (`1.0`, `None`) leave output unchanged, and `FeatureSteerer.generate_steered`
+  inherits them because it forwards its keyword arguments. Tests use a
+  fixed-logit stub model so the decoded sequences are hand-computable — with
+  a penalty of 2 the greedy output changes from `5 0 0 0 0` to `5 0 1 0 0`, and
+  a stop token on the first prediction yields just `5 0`.
 - EMA of weights (`kamui.training.EMA`): keeps a smoothed "shadow" copy of the
   trainable parameters, `shadow <- decay * shadow + (1 - decay) * weights`,
   updated explicitly after each optimiser step. `average_parameters(model)` is
