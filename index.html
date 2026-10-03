@@ -484,10 +484,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#v01-feature-scope" class="md-nav__link">
+  <a href="#feature-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.1 feature scope
+        Feature scope
       
     </span>
   </a>
@@ -1197,10 +1197,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#v01-feature-scope" class="md-nav__link">
+  <a href="#feature-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.1 feature scope
+        Feature scope
       
     </span>
   </a>
@@ -1256,63 +1256,64 @@ is exposed and documented.</p>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>residual_stream  (B, S, D)
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ↓  ×n_layers [TransformerBlock: Pre-LN → Attention → residual → Pre-LN → FFN → residual]
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>residual_stream  (B, S, D)
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ↓  [LayerNorm → Unembed]
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ↓  [Final norm (LayerNorm or RMSNorm) → Unembed]
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>logits  (B, S, V)
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ↓  [HookManager captures any activation above]
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>mechinterp tools: LogitLens | ActivationPatcher | InductionHeadDetector | CircuitAblator
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                  GradientAttribution | SparseAutoencoder | FeatureSteerer
 </span></code></pre></div>
-<h2 id="v01-feature-scope">v0.1 feature scope<a class="headerlink" href="#v01-feature-scope" title="Permanent link">&para;</a></h2>
+<h2 id="feature-scope">Feature scope<a class="headerlink" href="#feature-scope" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Feature</th>
-<th>Status</th>
+<th>Since</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>BPE tokeniser</td>
-<td>Phase 1</td>
-</tr>
-<tr>
-<td>Transformer model (from scratch)</td>
-<td>Phase 1</td>
-</tr>
-<tr>
-<td>Explicit training loop</td>
-<td>Phase 2</td>
+<td>BPE tokeniser, from-scratch transformer, explicit training loop</td>
+<td>v0.1</td>
 </tr>
 <tr>
 <td>Hook system</td>
-<td>Phase 3</td>
+<td>v0.1</td>
 </tr>
 <tr>
-<td>Logit lens</td>
-<td>Phase 4</td>
+<td>Logit lens, attention visualisation, linear probing</td>
+<td>v0.1</td>
 </tr>
 <tr>
-<td>Attention visualisation</td>
-<td>Phase 4</td>
+<td>Activation patching, induction-head detection, circuit ablation</td>
+<td>v0.1</td>
 </tr>
 <tr>
-<td>Activation patching</td>
-<td>Phase 4</td>
+<td>RoPE positional encoding</td>
+<td>v0.2</td>
 </tr>
 <tr>
-<td>Linear probing</td>
-<td>Phase 4</td>
-</tr>
-<tr>
-<td>Induction head detection</td>
-<td>Phase 4</td>
-</tr>
-<tr>
-<td>Circuit ablation</td>
-<td>Phase 4</td>
+<td>Gradient attribution (input×grad, integrated gradients)</td>
+<td>v0.2</td>
 </tr>
 <tr>
 <td>Sparse autoencoders</td>
 <td>v0.2</td>
+</tr>
+<tr>
+<td>Multi-GPU training (DDP)</td>
+<td>v0.3</td>
+</tr>
+<tr>
+<td>SAE feature analysis (interpretation, max-activating examples, co-occurrence, similarity)</td>
+<td>v0.4 (on <code>main</code>)</td>
+</tr>
+<tr>
+<td>Steering, steered generation, contrastive vectors, feature ablation</td>
+<td>v0.4 (on <code>main</code>)</td>
+</tr>
+<tr>
+<td>RMSNorm option, weight EMA, decoding controls, top-k accuracy</td>
+<td>v0.4 (on <code>main</code>)</td>
 </tr>
 </tbody>
 </table>
