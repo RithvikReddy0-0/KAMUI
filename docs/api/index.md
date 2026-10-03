@@ -76,6 +76,8 @@ distributed-training helpers live in `kamui.training`.
 
 ::: kamui.evaluate.perplexity.compute_perplexity
 
+::: kamui.evaluate.accuracy.compute_accuracy
+
 ::: kamui.evaluate.generation.generate
 
 ::: kamui.evaluate.calibration.expected_calibration_error

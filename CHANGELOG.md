@@ -10,6 +10,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Top-k next-token accuracy (`kamui.evaluate.compute_accuracy`): the fraction
+  of positions whose target token is among the model's `k` highest-scoring
+  predictions — the "did it get it right?" companion to `compute_perplexity`,
+  accepting the same batch formats (`(inputs, targets)` pairs or single tensors
+  shifted internally) and restoring the model's training mode. `k` is clamped
+  to the vocabulary size. Tests use a stub model with fixed, tie-free logits so
+  every value is exact (targets ranked 1st–4th give 0.25 / 0.5 / 0.75 / 1.0 at
+  k = 1–4), and check on a real model that accuracy never decreases as `k`
+  grows and reaches 1.0 at `k = vocab_size`. 12-test suite at 100% coverage.
 - Decoding controls for `generate`: `repetition_penalty` (Keskar et al. 2019 —
   a seen token's positive logit is divided by the penalty and its negative
   logit multiplied, so `penalty > 1` always makes it less likely; each distinct

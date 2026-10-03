@@ -4,15 +4,18 @@ Responsibilities:
     - Compute perplexity on a held-out dataset
     - Generate text with configurable sampling strategies
     - Measure calibration (confidence vs. accuracy alignment)
+    - Measure top-k next-token accuracy
 
 Public API:
     compute_perplexity  — token-level perplexity on a dataset
+    compute_accuracy    — top-k next-token accuracy on a dataset
     generate            — text generation with top-k, nucleus, greedy sampling
 
 Implemented in: Phase 4, Weeks 11–12 (training evaluation) and
                 Phase 4, Week 15 (generation, calibration)
 """
 
+from kamui.evaluate.accuracy import compute_accuracy
 from kamui.evaluate.calibration import (
     expected_calibration_error,
     reliability_diagram,
@@ -30,6 +33,7 @@ from kamui.evaluate.perplexity import (
 )
 
 __all__: list[str] = [
+    "compute_accuracy",
     "compute_perplexity",
     "compute_sequence_perplexity",
     "compute_token_loss",
