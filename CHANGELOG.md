@@ -138,6 +138,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   hand-computed values, and dead features report empty. 8-test suite at 100%
   coverage.
 
+### Changed
+- README and docs landing page brought up to date with everything shipped
+  since v0.1: the progress list, the interpretability toolkit (now split into
+  component/circuit tools and feature/superposition tools), a new training &
+  evaluation table, an architecture diagram that covers RoPE and the
+  LayerNorm/RMSNorm choice, and new quickstart examples for gradient
+  attribution, the SAE learn→interpret→steer workflow, and a LLaMA-style
+  config. Every new snippet was executed against the current API before
+  publishing.
+
 ---
 
 ## [0.3.0] — 2026-08-15

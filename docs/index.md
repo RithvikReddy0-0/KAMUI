@@ -37,24 +37,25 @@ token_ids  (B, S)
 residual_stream  (B, S, D)
     ↓  ×n_layers [TransformerBlock: Pre-LN → Attention → residual → Pre-LN → FFN → residual]
 residual_stream  (B, S, D)
-    ↓  [LayerNorm → Unembed]
+    ↓  [Final norm (LayerNorm or RMSNorm) → Unembed]
 logits  (B, S, V)
     ↓  [HookManager captures any activation above]
 mechinterp tools: LogitLens | ActivationPatcher | InductionHeadDetector | CircuitAblator
+                  GradientAttribution | SparseAutoencoder | FeatureSteerer
 ```
 
-## v0.1 feature scope
+## Feature scope
 
-| Feature | Status |
-|---------|--------|
-| BPE tokeniser | Phase 1 |
-| Transformer model (from scratch) | Phase 1 |
-| Explicit training loop | Phase 2 |
-| Hook system | Phase 3 |
-| Logit lens | Phase 4 |
-| Attention visualisation | Phase 4 |
-| Activation patching | Phase 4 |
-| Linear probing | Phase 4 |
-| Induction head detection | Phase 4 |
-| Circuit ablation | Phase 4 |
+| Feature | Since |
+|---------|-------|
+| BPE tokeniser, from-scratch transformer, explicit training loop | v0.1 |
+| Hook system | v0.1 |
+| Logit lens, attention visualisation, linear probing | v0.1 |
+| Activation patching, induction-head detection, circuit ablation | v0.1 |
+| RoPE positional encoding | v0.2 |
+| Gradient attribution (input×grad, integrated gradients) | v0.2 |
 | Sparse autoencoders | v0.2 |
+| Multi-GPU training (DDP) | v0.3 |
+| SAE feature analysis (interpretation, max-activating examples, co-occurrence, similarity) | v0.4 (on `main`) |
+| Steering, steered generation, contrastive vectors, feature ablation | v0.4 (on `main`) |
+| RMSNorm option, weight EMA, decoding controls, top-k accuracy | v0.4 (on `main`) |

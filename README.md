@@ -68,12 +68,26 @@ Activation Patching      ██████████  ✅ complete
 Induction Head Detector  ██████████  ✅ complete
 Circuit Ablation         ██████████  ✅ complete
 Shared Utilities         ██████████  ✅ complete
+── v0.2 ─────────────────────────────────────────
+RoPE Positional Encoding ██████████  ✅ complete
+Gradient Attribution     ██████████  ✅ complete
+Sparse Autoencoders      ██████████  ✅ complete
+── v0.3 ─────────────────────────────────────────
+Multi-GPU Training (DDP) ██████████  ✅ complete
+── v0.4 (unreleased) ────────────────────────────
+SAE Feature Analysis     ██████████  ✅ complete
+Steering & Ablation      ██████████  ✅ complete
+RMSNorm Option           ██████████  ✅ complete
+Weight EMA               ██████████  ✅ complete
+Decoding Controls        ██████████  ✅ complete
+Accuracy Metric          ██████████  ✅ complete
 ```
 
-**All v0.1 components are implemented** — the six-tool interpretability
-toolkit, the full transformer, the training pipeline, working CLI entry
-points, and 7 runnable notebooks — at ~99% test coverage with `ruff`,
-`black`, and `mypy` all clean.
+**v0.1 – v0.3 are released and the v0.4 work is on `main`.** That's the
+from-scratch transformer and training pipeline, the original six-tool
+interpretability toolkit, and the newer SAE, steering and attribution tools.
+It also covers multi-GPU training, working CLI entry points, and 7 runnable
+notebooks. Test coverage is ~99%, with `ruff`, `black`, and `mypy` all clean.
 
 The [roadmap](#roadmap) and [issue tracker](https://github.com/RithvikReddy0-0/KAMUI/issues) reflect active development.
 
@@ -120,9 +134,9 @@ pytest
 ```
 
 This clones the repo, installs all dependencies in editable mode, and runs
-the full test suite (740 tests, ~99% coverage).
+the full test suite (866 tests, ~99% coverage).
 
-### API (v0.1)
+### API
 
 **Train a model** (or simply: `kamui-train --config configs/nano.yaml --corpus data/corpus.txt`)
 
@@ -169,6 +183,44 @@ effect    = patcher.patch_all_layers(clean, corrupted)
 effect.plot()   # which layer stores the fact?
 ```
 
+**Which input tokens drove the prediction?**
+
+```python
+attr = kamui.GradientAttribution(model, tokenizer)
+attr.token_attribution(ids, method="integrated_gradients").plot()
+```
+
+**Sparse autoencoder: learn features, read them, steer with them**
+
+```python
+from kamui.mechinterp import (
+    FeatureSteerer, collect_activations, interpret_features, train_sae,
+)
+
+seqs = [torch.tensor(tokenizer.encode(line)) for line in lines]
+acts = collect_activations(model, "blocks.1.ffn.output", seqs)    # one row per token
+sae  = kamui.SparseAutoencoder(d_model=config.d_model, n_features=8 * config.d_model)
+train_sae(sae, acts, epochs=50)
+
+profiles = interpret_features(sae, acts, torch.cat(seqs), top_k=10)   # what each feature detects
+
+steerer = FeatureSteerer(model, sae)
+print(steerer.generate_steered_with_feature(       # clamp a feature up, read the text
+    tokenizer, "The city of", "blocks.1.ffn.output",
+    feature=profiles[0].feature, coefficient=8.0, max_new_tokens=20,
+))
+```
+
+**A LLaMA-style variant** (rotary positions + RMSNorm) is one config away:
+
+```python
+import dataclasses
+
+base   = kamui.ModelConfig.from_yaml("configs/nano.yaml")
+config = dataclasses.replace(base, positional_encoding="rope", normalization="rmsnorm")
+model  = kamui.KAMUITransformer(config)
+```
+
 ---
 
 ## Architecture
@@ -183,14 +235,16 @@ tokenizer  →  model  →  hooks  →  mechinterp  →  evaluate
 text input
     ↓  BPETokenizer (from scratch — no tiktoken)
 token_ids  (B, S)
-    ↓  Embedding: token + positional
+    ↓  Embedding: token (+ learned / sinusoidal positions; RoPE acts inside attention)
 residual_stream  (B, S, D)
     ↓  × n_layers:
-       Pre-LN → MultiHeadAttention → residual add
-       Pre-LN → FeedForward       → residual add
+       Pre-norm → MultiHeadAttention → residual add
+       Pre-norm → FeedForward        → residual add
 residual_stream  (B, S, D)
-    ↓  Final LayerNorm → Linear unembedding
+    ↓  Final norm → Linear unembedding (weight-tied)
 logits  (B, S, V)
+
+norm = LayerNorm (default) or RMSNorm, set by ModelConfig.normalization
 
 HookManager captures any activation above ↑
 mechinterp tools use captured activations for analysis
@@ -198,7 +252,9 @@ mechinterp tools use captured activations for analysis
 
 ---
 
-## Interpretability Toolkit (v0.1)
+## Interpretability Toolkit
+
+**Components and circuits** (v0.1)
 
 | Tool | What it answers |
 |------|----------------|
@@ -208,6 +264,33 @@ mechinterp tools use captured activations for analysis
 | `ActivationPatcher` | Which components are *causally* responsible for a behaviour? |
 | `InductionHeadDetector` | Which heads implement in-context pattern matching? |
 | `CircuitAblator` | What is the minimal circuit for a behaviour? |
+| `GradientAttribution` | Which input tokens drove this prediction? (v0.2) |
+
+**Features and superposition** (v0.2 – v0.4, in `kamui.mechinterp`)
+
+| Tool | What it answers |
+|------|----------------|
+| `SparseAutoencoder` + `train_sae` | What features is this layer representing? (save / load included) |
+| `interpret_features` | Which tokens make each feature fire? |
+| `max_activating_examples` | In what contexts does a feature fire most strongly? |
+| `feature_cooccurrence` | Which features fire together? |
+| `feature_similarity` | Which features point in the same direction? |
+| `FeatureSteerer.steer` / `generate_steered` | What happens if I push the model along a feature? |
+| `FeatureSteerer.ablate_features` | Does the model actually *use* this feature? |
+| `build_steering_vector` | What direction separates two sets of prompts? |
+
+---
+
+## Training & evaluation
+
+| Piece | What it does |
+|-------|--------------|
+| `Trainer` / `TrainingConfig` | Explicit loop: gradient accumulation, clipping, cosine LR with warmup |
+| `kamui.training.distributed` | Multi-GPU data parallelism (DDP), verified with two real processes |
+| `kamui.training.EMA` | Exponential moving average of the weights for evaluation / sampling |
+| `compute_perplexity` / `compute_accuracy` | Perplexity and top-k next-token accuracy |
+| `expected_calibration_error` | Does the model's confidence match its accuracy? |
+| `generate` | Greedy / top-k / nucleus / temperature sampling, repetition penalty, stop tokens |
 
 ---
 
@@ -234,7 +317,7 @@ research/
 ├── experiments/        # one folder per experiment (config + results + notes)
 ├── reports/            # written findings and paper drafts
 ├── figures/            # publication-quality plots
-├── future/             # v0.2 design specs (SAEs)
+├── future/             # design specs (e.g. the SAE spec, now implemented)
 └── RESEARCH_LOG.md     # chronological experiment log
 ```
 
@@ -250,6 +333,7 @@ becomes the experiments section of your paper.
 | **v0.1** | Core transformer + 6 interpretability tools | ✅ Released |
 | **v0.2** | Sparse autoencoders, gradient attribution, RoPE | ✅ Released |
 | **v0.3** | Multi-GPU training (DDP) | ✅ Released |
+| **v0.4** | SAE feature analysis & steering, RMSNorm, weight EMA, decoding controls, accuracy metric | 🔄 On `main`, unreleased |
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
