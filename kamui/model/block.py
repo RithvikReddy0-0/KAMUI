@@ -57,6 +57,7 @@ from torch import Tensor, nn
 from kamui.model.attention import MultiHeadAttention
 from kamui.model.config import ModelConfig
 from kamui.model.feedforward import FeedForward
+from kamui.model.kv_cache import LayerKVCache
 from kamui.model.normalization import build_norm
 
 
@@ -93,13 +94,20 @@ class TransformerBlock(nn.Module):
         self.ln2 = build_norm(config.normalization, config.d_model)
         self.ffn = FeedForward(config)
 
-    def forward(self, x: Tensor, return_weights: bool = False) -> Tensor | tuple[Tensor, Tensor]:
+    def forward(
+        self,
+        x: Tensor,
+        return_weights: bool = False,
+        cache: LayerKVCache | None = None,
+    ) -> Tensor | tuple[Tensor, Tensor]:
         """Run the residual stream through the block.
 
         Args:
             x:              Residual-stream tensor of shape ``(B, S, d_model)``.
             return_weights: If True, also return the attention probability
-                matrix of shape ``(B, n_heads, S, S)`` from this block.
+                matrix of shape ``(B, n_heads, S, T + S)`` from this block.
+            cache:          Optional ``LayerKVCache`` for this block's attention
+                (see ``kamui.model.kv_cache``).
 
         Returns:
             The updated residual stream of shape ``(B, S, d_model)`` if
@@ -122,9 +130,9 @@ class TransformerBlock(nn.Module):
 
         # Attention sublayer (Pre-LN): normalise input, attend, add to stream.
         if return_weights:
-            attn_out, weights = self.attn(self.ln1(x), return_weights=True)
+            attn_out, weights = self.attn(self.ln1(x), return_weights=True, cache=cache)
         else:
-            attn_out = self.attn(self.ln1(x))
+            attn_out = self.attn(self.ln1(x), cache=cache)
         x = x + attn_out
 
         # Feed-forward sublayer (Pre-LN): normalise input, transform, add.

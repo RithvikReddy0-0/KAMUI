@@ -10,6 +10,25 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- KV-cache for generation (`kamui.model.KVCache`,
+  `generate(..., use_cache=True)`). Each attention layer stores the keys and
+  values it has already computed, so every decoding step processes only the
+  newest token instead of re-running the whole window. Measured on CPU with a
+  6-layer, d_model=256 model generating 200 tokens: 2.2x faster with identical
+  output, and the gap widens with length. Under the hood the learned,
+  sinusoidal and rotary encodings accept a position `offset`. Attention appends
+  to the cache and uses the matching slice of the causal mask, and
+  `KAMUITransformer.forward` takes a `cache` (`model.new_cache()` builds one).
+  When the next position would run past `context_length`, the cache restarts
+  from the same cropped window uncached generation uses, so the two paths
+  always agree. Opt-in: `use_cache` defaults to `False`. The attention-weights
+  hook now forwards keyword arguments, so capturing weights during cached
+  decoding uses the cache instead of silently bypassing it. Tests show
+  cached logits matching a full forward pass, token by token and in
+  multi-token chunks, under all three positional encodings and RMSNorm. They
+  also show cached `generate` (including steered generation, decoding
+  controls, and runs past the context window) producing exactly the same
+  text as uncached. 29-test suite at 100% coverage.
 - Top-k next-token accuracy (`kamui.evaluate.compute_accuracy`): the fraction
   of positions whose target token is among the model's `k` highest-scoring
   predictions — the "did it get it right?" companion to `compute_perplexity`,

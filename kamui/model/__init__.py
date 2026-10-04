@@ -42,6 +42,7 @@ Implemented in: Phase 1, Weeks 5–8
 """
 
 from kamui.model.config import ModelConfig
+from kamui.model.kv_cache import KVCache
 from kamui.model.transformer import KAMUITransformer
 
-__all__: list[str] = ["ModelConfig", "KAMUITransformer"]
+__all__: list[str] = ["ModelConfig", "KAMUITransformer", "KVCache"]

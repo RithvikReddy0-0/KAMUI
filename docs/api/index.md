@@ -10,6 +10,8 @@ distributed-training helpers live in `kamui.training`.
 
 ::: kamui.model.transformer.KAMUITransformer
 
+::: kamui.model.kv_cache.KVCache
+
 ## Tokenizer
 
 ::: kamui.tokenizer.bpe.BPETokenizer

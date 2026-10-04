@@ -75,6 +75,19 @@ _INT_DTYPES: tuple[torch.dtype, ...] = (
 )
 
 
+def _check_positions(seq_len: int, offset: int, context_length: int) -> None:
+    """Validate a ``[offset, offset + seq_len)`` slice of a positional table."""
+    if seq_len < 1:
+        raise ValueError(f"seq_len must be >= 1, got {seq_len}")
+    if offset < 0:
+        raise ValueError(f"offset must be >= 0, got {offset}")
+    if offset + seq_len > context_length:
+        raise ValueError(
+            f"seq_len ({seq_len}) exceeds context_length ({context_length}) "
+            f"when starting at position {offset}"
+        )
+
+
 class TokenEmbedding(nn.Module):
     """Learnable token-ID → vector lookup table.
 
@@ -191,24 +204,23 @@ class SinusoidalPositionalEncoding(nn.Module):
         pe[:, 1::2] = torch.cos(position * div_term[: d_model // 2])
         self.register_buffer("pe", pe)
 
-    def forward(self, seq_len: int) -> Tensor:
-        """Return the positional encodings for the first ``seq_len`` positions.
+    def forward(self, seq_len: int, offset: int = 0) -> Tensor:
+        """Return the positional encodings for positions ``offset .. offset + seq_len - 1``.
 
         Args:
-            seq_len: Number of positions to return.  Must be in
-                ``[1, context_length]``.
+            seq_len: Number of positions to return (>= 1).
+            offset:  First position (>= 0).  Non-zero when decoding with a
+                KV-cache, where only the newest tokens are embedded.
 
         Returns:
             Float tensor of shape ``(seq_len, d_model)``.
 
         Raises:
-            ValueError: If ``seq_len`` is not in ``[1, context_length]``.
+            ValueError: If ``seq_len < 1``, ``offset < 0``, or the positions run
+                past ``context_length``.
         """
-        if seq_len < 1:
-            raise ValueError(f"seq_len must be >= 1, got {seq_len}")
-        if seq_len > self.context_length:
-            raise ValueError(f"seq_len ({seq_len}) exceeds context_length ({self.context_length})")
-        return self.pe[:seq_len]
+        _check_positions(seq_len, offset, self.context_length)
+        return self.pe[offset : offset + seq_len]
 
     def __repr__(self) -> str:
         return (
@@ -257,24 +269,23 @@ class LearnedPositionalEncoding(nn.Module):
         self.weight = nn.Parameter(torch.empty(context_length, d_model))
         nn.init.normal_(self.weight, mean=0.0, std=init_std)
 
-    def forward(self, seq_len: int) -> Tensor:
-        """Return the learned encodings for the first ``seq_len`` positions.
+    def forward(self, seq_len: int, offset: int = 0) -> Tensor:
+        """Return the learned encodings for positions ``offset .. offset + seq_len - 1``.
 
         Args:
-            seq_len: Number of positions to return.  Must be in
-                ``[1, context_length]``.
+            seq_len: Number of positions to return (>= 1).
+            offset:  First position (>= 0).  Non-zero when decoding with a
+                KV-cache, where only the newest tokens are embedded.
 
         Returns:
             Float tensor of shape ``(seq_len, d_model)``.
 
         Raises:
-            ValueError: If ``seq_len`` is not in ``[1, context_length]``.
+            ValueError: If ``seq_len < 1``, ``offset < 0``, or the positions run
+                past ``context_length``.
         """
-        if seq_len < 1:
-            raise ValueError(f"seq_len must be >= 1, got {seq_len}")
-        if seq_len > self.context_length:
-            raise ValueError(f"seq_len ({seq_len}) exceeds context_length ({self.context_length})")
-        return self.weight[:seq_len]
+        _check_positions(seq_len, offset, self.context_length)
+        return self.weight[offset : offset + seq_len]
 
     def __repr__(self) -> str:
         return (
@@ -353,30 +364,35 @@ class RotaryPositionalEncoding(nn.Module):
         x1, x2 = x[..., :half], x[..., half:]
         return torch.cat([-x2, x1], dim=-1)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor, offset: int = 0) -> Tensor:
         """Rotate ``x`` by its per-position angle.
 
         Args:
-            x: Tensor of shape ``(..., S, d_head)`` (typically ``(B, H, S, Dh)``).
+            x:      Tensor of shape ``(..., S, d_head)`` (typically ``(B, H, S, Dh)``).
+            offset: Position of the first element along ``S`` (>= 0).  Non-zero
+                when decoding with a KV-cache.
 
         Returns:
             The rotated tensor, same shape as ``x``.
 
         Raises:
-            ValueError: If the last dim is not ``d_head`` or ``S`` exceeds
-                ``context_length``.
+            ValueError: If the last dim is not ``d_head``, ``offset < 0``, or the
+                positions run past ``context_length``.
         """
         if x.shape[-1] != self.d_head:
             raise ValueError(
                 f"last dimension of x ({x.shape[-1]}) does not match d_head ({self.d_head})"
             )
         seq_len = x.shape[-2]
-        if seq_len > self.context_length:
+        if offset < 0:
+            raise ValueError(f"offset must be >= 0, got {offset}")
+        if offset + seq_len > self.context_length:
             raise ValueError(
-                f"sequence length ({seq_len}) exceeds context_length ({self.context_length})"
+                f"sequence length ({offset + seq_len}) exceeds context_length "
+                f"({self.context_length})"
             )
-        cos = self.cos[:seq_len]  # (S, d_head), broadcasts over leading dims
-        sin = self.sin[:seq_len]
+        cos = self.cos[offset : offset + seq_len]  # (S, d_head), broadcasts over leading dims
+        sin = self.sin[offset : offset + seq_len]
         return x * cos + self._rotate_half(x) * sin
 
     def __repr__(self) -> str:
@@ -433,29 +449,33 @@ class Embedding(nn.Module):
 
         self.dropout = nn.Dropout(config.dropout)
 
-    def forward(self, token_ids: Tensor) -> Tensor:
+    def forward(self, token_ids: Tensor, offset: int = 0) -> Tensor:
         """Embed a batch of token-ID sequences.
 
         Args:
             token_ids: Integer tensor of shape ``(B, S)``.
+            offset:    Position of the first token (>= 0).  Non-zero when
+                decoding with a KV-cache, where only the newest tokens are fed in.
 
         Returns:
             Float tensor of shape ``(B, S, d_model)`` — the residual stream.
 
         Raises:
             TypeError:  If ``token_ids`` is not a tensor.
-            ValueError: If ``token_ids`` is not 2-D, or ``S`` exceeds the
-                configured ``context_length``.
+            ValueError: If ``token_ids`` is not 2-D, ``offset < 0``, or the
+                positions run past the configured ``context_length``.
         """
         if not isinstance(token_ids, Tensor):
             raise TypeError(f"token_ids must be a torch.Tensor, got {type(token_ids)}")
         if token_ids.dim() != 2:
             raise ValueError(f"token_ids must be 2-D (B, S), got shape {tuple(token_ids.shape)}")
+        if offset < 0:
+            raise ValueError(f"offset must be >= 0, got {offset}")
 
         seq_len = token_ids.shape[1]
-        if seq_len > self.config.context_length:
+        if offset + seq_len > self.config.context_length:
             raise ValueError(
-                f"sequence length ({seq_len}) exceeds context_length "
+                f"sequence length ({offset + seq_len}) exceeds context_length "
                 f"({self.config.context_length})"
             )
 
@@ -464,7 +484,7 @@ class Embedding(nn.Module):
             # RoPE: positions are injected in attention, so nothing is added here.
             return self.dropout(tok)
         # (B, S, D) token vectors plus (S, D) position vectors, broadcast over batch.
-        pos = self.positional_encoding(seq_len)
+        pos = self.positional_encoding(seq_len, offset)
         return self.dropout(tok + pos)
 
     def __repr__(self) -> str:

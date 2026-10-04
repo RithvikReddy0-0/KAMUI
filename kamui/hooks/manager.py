@@ -224,7 +224,8 @@ class HookManager:
         original_forward = module.forward
 
         def wrapper(x: Tensor, *args: Any, **kwargs: Any) -> Tensor:
-            output, weights = original_forward(x, return_weights=True)
+            kwargs["return_weights"] = True
+            output, weights = original_forward(x, **kwargs)
             self._cache[hook_point] = weights.detach()
             return output
 

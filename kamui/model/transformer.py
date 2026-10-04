@@ -68,6 +68,7 @@ from kamui.model.block import TransformerBlock
 from kamui.model.config import ModelConfig
 from kamui.model.embedding import Embedding
 from kamui.model.init_weights import init_weights
+from kamui.model.kv_cache import KVCache
 from kamui.model.normalization import build_norm
 
 
@@ -130,13 +131,21 @@ class KAMUITransformer(nn.Module):
     # Forward
     # ------------------------------------------------------------------
 
-    def forward(self, token_ids: Tensor, targets: Tensor | None = None) -> Tensor:
+    def forward(
+        self,
+        token_ids: Tensor,
+        targets: Tensor | None = None,
+        cache: KVCache | None = None,
+    ) -> Tensor:
         """Run the model.
 
         Args:
             token_ids: Integer tensor of shape ``(B, S)``.
             targets:   Optional next-token labels of shape ``(B, S)``.  When
                 provided, the return value is the scalar cross-entropy loss.
+            cache:     Optional ``KVCache`` (from ``new_cache()``).  When given,
+                ``token_ids`` are the newest positions only: they are placed
+                after the cached ones and their keys/values are stored.
 
         Returns:
             Logits of shape ``(B, S, vocab_size)`` if ``targets`` is None,
@@ -145,11 +154,16 @@ class KAMUITransformer(nn.Module):
         Raises:
             TypeError:  If ``targets`` is provided but is not a tensor.
             ValueError: If ``targets`` is provided but its shape differs from
-                ``token_ids``.
+                ``token_ids``, or ``cache`` has the wrong number of layers.
         """
-        x = self.embed(token_ids)  # (B, S, D)
-        for block in self.blocks:
-            x = block(x)  # (B, S, D)
+        if cache is not None and len(cache.layers) != len(self.blocks):
+            raise ValueError(
+                f"cache has {len(cache.layers)} layers but the model has {len(self.blocks)}"
+            )
+        offset = cache.length if cache is not None else 0
+        x = self.embed(token_ids, offset)  # (B, S, D)
+        for i, block in enumerate(self.blocks):
+            x = block(x, cache=cache.layers[i] if cache is not None else None)  # (B, S, D)
         x = self.final_ln(x)  # (B, S, D)
         logits = self.unembed(x)  # (B, S, V)
 
@@ -171,6 +185,10 @@ class KAMUITransformer(nn.Module):
     # ------------------------------------------------------------------
     # Introspection
     # ------------------------------------------------------------------
+
+    def new_cache(self) -> KVCache:
+        """Return an empty ``KVCache`` sized for this model (one entry per block)."""
+        return KVCache(len(self.blocks))
 
     def num_parameters(self, trainable_only: bool = True) -> int:
         """Return the number of parameters.

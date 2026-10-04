@@ -81,6 +81,7 @@ RMSNorm Option           ██████████  ✅ complete
 Weight EMA               ██████████  ✅ complete
 Decoding Controls        ██████████  ✅ complete
 Accuracy Metric          ██████████  ✅ complete
+KV-Cache Generation      ██████████  ✅ complete
 ```
 
 **v0.1 – v0.3 are released and the v0.4 work is on `main`.** That's the
@@ -134,7 +135,7 @@ pytest
 ```
 
 This clones the repo, installs all dependencies in editable mode, and runs
-the full test suite (866 tests, ~99% coverage).
+the full test suite (895 tests, ~99% coverage).
 
 ### API
 
@@ -290,7 +291,7 @@ mechinterp tools use captured activations for analysis
 | `kamui.training.EMA` | Exponential moving average of the weights for evaluation / sampling |
 | `compute_perplexity` / `compute_accuracy` | Perplexity and top-k next-token accuracy |
 | `expected_calibration_error` | Does the model's confidence match its accuracy? |
-| `generate` | Greedy / top-k / nucleus / temperature sampling, repetition penalty, stop tokens |
+| `generate` | Greedy / top-k / nucleus / temperature sampling, repetition penalty, stop tokens, optional KV-cache (`use_cache=True`) |
 
 ---
 
@@ -333,7 +334,7 @@ becomes the experiments section of your paper.
 | **v0.1** | Core transformer + 6 interpretability tools | ✅ Released |
 | **v0.2** | Sparse autoencoders, gradient attribution, RoPE | ✅ Released |
 | **v0.3** | Multi-GPU training (DDP) | ✅ Released |
-| **v0.4** | SAE feature analysis & steering, RMSNorm, weight EMA, decoding controls, accuracy metric | 🔄 On `main`, unreleased |
+| **v0.4** | SAE feature analysis & steering, RMSNorm, weight EMA, decoding controls, accuracy metric, KV-cache | 🔄 On `main`, unreleased |
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 

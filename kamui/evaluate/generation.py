@@ -49,6 +49,7 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 
+from kamui.model.kv_cache import KVCache
 from kamui.model.transformer import KAMUITransformer
 
 #: Supported sampling strategies.
@@ -101,6 +102,25 @@ def _apply_repetition_penalty(logits: Tensor, previous_ids: Tensor, penalty: flo
     values = penalised[seen]
     penalised[seen] = torch.where(values > 0, values / penalty, values * penalty)
     return penalised
+
+
+def _next_logits(
+    model: KAMUITransformer, tokens: Tensor, context_length: int, cache: KVCache | None
+) -> Tensor:
+    """Return the final-position logits for ``tokens`` (shape ``(1, T)``).
+
+    Without a cache, the model is re-run over the last ``context_length``
+    tokens.  With one, only the newest token is fed in.  The cache restarts
+    from the cropped window on the first step, and whenever the next position
+    would run past ``context_length``.  So both paths always see the same
+    positions, and produce the same logits up to rounding.
+    """
+    if cache is None:
+        return model(tokens[:, -context_length:])[0, -1]
+    if cache.length == 0 or cache.length + 1 > context_length:
+        cache.reset()
+        return model(tokens[:, -context_length:], cache=cache)[0, -1]
+    return model(tokens[:, -1:], cache=cache)[0, -1]
 
 
 def _validate_sampling_args(
@@ -172,6 +192,7 @@ def generate(
     seed: int | None = None,
     repetition_penalty: float = 1.0,
     stop_token_ids: Iterable[int] | None = None,
+    use_cache: bool = False,
 ) -> str:
     """Generate a continuation of ``prompt``.
 
@@ -191,6 +212,9 @@ def generate(
             sequence; ``1.0`` disables it.
         stop_token_ids:     Optional token IDs that end generation as soon as
             one is produced (it is kept in the output).
+        use_cache:          Reuse attention keys/values between steps (a
+            KV-cache) so each step processes only the newest token.  Same
+            output, less recomputation.
 
     Returns:
         The full decoded string (prompt + continuation).
@@ -214,9 +238,9 @@ def generate(
 
     ctx = model.config.context_length
     tokens = torch.tensor([ids], dtype=torch.long)  # (1, S)
+    cache = model.new_cache() if use_cache else None
     for _ in range(max_new_tokens):
-        window = tokens[:, -ctx:]
-        next_logits = model(window)[0, -1]  # (V,)
+        next_logits = _next_logits(model, tokens, ctx, cache)  # (V,)
         if repetition_penalty != 1.0:
             next_logits = _apply_repetition_penalty(next_logits, tokens[0], repetition_penalty)
         next_id = _sample_next(next_logits, strategy, temperature, top_k, top_p)

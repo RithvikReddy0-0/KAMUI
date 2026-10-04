@@ -70,6 +70,7 @@ from torch import Tensor, nn
 
 from kamui.model.config import ModelConfig
 from kamui.model.embedding import RotaryPositionalEncoding
+from kamui.model.kv_cache import LayerKVCache
 
 
 def scaled_dot_product_attention(
@@ -172,13 +173,21 @@ class MultiHeadAttention(nn.Module):
         )
         self.register_buffer("causal_mask", causal)
 
-    def forward(self, x: Tensor, return_weights: bool = False) -> Tensor | tuple[Tensor, Tensor]:
+    def forward(
+        self,
+        x: Tensor,
+        return_weights: bool = False,
+        cache: LayerKVCache | None = None,
+    ) -> Tensor | tuple[Tensor, Tensor]:
         """Apply multi-head causal self-attention.
 
         Args:
             x:              Residual-stream tensor of shape ``(B, S, d_model)``.
             return_weights: If True, also return the attention probability
-                matrix of shape ``(B, n_heads, S, S)``.
+                matrix of shape ``(B, n_heads, S, T + S)`` (``T`` = cached length).
+            cache:          Optional ``LayerKVCache``.  When given, ``x`` holds
+                only the newest ``S`` positions; their keys/values are appended
+                and the queries attend over everything stored so far.
 
         Returns:
             ``out`` of shape ``(B, S, d_model)`` if ``return_weights`` is False,
@@ -187,7 +196,7 @@ class MultiHeadAttention(nn.Module):
         Raises:
             TypeError:  If ``x`` is not a tensor.
             ValueError: If ``x`` is not 3-D, its last dimension is not
-                ``d_model``, or ``S`` exceeds ``context_length``.
+                ``d_model``, or the positions run past ``context_length``.
         """
         if not isinstance(x, Tensor):
             raise TypeError(f"x must be a torch.Tensor, got {type(x)}")
@@ -200,9 +209,10 @@ class MultiHeadAttention(nn.Module):
             )
 
         seq_len = x.shape[1]
-        if seq_len > self.config.context_length:
+        offset = cache.length if cache is not None else 0
+        if offset + seq_len > self.config.context_length:
             raise ValueError(
-                f"sequence length ({seq_len}) exceeds context_length "
+                f"sequence length ({offset + seq_len}) exceeds context_length "
                 f"({self.config.context_length})"
             )
 
@@ -213,12 +223,16 @@ class MultiHeadAttention(nn.Module):
 
         # Rotary encoding rotates Q and K by their position (V is left untouched).
         if self.rope is not None:
-            q = self.rope(q)
-            k = self.rope(k)
+            q = self.rope(q, offset)
+            k = self.rope(k, offset)
 
-        # Slice the causal mask to the current sequence length; broadcasts over
-        # batch and heads inside scaled_dot_product_attention.
-        mask = self.causal_mask[:seq_len, :seq_len]
+        # With a cache, attend over every stored key/value plus the new ones.
+        if cache is not None:
+            k, v = cache.append(k, v)
+
+        # Rows are the new query positions, columns every key position so far;
+        # the mask broadcasts over batch and heads inside the attention function.
+        mask = self.causal_mask[offset : offset + seq_len, : offset + seq_len]
         attn_out, weights = scaled_dot_product_attention(q, k, v, mask=mask)
 
         # Concatenate heads back into d_model and project.
