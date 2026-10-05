@@ -58,4 +58,4 @@ mechinterp tools: LogitLens | ActivationPatcher | InductionHeadDetector | Circui
 | Multi-GPU training (DDP) | v0.3 |
 | SAE feature analysis (interpretation, max-activating examples, co-occurrence, similarity) | v0.4 (on `main`) |
 | Steering, steered generation, contrastive vectors, feature ablation | v0.4 (on `main`) |
-| RMSNorm option, weight EMA, decoding controls, top-k accuracy, KV-cache | v0.4 (on `main`) |
+| RMSNorm option, weight EMA, decoding controls, top-k accuracy, KV-cache, gradient checkpointing | v0.4 (on `main`) |

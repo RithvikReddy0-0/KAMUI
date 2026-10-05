@@ -60,9 +60,12 @@ Implemented in: Phase 2G.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
+import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
+from torch.utils.checkpoint import checkpoint
 
 from kamui.model.block import TransformerBlock
 from kamui.model.config import ModelConfig
@@ -108,6 +111,9 @@ class KAMUITransformer(nn.Module):
 
         # Weight tying: the unembedding shares the token-embedding matrix.
         self.unembed.weight = self.embed.token_embedding.weight
+
+        # Off by default; see ``set_gradient_checkpointing``.
+        self.gradient_checkpointing = False
 
     # ------------------------------------------------------------------
     # Constructors
@@ -163,7 +169,7 @@ class KAMUITransformer(nn.Module):
         offset = cache.length if cache is not None else 0
         x = self.embed(token_ids, offset)  # (B, S, D)
         for i, block in enumerate(self.blocks):
-            x = block(x, cache=cache.layers[i] if cache is not None else None)  # (B, S, D)
+            x = self._run_block(block, x, cache, i)  # (B, S, D)
         x = self.final_ln(x)  # (B, S, D)
         logits = self.unembed(x)  # (B, S, V)
 
@@ -185,6 +191,31 @@ class KAMUITransformer(nn.Module):
     # ------------------------------------------------------------------
     # Introspection
     # ------------------------------------------------------------------
+
+    def _run_block(self, block: nn.Module, x: Tensor, cache: KVCache | None, index: int) -> Tensor:
+        """Run one block, checkpointing it when that is enabled and useful."""
+        if cache is not None:
+            return cast(Tensor, block(x, cache=cache.layers[index]))
+        if self.gradient_checkpointing and self.training and torch.is_grad_enabled():
+            # Drop the block's internal activations now; recompute them in backward.
+            return cast(Tensor, checkpoint(block, x, use_reentrant=False))
+        return cast(Tensor, block(x))
+
+    def set_gradient_checkpointing(self, enabled: bool = True) -> None:
+        """Turn activation (gradient) checkpointing on or off.
+
+        When on, each transformer block keeps only its input during the forward
+        pass and recomputes its internal activations during backward.  Training
+        then needs far less activation memory, at the cost of roughly one extra
+        forward pass per step.  It only takes effect in training mode with
+        gradients enabled: evaluation, interpretability tools, and cached
+        generation run exactly as before.  Losses and gradients are unchanged
+        (dropout masks are reproduced on recompute).
+
+        Args:
+            enabled: Whether to checkpoint blocks during training.
+        """
+        self.gradient_checkpointing = enabled
 
     def new_cache(self) -> KVCache:
         """Return an empty ``KVCache`` sized for this model (one entry per block)."""

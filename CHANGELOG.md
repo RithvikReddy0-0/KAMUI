@@ -10,6 +10,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Gradient (activation) checkpointing
+  (`KAMUITransformer.set_gradient_checkpointing(True)`). Each transformer block
+  keeps only its input during the forward pass and recomputes its internal
+  activations during backward. On a 6-layer, d_model=256 model with an 8x256
+  batch, the memory autograd holds for backward drops from 491 MiB to 28.5 MiB
+  (~17x less), while a training step takes ~14% longer on CPU (0.64 s ->
+  0.73 s). It only engages in training mode with gradients enabled, so
+  evaluation, the interpretability tools and (cached) generation run exactly as
+  before. Tests show identical losses, gradients (with dropout too: masks are
+  replayed on recompute) and multi-step training trajectories. They also check
+  that activation memory more than halves, that eval mode is left alone, and
+  that hooks still capture correctly during checkpointed training. 10-test suite;
+  `transformer.py` stays at 100% coverage.
 - KV-cache for generation (`kamui.model.KVCache`,
   `generate(..., use_cache=True)`). Each attention layer stores the keys and
   values it has already computed, so every decoding step processes only the
