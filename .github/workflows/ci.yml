@@ -57,8 +57,13 @@ jobs:
       - name: Run unit tests
         run: pytest tests/unit/ -v --timeout=120 --tb=short
 
+      # Coverage is enforced by pytest (--cov-fail-under) in the step above;
+      # this upload is reporting only, so an outage at Codecov (e.g. a TLS
+      # failure while the action fetches its uploader, which fail_ci_if_error
+      # does not cover) must never fail the build.
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.11'
+        continue-on-error: true
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
