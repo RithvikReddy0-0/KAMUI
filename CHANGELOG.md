@@ -10,6 +10,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Notebook `07_sparse_autoencoders`: the full SAE workflow on a tiny model.
+  It trains a dictionary (99.9% of variance explained with ~6 of 256 features
+  active per token), reads features through their top tokens and
+  max-activating contexts (they come out as clean word-category detectors:
+  verb phrases, animals, sentence endings), and relates features by
+  co-occurrence and decoder geometry. It then tests them causally: feature
+  steering changes the generated text, and a contrastive "an object comes
+  next" direction flips P(animal next) from 1.00 to 0.08. It finishes by
+  saving and reloading the dictionary. It trains on templated sentences
+  rather than the word salad used by notebooks 01–06: on random words the
+  best model just learns word frequencies, its activations barely vary from
+  token to token, and an SAE has nothing to find.
+- Integration test that executes every notebook's code cells against the
+  current API, so the notebooks cannot silently go stale as the library
+  changes. All eight pass.
 - Gradient (activation) checkpointing
   (`KAMUITransformer.set_gradient_checkpointing(True)`). Each transformer block
   keeps only its input during the forward pass and recomputes its internal

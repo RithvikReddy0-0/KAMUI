@@ -88,8 +88,8 @@ Gradient Checkpointing   ██████████  ✅ complete
 **v0.1 – v0.3 are released and the v0.4 work is on `main`.** That's the
 from-scratch transformer and training pipeline, the original six-tool
 interpretability toolkit, and the newer SAE, steering and attribution tools.
-It also covers multi-GPU training, working CLI entry points, and 7 runnable
-notebooks. Test coverage is ~99%, with `ruff`, `black`, and `mypy` all clean.
+It also covers multi-GPU training, working CLI entry points, and 8 runnable
+notebooks (each executed by the integration tests). Test coverage is ~99%, with `ruff`, `black`, and `mypy` all clean.
 
 The [roadmap](#roadmap) and [issue tracker](https://github.com/RithvikReddy0-0/KAMUI/issues) reflect active development.
 
@@ -120,7 +120,7 @@ You read every line of every tool.
 | Trains from scratch | ✅ | ❌ | ✅ |
 | Full interpretability toolkit | ❌ | ✅ | ✅ |
 | Context-managed hook system | ❌ | partial | ✅ |
-| Educational notebooks (7) | ❌ | ❌ | ✅ |
+| Educational notebooks (8) | ❌ | ❌ | ✅ |
 | Research infrastructure | ❌ | ❌ | ✅ |
 | Zero magic abstractions | ✅ | ❌ | ✅ |
 
@@ -308,6 +308,7 @@ mechinterp tools use captured activations for analysis
 | `04_activation_patching` | Causal interventions — find where facts live |
 | `05_induction_heads` | Detect and ablate induction circuits |
 | `06_circuit_analysis` | Reverse-engineer a complete behaviour |
+| `07_sparse_autoencoders` | Train an SAE, read its features, then steer and ablate them |
 
 ---
 
