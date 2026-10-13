@@ -10,6 +10,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- `InductionHeadDetector(model, token_ids=...)`: build the repeated random
+  test sequences from a chosen pool of token IDs (typically the tokens seen
+  in training) instead of the whole vocabulary. A tokenizer trained on a
+  small corpus leaves many IDs, such as most raw byte tokens, that the model
+  never learned, so whole-vocabulary sequences are partly noise. On notebook
+  05's model, ablating the top head went from a nonsensical -0.18 change in
+  in-context loss to +0.16 once the pool was used. The default (`None`) is
+  unchanged and produces exactly the same sequences as before. Notebook 05
+  now passes the training tokens.
 - Notebook `07_sparse_autoencoders`: the full SAE workflow on a tiny model.
   It trains a dictionary (99.9% of variance explained with ~6 of 256 features
   active per token), reads features through their top tokens and

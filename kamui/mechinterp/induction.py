@@ -14,6 +14,13 @@ Detection method (Olsson et al., 2022):
     all second-half positions.  Scores are in ``[0, 1]``; > 0.5 strongly
     indicates induction behaviour.
 
+Choosing the random tokens:
+    By default the sequences draw from the whole vocabulary.  A tokenizer
+    trained on a small corpus leaves many IDs (e.g. most of the 256 raw
+    byte tokens) that never appear in training, and the model's behaviour on
+    those is meaningless.  Pass ``token_ids`` — typically the set of tokens in
+    the training data — to sample only tokens the model has actually learned.
+
 Responsibilities:
     - ``InductionHeadDetector.score_all_heads()``:
         Score every (layer, head) pair; returns ``{(layer, head): score}``.
@@ -32,7 +39,7 @@ Implemented in: Phase 4.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 import torch
@@ -50,16 +57,36 @@ class InductionHeadDetector:
     """Score and causally test every attention head for induction behaviour.
 
     Attributes:
-        model: A trained ``KAMUITransformer``.
+        model:     A trained ``KAMUITransformer``.
+        token_ids: The sorted token IDs that random sequences are drawn from, or
+            ``None`` to draw from the whole vocabulary.
     """
 
-    def __init__(self, model: KAMUITransformer) -> None:
+    def __init__(self, model: KAMUITransformer, token_ids: Iterable[int] | None = None) -> None:
         """Create a detector over ``model``.
 
         Args:
-            model: A ``KAMUITransformer``.
+            model:     A ``KAMUITransformer``.
+            token_ids: Optional pool of token IDs to build the repeated random
+                sequences from (duplicates are ignored; each distinct ID is
+                equally likely).  Use the tokens seen in training so the test
+                inputs are ones the model knows.  ``None`` samples the whole
+                vocabulary.
+
+        Raises:
+            ValueError: If ``token_ids`` is empty or contains an ID outside
+                ``[0, vocab_size)``.
         """
         self.model = model
+        self.token_ids: Tensor | None = None
+        if token_ids is not None:
+            pool = sorted({int(t) for t in token_ids})
+            if not pool:
+                raise ValueError("token_ids must contain at least one token")
+            vocab = model.config.vocab_size
+            if pool[0] < 0 or pool[-1] >= vocab:
+                raise ValueError(f"token_ids must lie in [0, {vocab}), got {pool[0]}..{pool[-1]}")
+            self.token_ids = torch.tensor(pool)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -68,8 +95,12 @@ class InductionHeadDetector:
     def _repeated_sequence(self, prefix_len: int, seed: int) -> Tensor:
         """Return a ``(1, 2 * prefix_len)`` random sequence repeated twice."""
         generator = torch.Generator().manual_seed(seed)
-        vocab = self.model.config.vocab_size
-        prefix = torch.randint(0, vocab, (prefix_len,), generator=generator)
+        if self.token_ids is None:
+            vocab = self.model.config.vocab_size
+            prefix = torch.randint(0, vocab, (prefix_len,), generator=generator)
+        else:
+            picks = torch.randint(0, len(self.token_ids), (prefix_len,), generator=generator)
+            prefix = self.token_ids[picks]
         return torch.cat([prefix, prefix]).unsqueeze(0)
 
     def _resolve_prefix_len(self, prefix_len: int | None) -> int:

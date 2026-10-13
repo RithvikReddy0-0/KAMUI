@@ -118,3 +118,43 @@ class TestAblateAndMeasure:
             detector.ablate_and_measure([(5, 0)])
         with pytest.raises(ValueError, match="out of range"):
             detector.ablate_and_measure([(0, 9)])
+
+
+class TestTokenPool:
+    def test_default_sequences_are_unchanged(self) -> None:
+        # Without a pool, sequences match the original whole-vocab formula exactly.
+        det = _detector()
+        g = torch.Generator().manual_seed(3)
+        prefix = torch.randint(0, 40, (6,), generator=g)
+        expected = torch.cat([prefix, prefix]).unsqueeze(0)
+        assert torch.equal(det._repeated_sequence(6, seed=3), expected)
+
+    def test_sequences_use_only_pool_tokens(self) -> None:
+        torch.manual_seed(0)
+        pool = [3, 7, 11, 19]
+        det = InductionHeadDetector(KAMUITransformer(_config()).eval(), token_ids=pool)
+        ids = det._repeated_sequence(8, seed=0)
+        assert set(ids.flatten().tolist()) <= set(pool)
+        assert torch.equal(ids[0, :8], ids[0, 8:])  # still a repeated sequence
+
+    def test_duplicates_are_collapsed(self) -> None:
+        torch.manual_seed(0)
+        det = InductionHeadDetector(KAMUITransformer(_config()).eval(), token_ids=[5, 5, 2, 5])
+        assert det.token_ids is not None
+        assert det.token_ids.tolist() == [2, 5]
+
+    def test_pool_works_for_scoring_and_ablation(self) -> None:
+        torch.manual_seed(0)
+        det = InductionHeadDetector(KAMUITransformer(_config()).eval(), token_ids=range(10))
+        scores = det.score_all_heads(prefix_len=4, n_samples=2)
+        assert len(scores) == 2 * 4
+        assert isinstance(det.ablate_and_measure([(0, 0)], prefix_len=4), float)
+
+    def test_empty_pool_raises(self) -> None:
+        with pytest.raises(ValueError, match="at least one token"):
+            InductionHeadDetector(KAMUITransformer(_config()).eval(), token_ids=[])
+
+    @pytest.mark.parametrize("bad", [[-1, 2], [2, 40]])
+    def test_out_of_range_pool_raises(self, bad: list[int]) -> None:
+        with pytest.raises(ValueError, match="token_ids must lie in"):
+            InductionHeadDetector(KAMUITransformer(_config()).eval(), token_ids=bad)
