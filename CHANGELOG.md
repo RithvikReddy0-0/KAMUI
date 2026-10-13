@@ -19,9 +19,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   steering changes the generated text, and a contrastive "an object comes
   next" direction flips P(animal next) from 1.00 to 0.08. It finishes by
   saving and reloading the dictionary. It trains on templated sentences
-  rather than the word salad used by notebooks 01–06: on random words the
-  best model just learns word frequencies, its activations barely vary from
-  token to token, and an SAE has nothing to find.
+  rather than random words: on random words the best model just learns word
+  frequencies, its activations barely vary from token to token, and an SAE
+  has nothing to find.
 - Integration test that executes every notebook's code cells against the
   current API, so the notebooks cannot silently go stale as the library
   changes. All eight pass.
@@ -186,6 +186,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   coverage.
 
 ### Changed
+- Notebooks 01–06 now train on the same structured corpus as notebook 07
+  (templated sentences) instead of uniformly random words. On random words
+  the optimal model only learns word frequencies, so several demos showed
+  nothing. Patching recovered 0.0 (04), generation looped "on on on" (02), and
+  the logit lens had nothing to reveal (03). Now the logit lens shows the
+  prediction forming between layers 0 and 1, and patching (04) traces the
+  object-vs-animal decision to block 0's feed-forward layer (99.5%
+  recovery). Circuit ablation (06) independently finds that same layer
+  critical, and generation (02) writes grammatical sentences, plus a
+  sampled variant using the repetition penalty. Notebook 05 now states
+  plainly that this small, briefly trained model develops no strong
+  induction heads. All eight notebooks still pass the integration test.
 - README and docs landing page brought up to date with everything shipped
   since v0.1: the progress list, the interpretability toolkit (now split into
   component/circuit tools and feature/superposition tools), a new training &
