@@ -195,6 +195,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   coverage.
 
 ### Changed
+- CI and docs workflows upgraded to `actions/checkout@v7`,
+  `actions/setup-python@v7` and `codecov/codecov-action@v7`. This clears the
+  Node.js 20 deprecation warnings: the first two now run on Node 24, and the
+  Codecov action is a composite action with no Node runtime. Release notes
+  were checked first: none of the inputs used here changed. Runners stay on
+  `ubuntu-latest`. It begins moving to Ubuntu 26 on 2026-10-19, and
+  `setup-python` already publishes Python 3.11 and 3.12 builds for 26.04.
 - Notebooks 01–06 now train on the same structured corpus as notebook 07
   (templated sentences) instead of uniformly random words. On random words
   the optimal model only learns word frequencies, so several demos showed
