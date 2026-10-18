@@ -10,7 +10,7 @@
 
 [![Tests](https://github.com/RithvikReddy0-0/KAMUI/actions/workflows/ci.yml/badge.svg)](https://github.com/RithvikReddy0-0/KAMUI/actions/workflows/ci.yml)
 [![Docs](https://github.com/RithvikReddy0-0/KAMUI/actions/workflows/docs.yml/badge.svg)](https://rithvikreddy0-0.github.io/KAMUI)
-[![Version 0.3.0](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/RithvikReddy0-0/KAMUI/releases)
+[![Version 0.4.0](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/RithvikReddy0-0/KAMUI/releases)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -74,7 +74,7 @@ Gradient Attribution     ██████████  ✅ complete
 Sparse Autoencoders      ██████████  ✅ complete
 ── v0.3 ─────────────────────────────────────────
 Multi-GPU Training (DDP) ██████████  ✅ complete
-── v0.4 (unreleased) ────────────────────────────
+── v0.4 ─────────────────────────────────────────
 SAE Feature Analysis     ██████████  ✅ complete
 Steering & Ablation      ██████████  ✅ complete
 RMSNorm Option           ██████████  ✅ complete
@@ -85,7 +85,7 @@ KV-Cache Generation      ██████████  ✅ complete
 Gradient Checkpointing   ██████████  ✅ complete
 ```
 
-**v0.1 – v0.3 are released and the v0.4 work is on `main`.** That's the
+**v0.1 – v0.4 are released.** That's the
 from-scratch transformer and training pipeline, the original six-tool
 interpretability toolkit, and the newer SAE, steering and attribution tools.
 It also covers multi-GPU training, working CLI entry points, and 8 runnable
@@ -136,7 +136,7 @@ pytest
 ```
 
 This clones the repo, installs all dependencies in editable mode, and runs
-the full test suite (905 tests, ~99% coverage).
+the full test suite (923 tests, ~99% coverage).
 
 ### API
 
@@ -337,7 +337,7 @@ becomes the experiments section of your paper.
 | **v0.1** | Core transformer + 6 interpretability tools | ✅ Released |
 | **v0.2** | Sparse autoencoders, gradient attribution, RoPE | ✅ Released |
 | **v0.3** | Multi-GPU training (DDP) | ✅ Released |
-| **v0.4** | SAE feature analysis & steering, RMSNorm, weight EMA, decoding controls, accuracy metric, KV-cache, gradient checkpointing | 🔄 On `main`, unreleased |
+| **v0.4** | SAE feature analysis & steering, RMSNorm, weight EMA, decoding controls, accuracy metric, KV-cache, gradient checkpointing | ✅ Released |
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
@@ -349,10 +349,10 @@ KAMUI is not yet on PyPI — install from source:
 
 ```bash
 # Minimal install (training + inference), pinned to a release
-pip install "git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.3.0"
+pip install "git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.4.0"
 
 # With visualisation extras (matplotlib, plotly)
-pip install "kamui[viz] @ git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.3.0"
+pip install "kamui[viz] @ git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.4.0"
 
 # Full development install
 git clone https://github.com/RithvikReddy0-0/KAMUI

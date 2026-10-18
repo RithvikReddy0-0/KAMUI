@@ -9,6 +9,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [0.4.0] — 2026-10-18
+
+The features-and-performance release. It adds a complete sparse-autoencoder
+workflow: read what features detect, see how they relate, and test them
+causally by steering and ablation. It also adds faster, leaner generation and
+training (KV-cache, gradient checkpointing), new model and evaluation options
+(RMSNorm, weight EMA, decoding controls, top-k accuracy), and notebooks that
+now show real behaviour and are executed in CI. Every module added here is at
+100% test coverage, and `ruff`, `black`, `mypy` and a strict docs build are
+all clean.
+
 ### Added
 - `InductionHeadDetector(model, token_ids=...)`: build the repeated random
   test sequences from a chosen pool of token IDs (typically the tokens seen
@@ -482,7 +497,7 @@ hook system, and all six interpretability tools, at ~99% test coverage with
 
 ---
 
-## [0.4.0] — Future
+## [0.5.0] — Future
 
 ### Will include
 - To be determined

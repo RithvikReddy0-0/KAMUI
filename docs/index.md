@@ -56,6 +56,6 @@ mechinterp tools: LogitLens | ActivationPatcher | InductionHeadDetector | Circui
 | Gradient attribution (input×grad, integrated gradients) | v0.2 |
 | Sparse autoencoders | v0.2 |
 | Multi-GPU training (DDP) | v0.3 |
-| SAE feature analysis (interpretation, max-activating examples, co-occurrence, similarity) | v0.4 (on `main`) |
-| Steering, steered generation, contrastive vectors, feature ablation | v0.4 (on `main`) |
-| RMSNorm option, weight EMA, decoding controls, top-k accuracy, KV-cache, gradient checkpointing | v0.4 (on `main`) |
+| SAE feature analysis (interpretation, max-activating examples, co-occurrence, similarity) | v0.4 |
+| Steering, steered generation, contrastive vectors, feature ablation | v0.4 |
+| RMSNorm option, weight EMA, decoding controls, top-k accuracy, KV-cache, gradient checkpointing | v0.4 |
