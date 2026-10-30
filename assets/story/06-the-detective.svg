@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 300" width="840" height="300" role="img" aria-labelledby="t d"><title id="t">Chapter 6: The detective</title><desc id="d">Kam transplants one part at a time. Attention restores nothing, but the first feed-forward layer restores 99.5% of the answer. Removing it costs 10 points.</desc><style>text{font-family:'Comic Neue','Comic Sans MS','Chalkboard SE','Segoe Print',cursive}path,line{stroke-linecap:round;stroke-linejoin:round}</style><rect width="840" height="300" rx="16" fill="#FFFDF5"/><path d="M19.0 12.0Q145.0 11.3 271.0 12.0Q278.0 12.0 278.0 19.0Q278.7 150.0 278.0 281.0Q278.0 288.0 271.0 288.0Q145.0 288.5 19.0 288.0Q12.0 288.0 12.0 281.0Q11.5 150.0 12.0 19.0Q12.0 12.0 19.0 12.0Z" fill="#FFFFFF" stroke="#23272E" stroke-width="3.0"/>
+<path d="M294.0 12.0Q420.0 12.0 546.0 12.0Q553.0 12.0 553.0 19.0Q552.9 150.0 553.0 281.0Q553.0 288.0 546.0 288.0Q420.0 288.3 294.0 288.0Q287.0 288.0 287.0 281.0Q287.6 150.0 287.0 19.0Q287.0 12.0 294.0 12.0Z" fill="#FFFFFF" stroke="#23272E" stroke-width="3.0"/>
+<path d="M569.0 12.0Q695.0 11.2 821.0 12.0Q828.0 12.0 828.0 19.0Q827.1 150.0 828.0 281.0Q828.0 288.0 821.0 288.0Q695.0 288.7 569.0 288.0Q562.0 288.0 562.0 281.0Q561.9 150.0 562.0 19.0Q562.0 12.0 569.0 12.0Z" fill="#FFFFFF" stroke="#23272E" stroke-width="3.0"/>
+<path d="M27.0 22.0Q145.0 22.3 263.0 22.0Q268.0 22.0 268.0 27.0Q267.4 37.0 268.0 47.0Q268.0 52.0 263.0 52.0Q145.0 51.9 27.0 52.0Q22.0 52.0 22.0 47.0Q22.3 37.0 22.0 27.0Q22.0 22.0 27.0 22.0Z" fill="#FFF3C4" stroke="#23272E" stroke-width="2.0"/>
+<text x="145.0" y="43.0" font-size="15" text-anchor="middle" fill="#23272E" textLength="115.5" lengthAdjust="spacingAndGlyphs">Swap in one part</text>
+<path d="M47.0 130.0Q73.0 129.3 99.0 130.0Q108.0 130.0 108.0 139.0Q109.1 174.0 108.0 209.0Q108.0 218.0 99.0 218.0Q73.0 219.0 47.0 218.0Q38.0 218.0 38.0 209.0Q36.9 174.0 38.0 139.0Q38.0 130.0 47.0 130.0Z" fill="#2B2F38" stroke="#23272E" stroke-width="3.2"/>
+<path d="M47.0 141.0Q47.5 155.3 47.0 169.6" fill="none" stroke="#5A6170" stroke-width="2.6"/>
+<circle cx="76.9" cy="153.8" r="2.1" fill="#FFFFFF" stroke="none"/>
+<circle cx="87.1" cy="153.8" r="2.1" fill="#FFFFFF" stroke="none"/>
+<path d="M75.56 162.5Q82.0 168.02 88.44 162.5" fill="none" stroke="#FFFFFF" stroke-width="2.2"/>
+<path d="M189.0 130.0Q215.0 130.1 241.0 130.0Q250.0 130.0 250.0 139.0Q251.1 174.0 250.0 209.0Q250.0 218.0 241.0 218.0Q215.0 217.7 189.0 218.0Q180.0 218.0 180.0 209.0Q179.3 174.0 180.0 139.0Q180.0 130.0 189.0 130.0Z" fill="#2B2F38" stroke="#23272E" stroke-width="3.2"/>
+<path d="M189.0 141.0Q189.1 155.3 189.0 169.6" fill="none" stroke="#5A6170" stroke-width="2.6"/>
+<circle cx="200.9" cy="153.8" r="2.1" fill="#FFFFFF" stroke="none"/>
+<circle cx="211.1" cy="153.8" r="2.1" fill="#FFFFFF" stroke="none"/>
+<path d="M199.56 166.18Q206.0 159.74 212.44 166.18" fill="none" stroke="#FFFFFF" stroke-width="2.2"/>
+<text x="73.0" y="238.0" font-size="16" text-anchor="middle" fill="#2E9E6B" textLength="37.4" lengthAdjust="spacingAndGlyphs">right</text>
+<text x="215.0" y="238.0" font-size="16" text-anchor="middle" fill="#E4572E" textLength="43.8" lengthAdjust="spacingAndGlyphs">wrong</text>
+<path d="M160.0 100.0L154.6 104.4L155.3 111.3L148.4 110.6L144.0 116.0L139.6 110.6L132.7 111.3L133.4 104.4L128.0 100.0L133.4 95.6L132.7 88.7L139.6 89.4L144.0 84.0L148.4 89.4L155.3 88.7L154.6 95.6Z" fill="#E4572E" stroke="#23272E" stroke-width="2.2"/>
+<circle cx="144.0" cy="100.0" r="4.5" fill="#FFFFFF" stroke="#23272E" stroke-width="2.0"/>
+<path d="M92 128Q144 72 196 126" fill="none" stroke="#E4572E" stroke-width="2.8" stroke-dasharray="7 6"/>
+<path d="M188.0 118.0Q192.7 121.3 196.0 126.0" fill="none" stroke="#E4572E" stroke-width="2.8"/>
+<path d="M196.0 126.0Q192.1 125.0 188.2 124.1" fill="none" stroke="#E4572E" stroke-width="2.8"/>
+<path d="M196.0 126.0Q195.0 122.1 194.1 118.2" fill="none" stroke="#E4572E" stroke-width="2.8"/>
+<text x="145.0" y="258.0" font-size="14" text-anchor="middle" fill="#23272E" textLength="185.2" lengthAdjust="spacingAndGlyphs">does the answer come back?</text>
+<path d="M302.0 22.0Q420.0 22.0 538.0 22.0Q543.0 22.0 543.0 27.0Q542.7 37.0 543.0 47.0Q543.0 52.0 538.0 52.0Q420.0 51.7 302.0 52.0Q297.0 52.0 297.0 47.0Q296.7 37.0 297.0 27.0Q297.0 22.0 302.0 22.0Z" fill="#FFF3C4" stroke="#23272E" stroke-width="2.0"/>
+<text x="420.0" y="43.0" font-size="15" text-anchor="middle" fill="#23272E" textLength="154.3" lengthAdjust="spacingAndGlyphs">How much came back?</text>
+<text x="310.0" y="71.0" font-size="15" text-anchor="start" fill="#23272E" textLength="64.8" lengthAdjust="spacingAndGlyphs">attention</text>
+<path d="M314.0 78.0Q420.0 78.0 526.0 78.0Q530.0 78.0 530.0 82.0Q529.8 87.0 530.0 92.0Q530.0 96.0 526.0 96.0Q420.0 95.6 314.0 96.0Q310.0 96.0 310.0 92.0Q310.3 87.0 310.0 82.0Q310.0 78.0 314.0 78.0Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.2"/>
+<text x="530.0" y="71.0" font-size="15" text-anchor="end" fill="#23272E" textLength="21.4" lengthAdjust="spacingAndGlyphs">0%</text>
+<text x="310.0" y="113.0" font-size="15" text-anchor="start" fill="#23272E" textLength="107.2" lengthAdjust="spacingAndGlyphs">feed-forward 1</text>
+<path d="M314.0 120.0Q420.0 120.0 526.0 120.0Q530.0 120.0 530.0 124.0Q530.1 129.0 530.0 134.0Q530.0 138.0 526.0 138.0Q420.0 137.7 314.0 138.0Q310.0 138.0 310.0 134.0Q310.4 129.0 310.0 124.0Q310.0 120.0 314.0 120.0Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.2"/>
+<path d="M315.0 122.0Q419.5 122.1 523.9 122.0Q526.9 122.0 526.9 125.0Q526.8 129.0 526.9 133.0Q526.9 136.0 523.9 136.0Q419.5 135.9 315.0 136.0Q312.0 136.0 312.0 133.0Q312.1 129.0 312.0 125.0Q312.0 122.0 315.0 122.0Z" fill="#E4572E" stroke="#E4572E" stroke-width="0.5"/>
+<text x="530.0" y="113.0" font-size="15" text-anchor="end" fill="#E4572E" font-weight="700" textLength="46.2" lengthAdjust="spacingAndGlyphs">99.5%</text>
+<text x="310.0" y="155.0" font-size="15" text-anchor="start" fill="#23272E" textLength="109.7" lengthAdjust="spacingAndGlyphs">feed-forward 2</text>
+<path d="M314.0 162.0Q420.0 162.2 526.0 162.0Q530.0 162.0 530.0 166.0Q530.3 171.0 530.0 176.0Q530.0 180.0 526.0 180.0Q420.0 179.9 314.0 180.0Q310.0 180.0 310.0 176.0Q310.3 171.0 310.0 166.0Q310.0 162.0 314.0 162.0Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.2"/>
+<path d="M315.0 164.0Q320.3 164.1 325.6 164.0Q328.6 164.0 328.6 167.0Q328.6 171.0 328.6 175.0Q328.6 178.0 325.6 178.0Q320.3 178.0 315.0 178.0Q312.0 178.0 312.0 175.0Q312.2 171.0 312.0 167.0Q312.0 164.0 315.0 164.0Z" fill="#8A8F98" stroke="#8A8F98" stroke-width="0.5"/>
+<text x="530.0" y="155.0" font-size="15" text-anchor="end" fill="#23272E" textLength="21.4" lengthAdjust="spacingAndGlyphs">8%</text>
+<path d="M340.0 248.3Q338.1 255.1 337.3 262.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M337.3 262.1Q336.7 269.0 336.1 276.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M340.0 248.3Q341.2 255.2 342.7 262.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M342.7 262.1Q344.1 269.0 343.9 276.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M340.0 221.4Q340.6 234.9 340.0 248.3" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M340.0 221.4Q337.1 227.2 335.2 233.4" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M335.2 233.4Q334.4 239.8 333.4 246.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M340.0 221.4Q345.9 224.1 351.2 227.9" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M351.2 227.9Q354.5 222.3 357.6 216.7" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<circle cx="340.0" cy="210.2" r="9.5" fill="#FFFDF5" stroke="#23272E" stroke-width="3.4"/>
+<path d="M333.8 220.9Q340.0 221.1 346.2 220.9" fill="none" stroke="#E4572E" stroke-width="3.08"/>
+<path d="M335.5 220.9Q329.9 222.5 324.9 225.4" fill="none" stroke="#E4572E" stroke-width="2.4640000000000004"/>
+<path d="M335.5 221.4Q332.0 226.0 327.7 229.8" fill="none" stroke="#E4572E" stroke-width="2.4640000000000004"/>
+<circle cx="339.7" cy="208.6" r="1.3" fill="#23272E" stroke="none"/>
+<circle cx="345.9" cy="208.6" r="1.3" fill="#23272E" stroke="none"/>
+<path d="M336.88 212.87049365844825Q342.8 219.47049365844825 348.72 212.87049365844825Z" fill="#23272E" stroke="#23272E" stroke-width="2.2"/>
+<path d="M357.6 216.7Q360.6 211.5 363.6 206.3" fill="none" stroke="#8A5A2B" stroke-width="5"/>
+<circle cx="369.1" cy="196.8" r="11.0" fill="#DCEBFA" stroke="#23272E" stroke-width="3.2"/>
+<path d="M423.0 229.5L501.0 229.5Q514.0 229.5 514.0 242.5L514.0 249.5Q514.0 262.5 501.0 262.5L423.0 262.5Q410.0 262.5 410.0 249.5L410.0 260.5L390.0 236.0L410.0 242.5L410.0 242.5Q410.0 229.5 423.0 229.5Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.6"/>
+<text x="462.0" y="252.4" font-size="18" text-anchor="middle" fill="#23272E" textLength="88.0" lengthAdjust="spacingAndGlyphs">Found you.</text>
+<path d="M577.0 22.0Q695.0 22.0 813.0 22.0Q818.0 22.0 818.0 27.0Q818.3 37.0 818.0 47.0Q818.0 52.0 813.0 52.0Q695.0 52.0 577.0 52.0Q572.0 52.0 572.0 47.0Q571.9 37.0 572.0 27.0Q572.0 22.0 577.0 22.0Z" fill="#FFF3C4" stroke="#23272E" stroke-width="2.0"/>
+<text x="695.0" y="43.0" font-size="15" text-anchor="middle" fill="#23272E" textLength="160.5" lengthAdjust="spacingAndGlyphs">Second test: remove it</text>
+<path d="M624.0 218.6Q621.6 230.8 619.2 243.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M619.2 243.1Q619.0 255.6 617.1 268.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M624.0 218.6Q627.2 230.7 628.8 243.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M628.8 243.1Q629.5 255.6 630.9 268.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M624.0 170.6Q622.8 194.6 624.0 218.6" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M624.0 170.6Q619.5 181.2 615.4 191.9" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M615.4 191.9Q614.0 203.3 612.2 214.7" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M624.0 170.6Q633.2 177.5 641.6 185.3" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M641.6 185.3Q652.4 181.4 663.2 177.5" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<circle cx="624.0" cy="150.6" r="17.0" fill="#FFFDF5" stroke="#23272E" stroke-width="3.4"/>
+<path d="M613.0 169.6Q624.0 170.1 635.0 169.6" fill="none" stroke="#E4572E" stroke-width="5.5"/>
+<path d="M616.0 169.6Q606.1 172.6 597.0 177.6" fill="none" stroke="#E4572E" stroke-width="4.4"/>
+<path d="M616.0 170.6Q608.9 177.9 602.0 185.6" fill="none" stroke="#E4572E" stroke-width="4.4"/>
+<circle cx="623.5" cy="147.6" r="2.3" fill="#23272E" stroke="none"/>
+<circle cx="634.5" cy="147.6" r="2.3" fill="#23272E" stroke="none"/>
+<path d="M622.0 157.05445296151476Q629.0 163.05445296151476 636.0 157.05445296151476" fill="none" stroke="#23272E" stroke-width="2.2"/>
+<path d="M690.2 173.5L685.2 177.6L685.8 184.1L679.4 183.5L675.2 188.5L671.1 183.5L664.6 184.1L665.3 177.6L660.2 173.5L665.3 169.3L664.6 162.9L671.1 163.5L675.2 158.5L679.4 163.5L685.8 162.9L685.2 169.3Z" fill="#E4572E" stroke="#23272E" stroke-width="2.2"/>
+<circle cx="675.2" cy="173.5" r="4.2" fill="#FFFFFF" stroke="#23272E" stroke-width="2.0"/>
+<path d="M715.0 168.0Q752.0 168.9 789.0 168.0Q798.0 168.0 798.0 177.0Q797.4 218.0 798.0 259.0Q798.0 268.0 789.0 268.0Q752.0 268.0 715.0 268.0Q706.0 268.0 706.0 259.0Q707.1 218.0 706.0 177.0Q706.0 168.0 715.0 168.0Z" fill="#2B2F38" stroke="#23272E" stroke-width="3.2"/>
+<path d="M715.0 179.0Q714.9 196.0 715.0 213.0" fill="none" stroke="#5A6170" stroke-width="2.6"/>
+<path d="M735.4 192.4Q737.9 195.0 740.5 197.6" fill="none" stroke="#FFFFFF" stroke-width="2.0"/>
+<path d="M735.4 197.6Q737.9 195.0 740.5 192.4" fill="none" stroke="#FFFFFF" stroke-width="2.0"/>
+<path d="M745.5 192.4Q748.1 195.0 750.6 197.6" fill="none" stroke="#FFFFFF" stroke-width="2.0"/>
+<path d="M745.5 197.6Q748.1 195.0 750.6 192.4" fill="none" stroke="#FFFFFF" stroke-width="2.0"/>
+<path d="M736.56 205.74q3.22 -5 6.44 0t6.44 0" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="752.0" y="150.0" font-size="24" text-anchor="middle" fill="#E4572E" font-weight="700" textLength="68.9" lengthAdjust="spacingAndGlyphs">-10.0</text>
+<path d="M617.8 64.7L714.2 64.7Q727.2 64.7 727.2 77.7L727.2 106.3Q727.2 119.3 714.2 119.3L635.8 119.3L626.0 132.6L617.8 119.3L617.8 119.3Q604.8 119.3 604.8 106.3L604.8 77.7Q604.8 64.7 617.8 64.7Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.6"/>
+<text x="666.0" y="87.3" font-size="17" text-anchor="middle" fill="#23272E" textLength="83.5" lengthAdjust="spacingAndGlyphs">Two tests.</text>
+<text x="666.0" y="108.7" font-size="17" text-anchor="middle" fill="#23272E" textLength="104.4" lengthAdjust="spacingAndGlyphs">Same culprit.</text></svg>
