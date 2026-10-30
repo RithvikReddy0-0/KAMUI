@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 300" width="840" height="300" role="img" aria-labelledby="t d"><title id="t">Chapter 1: The Box</title><desc id="d">Kam asks a black box to finish 'the cat sat on the'. It says 'mat'. Kam asks how it knew. The Box stays silent.</desc><style>text{font-family:'Comic Neue','Comic Sans MS','Chalkboard SE','Segoe Print',cursive}path,line{stroke-linecap:round;stroke-linejoin:round}</style><rect width="840" height="300" rx="16" fill="#FFFDF5"/><path d="M19.0 12.0Q145.0 11.3 271.0 12.0Q278.0 12.0 278.0 19.0Q278.7 150.0 278.0 281.0Q278.0 288.0 271.0 288.0Q145.0 288.5 19.0 288.0Q12.0 288.0 12.0 281.0Q11.5 150.0 12.0 19.0Q12.0 12.0 19.0 12.0Z" fill="#FFFFFF" stroke="#23272E" stroke-width="3.0"/>
+<path d="M294.0 12.0Q420.0 12.0 546.0 12.0Q553.0 12.0 553.0 19.0Q552.9 150.0 553.0 281.0Q553.0 288.0 546.0 288.0Q420.0 288.3 294.0 288.0Q287.0 288.0 287.0 281.0Q287.6 150.0 287.0 19.0Q287.0 12.0 294.0 12.0Z" fill="#FFFFFF" stroke="#23272E" stroke-width="3.0"/>
+<path d="M569.0 12.0Q695.0 11.2 821.0 12.0Q828.0 12.0 828.0 19.0Q827.1 150.0 828.0 281.0Q828.0 288.0 821.0 288.0Q695.0 288.7 569.0 288.0Q562.0 288.0 562.0 281.0Q561.9 150.0 562.0 19.0Q562.0 12.0 569.0 12.0Z" fill="#FFFFFF" stroke="#23272E" stroke-width="3.0"/>
+<path d="M62.0 218.6Q59.2 230.7 57.2 243.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M57.2 243.1Q57.0 255.6 55.1 268.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M62.0 218.6Q64.5 230.8 66.8 243.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M66.8 243.1Q67.5 255.6 68.9 268.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M62.0 170.6Q62.7 194.6 62.0 218.6" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M62.0 170.6Q56.9 180.9 53.4 191.9" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M53.4 191.9Q51.1 203.2 50.2 214.7" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M62.0 170.6Q73.1 173.7 83.6 178.4" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M83.6 178.4Q95.1 179.6 106.3 182.4" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<circle cx="62.0" cy="150.6" r="17.0" fill="#FFFDF5" stroke="#23272E" stroke-width="3.4"/>
+<path d="M51.0 169.6Q62.0 169.6 73.0 169.6" fill="none" stroke="#E4572E" stroke-width="5.5"/>
+<path d="M54.0 169.6Q43.8 171.9 35.0 177.6" fill="none" stroke="#E4572E" stroke-width="4.4"/>
+<path d="M54.0 170.6Q47.3 178.4 40.0 185.6" fill="none" stroke="#E4572E" stroke-width="4.4"/>
+<circle cx="61.5" cy="147.6" r="2.3" fill="#23272E" stroke="none"/>
+<circle cx="72.5" cy="147.6" r="2.3" fill="#23272E" stroke="none"/>
+<path d="M60.0 157.05445296151476Q67.0 163.05445296151476 74.0 157.05445296151476" fill="none" stroke="#23272E" stroke-width="2.2"/>
+<path d="M181.0 156.0Q218.0 155.3 255.0 156.0Q264.0 156.0 264.0 165.0Q263.8 212.0 264.0 259.0Q264.0 268.0 255.0 268.0Q218.0 266.9 181.0 268.0Q172.0 268.0 172.0 259.0Q171.3 212.0 172.0 165.0Q172.0 156.0 181.0 156.0Z" fill="#2B2F38" stroke="#23272E" stroke-width="3.2"/>
+<path d="M181.0 167.0Q181.1 186.7 181.0 206.4" fill="none" stroke="#5A6170" stroke-width="2.6"/>
+<circle cx="203.9" cy="186.2" r="2.1" fill="#FFFFFF" stroke="none"/>
+<circle cx="214.1" cy="186.2" r="2.1" fill="#FFFFFF" stroke="none"/>
+<path d="M202.56 195.98000000000002L215.44 195.98000000000002" fill="none" stroke="#FFFFFF" stroke-width="2.2"/>
+<path d="M42.6 31.5L133.4 31.5Q146.4 31.5 146.4 44.5L146.4 79.5Q146.4 92.5 133.4 92.5L79.0 92.5L70.0 132.6L61.0 92.5L42.6 92.5Q29.6 92.5 29.6 79.5L29.6 44.5Q29.6 31.5 42.6 31.5Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.6"/>
+<text x="88.0" y="57.0" font-size="18" text-anchor="middle" fill="#23272E" textLength="92.9" lengthAdjust="spacingAndGlyphs">the cat sat</text>
+<text x="88.0" y="79.7" font-size="18" text-anchor="middle" fill="#23272E" textLength="66.6" lengthAdjust="spacingAndGlyphs">on the...</text>
+<path d="M204.9 92.9L239.1 92.9Q252.1 92.9 252.1 105.9L252.1 118.1Q252.1 131.1 239.1 131.1L227.0 131.1L218.0 160.0L209.0 131.1L204.9 131.1Q191.9 131.1 191.9 118.1L191.9 105.9Q191.9 92.9 204.9 92.9Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.6"/>
+<text x="222.0" y="118.4" font-size="18" text-anchor="middle" fill="#23272E" textLength="36.2" lengthAdjust="spacingAndGlyphs">mat.</text>
+<path d="M337.0 219.2Q333.6 231.2 330.1 243.2" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M330.1 243.2Q328.8 255.7 326.6 268.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M337.0 219.2Q340.9 231.1 343.9 243.2" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M343.9 243.2Q346.1 255.6 347.4 268.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M337.0 171.2Q337.1 195.2 337.0 219.2" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M337.0 171.2Q327.4 164.9 318.2 158.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M318.2 158.0Q311.7 148.5 306.7 138.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M337.0 171.2Q346.8 165.1 355.8 158.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M355.8 158.0Q361.7 148.1 367.3 138.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<circle cx="337.0" cy="151.2" r="17.0" fill="#FFFDF5" stroke="#23272E" stroke-width="3.4"/>
+<path d="M326.0 170.2Q337.0 170.4 348.0 170.2" fill="none" stroke="#E4572E" stroke-width="5.5"/>
+<path d="M329.0 170.2Q320.0 175.4 310.0 178.2" fill="none" stroke="#E4572E" stroke-width="4.4"/>
+<path d="M329.0 171.2Q320.6 177.4 315.0 186.2" fill="none" stroke="#E4572E" stroke-width="4.4"/>
+<circle cx="336.5" cy="148.2" r="2.3" fill="#23272E" stroke="none"/>
+<circle cx="347.5" cy="148.2" r="2.3" fill="#23272E" stroke="none"/>
+<circle cx="342.0" cy="160.2" r="3.6" fill="none" stroke="#23272E" stroke-width="2.0"/>
+<path d="M456.0 156.0Q493.0 156.9 530.0 156.0Q539.0 156.0 539.0 165.0Q538.1 212.0 539.0 259.0Q539.0 268.0 530.0 268.0Q493.0 267.6 456.0 268.0Q447.0 268.0 447.0 259.0Q447.5 212.0 447.0 165.0Q447.0 156.0 456.0 156.0Z" fill="#2B2F38" stroke="#23272E" stroke-width="3.2"/>
+<path d="M456.0 167.0Q455.8 186.7 456.0 206.4" fill="none" stroke="#5A6170" stroke-width="2.6"/>
+<circle cx="478.9" cy="186.2" r="2.1" fill="#FFFFFF" stroke="none"/>
+<circle cx="489.1" cy="186.2" r="2.1" fill="#FFFFFF" stroke="none"/>
+<path d="M477.56 195.98000000000002L490.44 195.98000000000002" fill="none" stroke="#FFFFFF" stroke-width="2.2"/>
+<path d="M312.2 25.5L427.8 25.5Q440.8 25.5 440.8 38.5L440.8 73.5Q440.8 86.5 427.8 86.5L360.0 86.5L351.0 139.2L342.0 86.5L312.2 86.5Q299.2 86.5 299.2 73.5L299.2 38.5Q299.2 25.5 312.2 25.5Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.6"/>
+<text x="370.0" y="51.0" font-size="18" text-anchor="middle" fill="#23272E" textLength="117.5" lengthAdjust="spacingAndGlyphs">Wow! How did</text>
+<text x="370.0" y="73.7" font-size="18" text-anchor="middle" fill="#23272E" textLength="83.9" lengthAdjust="spacingAndGlyphs">you know?</text>
+<path d="M488.2 96.9L499.8 96.9Q512.8 96.9 512.8 109.9L512.8 122.1Q512.8 135.1 499.8 135.1L506.2 135.1L493.0 160.0L488.2 135.1L488.2 135.1Q475.2 135.1 475.2 122.1L475.2 109.9Q475.2 96.9 488.2 96.9Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.6"/>
+<text x="494.0" y="122.4" font-size="18" text-anchor="middle" fill="#23272E" textLength="13.5" lengthAdjust="spacingAndGlyphs">...</text>
+<path d="M640.0 218.6Q636.8 230.7 635.2 243.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M635.2 243.1Q634.3 255.6 633.1 268.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M640.0 218.6Q641.8 230.9 644.8 243.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M644.8 243.1Q645.6 255.6 646.9 268.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M646.7 171.0Q643.8 194.9 640.0 218.6" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M646.7 171.0Q642.2 181.6 638.1 192.3" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M638.1 192.3Q635.8 203.6 634.9 215.1" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M646.7 171.0Q658.2 170.6 669.6 169.0" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<path d="M669.6 169.0Q680.4 165.1 691.2 161.2" fill="none" stroke="#23272E" stroke-width="3.4"/>
+<circle cx="649.5" cy="151.2" r="17.0" fill="#FFFDF5" stroke="#23272E" stroke-width="3.4"/>
+<path d="M635.7 170.0Q646.7 170.1 657.7 170.0" fill="none" stroke="#E4572E" stroke-width="5.5"/>
+<path d="M638.7 170.0Q629.9 175.7 619.7 178.0" fill="none" stroke="#E4572E" stroke-width="4.4"/>
+<path d="M638.7 171.0Q632.4 179.2 624.7 186.0" fill="none" stroke="#E4572E" stroke-width="4.4"/>
+<circle cx="649.0" cy="148.2" r="2.3" fill="#23272E" stroke="none"/>
+<circle cx="660.0" cy="148.2" r="2.3" fill="#23272E" stroke="none"/>
+<path d="M647.4637708652845 159.71622428708798q3.5 -5 7.0 0t7.0 0" fill="none" stroke="#23272E" stroke-width="2.2"/>
+<path d="M709.0 138.0Q750.0 138.7 791.0 138.0Q800.0 138.0 800.0 147.0Q799.8 203.0 800.0 259.0Q800.0 268.0 791.0 268.0Q750.0 267.2 709.0 268.0Q700.0 268.0 700.0 259.0Q700.1 203.0 700.0 147.0Q700.0 138.0 709.0 138.0Z" fill="#2B2F38" stroke="#23272E" stroke-width="3.2"/>
+<path d="M709.0 149.0Q708.8 172.8 709.0 196.5" fill="none" stroke="#5A6170" stroke-width="2.6"/>
+<circle cx="735.9" cy="173.1" r="2.1" fill="#FFFFFF" stroke="none"/>
+<circle cx="746.1" cy="173.1" r="2.1" fill="#FFFFFF" stroke="none"/>
+<path d="M734.56 182.84L747.44 182.84" fill="none" stroke="#FFFFFF" stroke-width="2.2"/>
+<path d="M600.8 31.5L719.2 31.5Q732.2 31.5 732.2 44.5L732.2 79.5Q732.2 92.5 719.2 92.5L660.5 92.5L651.5 133.2L642.5 92.5L600.8 92.5Q587.8 92.5 587.8 79.5L587.8 44.5Q587.8 31.5 600.8 31.5Z" fill="#FFFFFF" stroke="#23272E" stroke-width="2.6"/>
+<text x="660.0" y="57.0" font-size="18" text-anchor="middle" fill="#23272E" textLength="120.4" lengthAdjust="spacingAndGlyphs">Hello? What's</text>
+<text x="660.0" y="79.7" font-size="18" text-anchor="middle" fill="#23272E" textLength="76.5" lengthAdjust="spacingAndGlyphs">in there?</text>
+<text x="744.0" y="214.0" font-size="15" text-anchor="middle" fill="#C9CED6" textLength="39.6" lengthAdjust="spacingAndGlyphs">knock</text>
+<text x="752.0" y="234.0" font-size="15" text-anchor="middle" fill="#C9CED6" textLength="39.6" lengthAdjust="spacingAndGlyphs">knock</text>
+<text x="792.0" y="66.0" font-size="34" text-anchor="middle" fill="#E4572E" textLength="17.7" lengthAdjust="spacingAndGlyphs">?</text></svg>

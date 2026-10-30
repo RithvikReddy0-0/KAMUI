@@ -9,7 +9,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+- README rewritten around an illustrated story: Kam, a stick figure, builds a
+  language model, cuts windows into it, and investigates how it works, across
+  ten comic strips in `docs/assets/story/`. Every number in the story comes
+  from the notebooks' tiny model.
+
+### Fixed
+- README Quickstart: `cd kamui` failed on case-sensitive filesystems, and the
+  examples relied on a `data/corpus.txt` that isn't in the repository. The
+  Quickstart now builds the story's model from scratch and every block runs
+  as written, without downloading any data.
+- Removed the README's comparison table, which wrongly marked TransformerLens
+  as having no notebooks or training support.
 
 ---
 
