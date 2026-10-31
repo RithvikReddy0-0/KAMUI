@@ -9,6 +9,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `tests/integration/test_readme.py`: runs the README Quickstart exactly as
+  written and checks each chapter's claims on the resulting model, so the
+  front page can't go stale unnoticed. It asserts the claims rather than exact
+  decimals, so machine-to-machine rounding can't fail it, and undertraining
+  the Quickstart's model makes 6 of its 9 tests fail.
+
 ### Changed
 - README rewritten around an illustrated story: Kam, a stick figure, builds a
   language model, cuts windows into it, and investigates how it works, across

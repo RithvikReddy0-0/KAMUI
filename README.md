@@ -41,7 +41,9 @@ Short on time? Skip to the [Quickstart](#quickstart).
 
 This all really happened, in the tiny model the [notebooks](notebooks/) train
 in under a minute on a CPU. The numbers come from those runs, so you can
-reproduce them yourself (they may vary slightly from machine to machine).
+reproduce them yourself (they may vary slightly from machine to machine). CI runs
+the Quickstart and checks each chapter's claims, so the story can't quietly go
+out of date.
 
 ### Chapter 1: The Box
 
@@ -476,7 +478,7 @@ KV-Cache Generation      ██████████  ✅ complete
 Gradient Checkpointing   ██████████  ✅ complete
 ```
 
-The suite has 923 tests at ~99% coverage, with `ruff`, `black`, and `mypy` all clean.
+The suite has 932 tests at ~99% coverage, with `ruff`, `black`, and `mypy` all clean.
 
 </details>
 
