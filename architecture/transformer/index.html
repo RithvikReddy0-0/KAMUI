@@ -664,6 +664,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#runtime-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1390,6 +1401,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#runtime-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1454,8 +1476,10 @@ at any point and measure the downstream effect cleanly.</p>
 <p>A learned lookup table of shape <code>(V, D)</code>. Each token ID maps to a
 <code>D</code>-dimensional vector. At initialisation: <code>N(0, 0.02)</code>.</p>
 <h3 id="positional-encoding">Positional Encoding<a class="headerlink" href="#positional-encoding" title="Permanent link">&para;</a></h3>
-<p><code>kamui/model/embedding.py</code> → <code>LearnedPositionalEncoding</code> or <code>SinusoidalPositionalEncoding</code></p>
-<p>KAMUI supports both. Default: learned (matches GPT-2).</p>
+<p><code>kamui/model/embedding.py</code> → <code>LearnedPositionalEncoding</code>, <code>SinusoidalPositionalEncoding</code>
+or <code>RotaryPositionalEncoding</code></p>
+<p>KAMUI supports all three through <code>positional_encoding</code>. Default: <code>"learned"</code>
+(matches GPT-2).</p>
 <p><strong>Sinusoidal</strong> (Vaswani et al., 2017):
 <div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>PE(pos, 2i)   = sin(pos / 10000^(2i/D))
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>PE(pos, 2i+1) = cos(pos / 10000^(2i/D))
@@ -1463,9 +1487,13 @@ at any point and measure the downstream effect cleanly.</p>
 Fixed, non-trainable. Can extrapolate beyond training length in principle.</p>
 <p><strong>Learned</strong>: a trainable <code>(context_length, D)</code> matrix. Better empirical
 performance but cannot extrapolate.</p>
+<p><strong>Rotary</strong> (RoPE, Su et al., 2021): instead of adding a position vector to the
+embedding, it rotates the queries and keys inside attention, so attention sees
+relative positions. It's used by LLaMA, and it requires an even <code>d_head</code>.</p>
 <h3 id="pre-layer-normalisation">Pre-Layer Normalisation<a class="headerlink" href="#pre-layer-normalisation" title="Permanent link">&para;</a></h3>
-<p><code>kamui/model/normalization.py</code> → <code>LayerNorm</code></p>
-<p>Applied <strong>before</strong> each sublayer (Pre-LN), not after (Post-LN).</p>
+<p><code>kamui/model/normalization.py</code> → <code>LayerNorm</code> or <code>RMSNorm</code></p>
+<p>Applied <strong>before</strong> each sublayer (Pre-LN), not after (Post-LN). Set
+<code>normalization="rmsnorm"</code> to use RMSNorm, which LLaMA uses. Default: <code>"layernorm"</code>.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>x = x + Attention(LayerNorm(x))     # ← Pre-LN: norm before sublayer
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>x = x + FFN(LayerNorm(x))
 </span></code></pre></div>
@@ -1485,19 +1513,21 @@ See Xiong et al. (2020).</p>
 <p><strong>Causal mask</strong>: future positions are set to <code>-inf</code> before softmax
 (not <code>0</code> — that is a common bug). This ensures <code>exp(-inf) = 0</code>, so
 future tokens receive zero attention weight.</p>
-<p><strong>KAMUI always returns attention weights</strong>: the forward pass returns
-<code>(output, weights)</code>, not just <code>output</code>. This is a deliberate design
-choice — interpretability tools need the weights without hooks.</p>
+<p><strong>Attention weights on request</strong>: <code>MultiHeadAttention</code> returns only its output by
+default, and <code>(output, weights)</code> with <code>return_weights=True</code>. Interpretability tools
+read the weights through the <code>blocks.{i}.attn.weights</code>
+<a href="../hooks/">hook point</a> instead, so nothing in the model has to change.</p>
 <h3 id="feed-forward-network">Feed-Forward Network<a class="headerlink" href="#feed-forward-network" title="Permanent link">&para;</a></h3>
 <p><code>kamui/model/feedforward.py</code> → <code>FeedForward</code></p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>FFN(x) = W_2 · GELU(W_1 · x + b_1) + b_2
 </span></code></pre></div>
-<p>Where <code>W_1 ∈ R^(D × 4D)</code> and <code>W_2 ∈ R^(4D × D)</code>. The 4× expansion factor
-is standard since Vaswani et al. (2017).</p>
-<p>GELU activation: smooth, non-monotonic, provides a learned soft gate.
-All modern transformers use GELU or SwiGLU. KAMUI uses GELU for simplicity.</p>
+<p>Where <code>W_1 ∈ R^(D × F)</code> and <code>W_2 ∈ R^(F × D)</code>, and <code>F</code> is <code>d_ff</code>. A 4× expansion
+has been standard since Vaswani et al. (2017), and the <code>nano</code>, <code>small</code> and <code>medium</code>
+configs use it.</p>
+<p>GELU activation: smooth and non-monotonic. Many modern transformers use GELU or
+SwiGLU. KAMUI uses GELU for simplicity.</p>
 <h3 id="final-layernorm-unembedding">Final LayerNorm + Unembedding<a class="headerlink" href="#final-layernorm-unembedding" title="Permanent link">&para;</a></h3>
-<p>After all blocks, a final LayerNorm is applied to the residual stream,
+<p>After all blocks, a final normalisation layer is applied to the residual stream,
 then a linear projection maps <code>D → V</code> to produce logits.</p>
 <p><strong>Weight tying</strong>: the unembedding matrix is the <strong>transpose</strong> of the token
 embedding matrix. This halves the parameter count of these two layers and
@@ -1510,9 +1540,8 @@ empirically improves perplexity. Used by GPT-2 and all descendants.</p>
 FFN (<code>W_2</code>) are initialised with reduced scale:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>std = 0.02 / sqrt(2 * n_layers)
 </span></code></pre></div>
-<p>This prevents residual stream variance from growing with depth. Without it,
-a 12-layer model has activation variance ~12× larger at the output than
-the embedding, causing instability.</p>
+<p>This prevents residual stream variance from growing with depth, because every block
+adds to the same stream.</p>
 <hr />
 <h2 id="hyperparameter-reference-small-config">Hyperparameter Reference (small config)<a class="headerlink" href="#hyperparameter-reference-small-config" title="Permanent link">&para;</a></h2>
 <table>
@@ -1561,8 +1590,31 @@ the embedding, causing instability.</p>
 </tr>
 <tr>
 <td>Parameters</td>
-<td>~12M</td>
+<td>6,901,760</td>
 <td>Total trainable parameters</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="runtime-options">Runtime Options<a class="headerlink" href="#runtime-options" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>How to use it</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KV-cache</td>
+<td><code>kamui.generate(..., use_cache=True)</code> or <code>model.new_cache()</code></td>
+<td>Reuses past keys and values, so generation only computes the newest token</td>
+</tr>
+<tr>
+<td>Gradient checkpointing</td>
+<td><code>model.set_gradient_checkpointing(True)</code></td>
+<td>Recomputes block activations during the backward pass, trading time for memory</td>
 </tr>
 </tbody>
 </table>
@@ -1570,6 +1622,7 @@ the embedding, causing instability.</p>
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Vaswani et al. (2017). Attention Is All You Need. https://arxiv.org/abs/1706.03762</li>
+<li>Su et al. (2021). Roformer: Enhanced Transformer with Rotary Position Embedding. https://arxiv.org/abs/2104.09118</li>
 <li>Xiong et al. (2020). On Layer Normalization in the Transformer Architecture. https://arxiv.org/abs/2002.04745</li>
 <li>Elhage et al. (2021). A Mathematical Framework for Transformer Circuits. https://transformer-circuits.pub/2021/framework/</li>
 </ul>

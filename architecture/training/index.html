@@ -576,10 +576,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-loop-pseudocode" class="md-nav__link">
+  <a href="#the-loop" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Loop (pseudocode)
+        The Loop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-training-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where Training Runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-kamui-train-reads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What kamui-train Reads
       
     </span>
   </a>
@@ -1213,10 +1235,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-loop-pseudocode" class="md-nav__link">
+  <a href="#the-loop" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Loop (pseudocode)
+        The Loop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-training-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where Training Runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-kamui-train-reads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What kamui-train Reads
       
     </span>
   </a>
@@ -1304,51 +1348,82 @@
 no callback system, no framework magic. The loop is a <code>for</code> loop you can
 read, modify, and understand in full.</p>
 <p>This is intentional. Understanding <em>how</em> a model is trained is as important
-as understanding its architecture. The training loop teaches:
-- How gradients accumulate and apply
-- Why learning rate warmup matters
-- What gradient clipping does and why
-- How to diagnose training instability from loss curves</p>
+as understanding its architecture. The training loop teaches:</p>
+<ul>
+<li>How gradients accumulate and apply</li>
+<li>Why learning rate warmup matters</li>
+<li>What gradient clipping does and why</li>
+<li>How to diagnose training instability from loss curves</li>
+</ul>
 <hr />
-<h2 id="the-loop-pseudocode">The Loop (pseudocode)<a class="headerlink" href="#the-loop-pseudocode" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_steps</span><span class="p">):</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="c1"># ── 1. Get a batch ───────────────────────────────────────────────────</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">input_ids</span><span class="p">,</span> <span class="n">target_ids</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">dataloader</span><span class="p">)</span>   <span class="c1"># (B, S) each</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="c1"># ── 2. Forward pass + loss ───────────────────────────────────────────</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">loss</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">target_ids</span><span class="p">)</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">/</span> <span class="n">grad_accum_steps</span>             <span class="c1"># scale for accumulation</span>
+<h2 id="the-loop">The Loop<a class="headerlink" href="#the-loop" title="Permanent link">&para;</a></h2>
+<p>This is what <code>Trainer.train(n_steps)</code> does, in <code>kamui/training/trainer.py</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>for _ in range(n_steps):
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    optimizer.zero_grad()
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    # ── 1. Accumulate gradients over micro-batches ───────────────────────
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    for _ in range(grad_accum_steps):
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        inputs, targets = next(data)                # (B, S) each
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        loss = model(inputs, targets=targets)
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        (loss / grad_accum_steps).backward()        # scale for accumulation
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="c1"># ── 3. Backward pass ─────────────────────────────────────────────────</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    # ── 2. Clip, keeping the norm from before clipping ───────────────────
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    grad_norm = clip_grad_norm_(model.parameters(), max_grad_norm)
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="c1"># ── 4. Gradient update (every grad_accum_steps micro-batches) ────────</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">grad_accum_steps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>        <span class="n">grad_norm_pre</span>  <span class="o">=</span> <span class="n">compute_grad_norm</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        <span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="n">grad_clip</span><span class="p">)</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>        <span class="n">grad_norm_post</span> <span class="o">=</span> <span class="n">compute_grad_norm</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>        <span class="n">lr</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">get_lr</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        <span class="n">set_lr</span><span class="p">(</span><span class="n">optimiser</span><span class="p">,</span> <span class="n">lr</span><span class="p">)</span>
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>        <span class="n">optimiser</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        <span class="n">optimiser</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="c1"># ── 5. Logging ───────────────────────────────────────────────────────</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="n">log_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>        <span class="n">log</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">grad_norm_pre</span><span class="p">,</span> <span class="n">grad_norm_post</span><span class="p">,</span> <span class="n">tokens_per_sec</span><span class="p">)</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>    <span class="c1"># ── 6. Evaluation ────────────────────────────────────────────────────</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>    <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="n">eval_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>        <span class="n">val_loss</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">val_dataloader</span><span class="p">)</span>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>        <span class="n">log</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">val_loss</span><span class="o">=</span><span class="n">val_loss</span><span class="p">)</span>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>    <span class="c1"># ── 7. Checkpoint ────────────────────────────────────────────────────</span>
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>    <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="n">checkpoint_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>        <span class="n">save_checkpoint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimiser</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    # ── 3. Apply the scheduled learning rate and update ──────────────────
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    set_lr(optimizer, scheduler.get_lr(step))
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    optimizer.step()
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    step += 1
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    # ── 4. Record, and evaluate if it is time ────────────────────────────
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    record = {step, train_loss, lr, grad_norm}
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    if eval_interval and val_loader and step % eval_interval == 0:
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        record["val_loss"] = evaluate()
 </span></code></pre></div>
+<hr />
+<h2 id="where-training-runs">Where Training Runs<a class="headerlink" href="#where-training-runs" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">KAMUI trains on the CPU for now</p>
+<p><code>Trainer</code> doesn't move batches to the model's device, and <code>kamui-train</code> never
+moves the model off the CPU. A GPU therefore sits idle under <code>kamui-train</code>, and
+putting the model on a GPU yourself fails at the first forward pass with a device
+mismatch.</p>
+<p><code>kamui.training.distributed</code> has only been run across CPU processes with the
+<code>gloo</code> backend, so it's tested as distributed training, not as GPU training.</p>
+</div>
+<hr />
+<h2 id="what-kamui-train-reads">What <code>kamui-train</code> Reads<a class="headerlink" href="#what-kamui-train-reads" title="Permanent link">&para;</a></h2>
+<p><code>kamui-train</code> reads these keys from the YAML config:</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Keys</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td>Every key</td>
+</tr>
+<tr>
+<td><code>training</code></td>
+<td><code>batch_size</code>, <code>grad_accum_steps</code>, <code>max_steps</code>, <code>learning_rate</code>, <code>min_lr</code>, <code>warmup_steps</code>, <code>grad_clip</code>, <code>weight_decay</code>, <code>eval_interval</code></td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td><code>train_split</code></td>
+</tr>
+<tr>
+<td><code>logging</code></td>
+<td><code>output_dir</code></td>
+</tr>
+</tbody>
+</table>
+<p>The shipped configs also contain <code>betas</code>, <code>checkpoint_interval</code>, <code>mixed_precision</code>,
+<code>log_interval</code>, <code>data.dataset</code> and <code>data.seed</code>, which <code>kamui-train</code> doesn't read yet.
+It logs every step, saves one checkpoint when training finishes, and always trains
+its tokenizer from the corpus you pass with <code>--corpus</code>.</p>
 <hr />
 <h2 id="learning-rate-schedule">Learning Rate Schedule<a class="headerlink" href="#learning-rate-schedule" title="Permanent link">&para;</a></h2>
 <p>Linear warmup → cosine decay → floor.</p>
@@ -1370,24 +1445,26 @@ spikes. The model gently anneals into a low-loss minimum.</p>
 <hr />
 <h2 id="gradient-accumulation">Gradient Accumulation<a class="headerlink" href="#gradient-accumulation" title="Permanent link">&para;</a></h2>
 <p>Gradient accumulation simulates a larger effective batch size without
-requiring additional GPU memory.</p>
+requiring additional memory.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>effective_batch_size = batch_size × grad_accum_steps
 </span></code></pre></div>
 <p>With <code>batch_size=32</code> and <code>grad_accum_steps=4</code>, the effective batch is 128 —
 equivalent to loading 128 sequences at once but using only 32 sequences
-worth of GPU memory per step.</p>
+worth of memory per micro-batch.</p>
 <p><strong>Correctness requirement</strong>: the loss must be divided by <code>grad_accum_steps</code>
 before <code>.backward()</code>. Otherwise gradients are scaled by the number of
 accumulation steps relative to a true large-batch run.</p>
 <hr />
 <h2 id="gradient-clipping">Gradient Clipping<a class="headerlink" href="#gradient-clipping" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">clip_grad_norm_</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">grad_norm</span> <span class="o">=</span> <span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 </span></code></pre></div>
 <p>Limits the L2 norm of the gradient vector. Prevents occasional large
 gradient updates (from difficult training examples) from destabilising
 the model.</p>
-<p><strong>Diagnostics</strong>: KAMUI logs <code>grad_norm_pre_clip</code> at every update step.
-If this value is consistently above 5–10, the learning rate is likely
+<p><strong>Diagnostics</strong>: KAMUI records this pre-clip norm as <code>grad_norm</code> at every update
+step. If this value is consistently above 5–10, the learning rate is likely
 too high or the model is unstable.</p>
 <hr />
 <h2 id="adamw-weight-decay-separation">AdamW — Weight Decay Separation<a class="headerlink" href="#adamw-weight-decay-separation" title="Permanent link">&para;</a></h2>
@@ -1409,14 +1486,13 @@ parameter groups:</p>
 </tr>
 <tr>
 <td>Not decayed</td>
-<td>Biases, LayerNorm γ/β (ndim &lt; 2)</td>
+<td>Biases, normalisation parameters (ndim &lt; 2)</td>
 <td>0.0</td>
 </tr>
 </tbody>
 </table>
-<p>Applying weight decay to biases and LayerNorm parameters is incorrect —
-they should be unconstrained. This separation is subtle but measurably
-improves training stability.</p>
+<p>Biases and normalisation parameters are left out because they should be
+unconstrained. This is the standard separation for transformers.</p>
 <hr />
 <h2 id="diagnosing-training-problems">Diagnosing Training Problems<a class="headerlink" href="#diagnosing-training-problems" title="Permanent link">&para;</a></h2>
 <table>
@@ -1441,10 +1517,10 @@ improves training stability.</p>
 <tr>
 <td>Loss decreases very slowly</td>
 <td>LR too low or gradient vanishing</td>
-<td>Raise LR; check <code>grad_norm_pre_clip</code></td>
+<td>Raise LR; check <code>grad_norm</code></td>
 </tr>
 <tr>
-<td><code>grad_norm_pre_clip</code> &gt; 10 consistently</td>
+<td><code>grad_norm</code> &gt; 10 consistently</td>
 <td>LR too high</td>
 <td>Lower LR; tighten <code>grad_clip</code></td>
 </tr>
@@ -1457,6 +1533,11 @@ improves training stability.</p>
 <td>Loss is exactly <code>log(vocab_size)</code> after 200 steps</td>
 <td>Gradient not flowing</td>
 <td>Check <code>.backward()</code> is called</td>
+</tr>
+<tr>
+<td><code>need at least context_length + 1 tokens</code></td>
+<td>Corpus too small for the vocabulary</td>
+<td>Use a larger corpus or a smaller <code>vocab_size</code></td>
 </tr>
 </tbody>
 </table>

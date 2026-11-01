@@ -1469,20 +1469,28 @@
 <h1 id="hook-system">Hook System<a class="headerlink" href="#hook-system" title="Permanent link">&para;</a></h1>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>The hook system is the bridge between the model and every interpretability
-tool in KAMUI. It allows any activation in the forward pass to be captured,
-inspected, and replaced — without touching a single line of model code.</p>
+tool in KAMUI. It allows any activation in the forward pass to be captured
+and inspected — without touching a single line of model code.</p>
+<p>The examples on this page use a <code>model</code> and a batch of token IDs, <code>token_ids</code>, of
+shape <code>(1, S)</code>.</p>
 <hr />
 <h2 id="the-core-problem">The Core Problem<a class="headerlink" href="#the-core-problem" title="Permanent link">&para;</a></h2>
 <p>PyTorch's <code>register_forward_hook</code> is powerful but dangerous:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Dangerous pattern — hook handle must be manually removed</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">handle</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">attn</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">my_fn</span><span class="p">)</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">handle</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>    <span class="c1"># ← easy to forget; silent memory leak if missed</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_fn</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Dangerous pattern — hook handle must be manually removed</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">handle</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">attn</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">my_fn</span><span class="p">)</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">token_ids</span><span class="p">)</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">handle</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>    <span class="c1"># ← easy to forget; silent memory leak if missed</span>
 </span></code></pre></div>
-<p>If <code>.remove()</code> is never called:
-- Hooks accumulate across forward passes
-- The activation cache grows unboundedly
-- Old activations contaminate new runs</p>
+<p>If <code>.remove()</code> is never called:</p>
+<ul>
+<li>Hooks accumulate across forward passes</li>
+<li>The activation cache grows unboundedly</li>
+<li>Old activations contaminate new runs</li>
+</ul>
 <p>KAMUI's <code>HookManager</code> makes the correct pattern the only possible pattern.</p>
 <hr />
 <h2 id="hookmanager">HookManager<a class="headerlink" href="#hookmanager" title="Permanent link">&para;</a></h2>
@@ -1492,14 +1500,14 @@ exit — including on exceptions.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">kamui.hooks</span><span class="w"> </span><span class="kn">import</span> <span class="n">HookManager</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">with</span> <span class="n">HookManager</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="k">as</span> <span class="n">hooks</span><span class="p">:</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">hooks</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="s2">"blocks.3.attn"</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="s2">"output"</span><span class="p">)</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">hooks</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="s2">"blocks.3.attn"</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="s2">"weights"</span><span class="p">)</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">hooks</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="s2">"blocks.1.attn"</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="s2">"output"</span><span class="p">)</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">hooks</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="s2">"blocks.1.attn"</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="s2">"weights"</span><span class="p">)</span>
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">hooks</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="s2">"embed"</span><span class="p">,</span>         <span class="n">point</span><span class="o">=</span><span class="s2">"output"</span><span class="p">)</span>
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">token_ids</span><span class="p">)</span>
 </span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">attn_out</span>  <span class="o">=</span> <span class="n">hooks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"blocks.3.attn.output"</span><span class="p">)</span>   <span class="c1"># (B, S, D)</span>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">attn_wts</span>  <span class="o">=</span> <span class="n">hooks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"blocks.3.attn.weights"</span><span class="p">)</span>  <span class="c1"># (B, H, S, S)</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">attn_out</span>  <span class="o">=</span> <span class="n">hooks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"blocks.1.attn.output"</span><span class="p">)</span>   <span class="c1"># (B, S, D)</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">attn_wts</span>  <span class="o">=</span> <span class="n">hooks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"blocks.1.attn.weights"</span><span class="p">)</span>  <span class="c1"># (B, H, S, S)</span>
 </span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">embedding</span> <span class="o">=</span> <span class="n">hooks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"embed.output"</span><span class="p">)</span>           <span class="c1"># (B, S, D)</span>
 </span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
 </span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1"># ← All hooks removed here, even if an exception occurred inside</span>
@@ -1539,17 +1547,16 @@ exit — including on exceptions.</p>
 <h3 id="all-valid-hook-points-small-config-6-layers">All valid hook points (small config, 6 layers)<a class="headerlink" href="#all-valid-hook-points-small-config-6-layers" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>embed.output                      # combined token + position embeddings  (B, S, D)
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>blocks.0.attn.pre_softmax         # attention scores before masking       (B, H, S, S)
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>blocks.0.attn.weights             # attention probabilities (post-softmax)(B, H, S, S)
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>blocks.0.attn.output              # projected attention output             (B, S, D)
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>blocks.0.ffn.mid                  # FFN hidden activations (post-GELU)    (B, S, F)
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>blocks.0.ffn.output               # FFN output                             (B, S, D)
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>blocks.1.attn.pre_softmax         # (same pattern for layers 1–5)
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>...
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>blocks.5.ffn.output
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>unembed.input                     # residual stream before unembedding    (B, S, D)
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>blocks.0.attn.weights             # attention probabilities (post-softmax)(B, H, S, S)
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>blocks.0.attn.output              # projected attention output             (B, S, D)
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>blocks.0.ffn.mid                  # FFN hidden activations (post-GELU)    (B, S, F)
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>blocks.0.ffn.output               # FFN output                             (B, S, D)
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>blocks.1.attn.weights             # (same pattern for layers 1–5)
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>...
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>blocks.5.ffn.output
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>unembed.input                     # residual stream before unembedding    (B, S, D)
 </span></code></pre></div>
 <h3 id="listing-all-hook-points-programmatically">Listing all hook points programmatically<a class="headerlink" href="#listing-all-hook-points-programmatically" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">kamui.hooks</span><span class="w"> </span><span class="kn">import</span> <span class="n">HookRegistry</span>
@@ -1558,24 +1565,33 @@ exit — including on exceptions.</p>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="s2">"configs/small.yaml"</span><span class="p">)</span>
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">all_points</span> <span class="o">=</span> <span class="n">HookRegistry</span><span class="o">.</span><span class="n">all_points</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">all_points</span><span class="p">)</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># ["embed.output", "blocks.0.attn.pre_softmax", ..., "unembed.input"]</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># ['embed.output', 'blocks.0.attn.weights', ..., 'unembed.input']</span>
 </span></code></pre></div>
 <hr />
 <h2 id="activation-patching-via-hooks">Activation Patching via Hooks<a class="headerlink" href="#activation-patching-via-hooks" title="Permanent link">&para;</a></h2>
-<p>The hook system supports output replacement: a hook can return a tensor
-to <em>replace</em> the module's output instead of just observing it. This is
-the mechanism behind <code>ActivationPatcher</code>.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Internal mechanism used by ActivationPatcher</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">patch_fn</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="k">return</span> <span class="n">clean_activation</span>   <span class="c1"># replaces the corrupted output</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">handle</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">attn</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">patch_fn</span><span class="p">)</span>
+<p><code>HookManager</code> only observes. Replacing an activation uses a plain PyTorch hook: if a
+forward hook returns a tensor, that tensor replaces the module's output.
+<code>ActivationPatcher</code> does this, and removes the hook in a <code>finally</code> block:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># First capture the clean activation</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">with</span> <span class="n">HookManager</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="k">as</span> <span class="n">hooks</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">hooks</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="s2">"blocks.1.attn"</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="s2">"output"</span><span class="p">)</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">model</span><span class="p">(</span><span class="n">clean_ids</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">clean_activation</span> <span class="o">=</span> <span class="n">hooks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"blocks.1.attn.output"</span><span class="p">)</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">def</span><span class="w"> </span><span class="nf">patch_fn</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="k">return</span> <span class="n">clean_activation</span>   <span class="c1"># replaces the corrupted output</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1"># Then run the corrupted input with that activation swapped in</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="n">handle</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">attn</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">patch_fn</span><span class="p">)</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">patched_logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">corrupted_ids</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="k">finally</span><span class="p">:</span>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="n">handle</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
 </span></code></pre></div>
-<p><code>HookManager</code> exposes this cleanly:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">with</span> <span class="n">HookManager</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="k">as</span> <span class="n">hooks</span><span class="p">:</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">hooks</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="s2">"blocks.3.attn"</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="s2">"output"</span><span class="p">,</span> <span class="n">replace_with</span><span class="o">=</span><span class="n">clean_tensor</span><span class="p">)</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">patched_logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">corrupted_ids</span><span class="p">)</span>
-</span></code></pre></div>
+<p>Use <a href="../../mechinterp/activation_patching/"><code>ActivationPatcher</code></a> rather than writing
+this yourself unless you need something it doesn't offer.</p>
 <hr />
 <h2 id="design-decisions">Design Decisions<a class="headerlink" href="#design-decisions" title="Permanent link">&para;</a></h2>
 <h3 id="why-strings-not-module-references">Why strings, not module references?<a class="headerlink" href="#why-strings-not-module-references" title="Permanent link">&para;</a></h3>

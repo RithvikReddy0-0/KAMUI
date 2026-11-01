@@ -1322,52 +1322,59 @@ but <em>whether</em> that information is causally responsible for a behaviour.</
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   → at hook point H, replace activation with cached clean activation
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>3. Measure: how much did the output recover toward the clean output?
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Effect = 0.0  →  hook point H is NOT on the causal path
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Effect = 1.0  →  hook point H IS on the causal path
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Effect ≈ 0.0  →  hook point H is NOT on the causal path
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Effect ≈ 1.0  →  hook point H IS on the causal path
 </span></code></pre></div>
 <hr />
 <h2 id="worked-example">Worked example<a class="headerlink" href="#worked-example" title="Permanent link">&para;</a></h2>
+<p>The examples on this page use a <code>model</code> and two token ID tensors of the same length,
+<code>clean_ids</code> and <code>corrupted_ids</code>. In the <a href="../../tutorials/quickstart/">Quickstart</a> they
+are the encoded <code>"the cat sat on the "</code> and <code>"the cat mat . the "</code>.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">kamui.mechinterp</span><span class="w"> </span><span class="kn">import</span> <span class="n">ActivationPatcher</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">patcher</span> <span class="o">=</span> <span class="n">ActivationPatcher</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Does layer 3's attention output store "Paris" vs "Berlin"?</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">result</span> <span class="o">=</span> <span class="n">patcher</span><span class="o">.</span><span class="n">patch_all_layers</span><span class="p">(</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">clean</span><span class="o">=</span><span class="s2">"The Eiffel Tower is in Paris"</span><span class="p">,</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">corrupted</span><span class="o">=</span><span class="s2">"The Eiffel Tower is in Berlin"</span><span class="p">,</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">component</span><span class="o">=</span><span class="s2">"attn"</span><span class="p">,</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p">)</span>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">result</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># Bar chart: layer with highest bar = where "Paris" is stored</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Which block's attention output carries the answer?</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">result</span> <span class="o">=</span> <span class="n">patcher</span><span class="o">.</span><span class="n">patch_all_layers</span><span class="p">(</span><span class="n">clean_ids</span><span class="p">,</span> <span class="n">corrupted_ids</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s2">"attn"</span><span class="p">)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">effects</span><span class="p">)</span>      <span class="c1"># one effect per block</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">best_layer</span><span class="p">())</span> <span class="c1"># the block with the largest effect</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">result</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>              <span class="c1"># bar chart of the effects</span>
 </span></code></pre></div>
+<p>Set <code>component="ffn"</code> to test the feed-forward networks instead. On the Quickstart's
+model, the attention effects stay near 0 and the feed-forward effects are
+<code>[0.9948, 0.0767]</code>, so the first block's feed-forward network is on the causal path.</p>
 <h3 id="patching-a-specific-head">Patching a specific head<a class="headerlink" href="#patching-a-specific-head" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">patcher</span><span class="o">.</span><span class="n">patch_all_heads</span><span class="p">(</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">clean_ids</span><span class="o">=</span><span class="n">clean_ids</span><span class="p">,</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">corrupted_ids</span><span class="o">=</span><span class="n">corrupted_ids</span><span class="p">,</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">result</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>   <span class="c1"># (n_layers × n_heads) heatmap of causal effects</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">patcher</span><span class="o">.</span><span class="n">patch_all_heads</span><span class="p">(</span><span class="n">clean_ids</span><span class="p">,</span> <span class="n">corrupted_ids</span><span class="p">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">best_head</span><span class="p">())</span>  <span class="c1"># (layer, head) with the largest effect</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">result</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>              <span class="c1"># (n_layers × n_heads) heatmap of causal effects</span>
 </span></code></pre></div>
 <hr />
 <h2 id="the-logit-difference-metric">The logit difference metric<a class="headerlink" href="#the-logit-difference-metric" title="Permanent link">&para;</a></h2>
-<p>For binary comparisons (correct token vs. incorrect token), the effect is
-measured as <strong>logit difference recovery</strong>:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>logit_diff(logits) = logit(correct_token) - logit(incorrect_token)
+<p>The effect is measured as <strong>logit difference recovery</strong> at the last position:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>logit_diff(logits) = logit(answer_token) - logit(corrupt_token)
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>effect = (logit_diff(patched) - logit_diff(corrupted)) /
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>         (logit_diff(clean)   - logit_diff(corrupted))
 </span></code></pre></div>
-<p>This normalises to <code>[0, 1]</code>: 0 = patching had no effect; 1 = full recovery.</p>
+<p>By default, <code>answer_token</code> is the clean run's top prediction and <code>corrupt_token</code> is
+the corrupted run's. Pass either one by keyword to compare specific tokens.</p>
+<p>An effect of 0 means patching changed nothing, and 1 means full recovery. The value
+isn't clamped, so it can fall slightly below 0 or above 1.</p>
 <hr />
 <h2 id="designing-good-patching-experiments">Designing good patching experiments<a class="headerlink" href="#designing-good-patching-experiments" title="Permanent link">&para;</a></h2>
+<p><strong>Clean and corrupt inputs must have the same shape.</strong></p>
+<p>Patching swaps activations position by position, so both inputs must encode to the
+same number of tokens. BPE merges can span words, so check the lengths after encoding.</p>
 <p><strong>Clean and corrupt inputs must differ in exactly one thing.</strong></p>
 <p>Good: <code>"Paris" → "Berlin"</code> (one factual change)
 Bad: <code>"The Eiffel Tower is in Paris" → "Big Ben is in London"</code> (multiple changes)</p>
 <p>If multiple things differ between clean and corrupt, you cannot attribute
 the patching effect to any single variable.</p>
-<p><strong>The corrupt run must produce wrong output.</strong></p>
-<p>If the corrupted model already gets the right answer (by coincidence), the
-logit difference metric is undefined.</p>
+<p><strong>The corrupt run must produce a different answer.</strong></p>
+<p>If both runs give the same answer, there is nothing to recover. When the two logit
+differences are effectively equal, <code>ActivationPatcher</code> reports an effect of 0.</p>
 <hr />
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <p>Meng et al. (2022). Locating and Editing Factual Associations in GPT.

@@ -894,10 +894,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-download-data" class="md-nav__link">
+  <a href="#2-build-and-train-a-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Download data
+        2. Build and train a model
       
     </span>
   </a>
@@ -905,10 +905,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-train-a-nano-model" class="md-nav__link">
+  <a href="#3-watch-a-prediction-form" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Train a nano model
+        3. Watch a prediction form
       
     </span>
   </a>
@@ -916,32 +916,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-generate-text" class="md-nav__link">
+  <a href="#4-find-the-part-that-decides" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Generate text
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-run-logit-lens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Run logit lens
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-find-induction-heads" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Find induction heads
+        4. Find the part that decides
       
     </span>
   </a>
@@ -1213,10 +1191,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-download-data" class="md-nav__link">
+  <a href="#2-build-and-train-a-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Download data
+        2. Build and train a model
       
     </span>
   </a>
@@ -1224,10 +1202,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-train-a-nano-model" class="md-nav__link">
+  <a href="#3-watch-a-prediction-form" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Train a nano model
+        3. Watch a prediction form
       
     </span>
   </a>
@@ -1235,32 +1213,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-generate-text" class="md-nav__link">
+  <a href="#4-find-the-part-that-decides" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Generate text
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-run-logit-lens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Run logit lens
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-find-induction-heads" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Find induction heads
+        4. Find the part that decides
       
     </span>
   </a>
@@ -1299,72 +1255,98 @@
 
 
 <h1 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h1>
-<p>This guide gets you from zero to a trained model with logit lens running
-in under 20 minutes on a free Google Colab T4 GPU.</p>
+<p>Build a tiny language model on your CPU, watch a prediction form inside it, and
+find the part that decides. The whole page runs in under a minute with no GPU and
+no downloads. It uses the same model as the
+<a href="https://github.com/RithvikReddy0-0/KAMUI#readme">README's story</a>, and CI runs every
+code block here.</p>
 <hr />
 <h2 id="1-install">1. Install<a class="headerlink" href="#1-install" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>kamui
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/RithvikReddy0-0/KAMUI
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>KAMUI
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[all]"</span>
 </span></code></pre></div>
-<p>Or from source (recommended for development):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/RithvikReddy0-0/KAMUI
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>kamui
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[all]"</span>
+<div class="admonition danger">
+<p class="admonition-title">Do not run <code>pip install kamui</code></p>
+<p>KAMUI is not published on PyPI. The <code>kamui</code> package there is an unrelated
+phase-unwrapping library that happens to share the name.</p>
+<p>To use KAMUI as a dependency without cloning it, install the tagged release
+from GitHub:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"git+https://github.com/RithvikReddy0-0/KAMUI.git@v0.4.0"</span>
+</span></code></pre></div>
+</div>
+<hr />
+<h2 id="2-build-and-train-a-model">2. Build and train a model<a class="headerlink" href="#2-build-and-train-a-model" title="Permanent link">&para;</a></h2>
+<p>The corpus is seven hundred sentences with real grammar, written by the script
+itself. The model has two blocks and about 90,000 parameters.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">kamui</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">kamui.training</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">TextDataset</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Sentences with real grammar: "the ANIMAL VERB PREP the OBJECT ."</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">animals</span><span class="p">,</span> <span class="n">verbs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"dog"</span><span class="p">,</span> <span class="s2">"bird"</span><span class="p">,</span> <span class="s2">"fish"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"sat"</span><span class="p">,</span> <span class="s2">"ran"</span><span class="p">,</span> <span class="s2">"slept"</span><span class="p">,</span> <span class="s2">"hid"</span><span class="p">]</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="n">preps</span><span class="p">,</span> <span class="n">objects</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"on"</span><span class="p">,</span> <span class="s2">"under"</span><span class="p">,</span> <span class="s2">"near"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"mat"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">,</span> <span class="s2">"rug"</span><span class="p">,</span> <span class="s2">"box"</span><span class="p">]</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="n">corpus</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="sa">f</span><span class="s2">"the </span><span class="si">{</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">animals</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">verbs</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">preps</span><span class="p">)</span><span class="si">}</span><span class="s2"> the </span><span class="si">{</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span><span class="si">}</span><span class="s2"> ."</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">700</span><span class="p">)</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="p">)</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="n">config</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">ModelConfig</span><span class="p">(</span><span class="n">n_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">n_heads</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">d_ff</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>                           <span class="n">vocab_size</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span> <span class="n">context_length</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">BPETokenizer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">vocab_size</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">vocab_size</span><span class="p">)</span>
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">corpus</span><span class="p">)</span>
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="n">model</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">KAMUITransformer</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">Trainer</span><span class="p">(</span>
+</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>    <span class="n">model</span><span class="p">,</span>
+</span><span id="__span-2-27"><a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>    <span class="n">DataLoader</span><span class="p">(</span><span class="n">TextDataset</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">context_length</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+</span><span id="__span-2-28"><a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>    <span class="n">config</span><span class="o">=</span><span class="n">kamui</span><span class="o">.</span><span class="n">TrainingConfig</span><span class="p">(</span><span class="n">max_lr</span><span class="o">=</span><span class="mf">3e-3</span><span class="p">,</span> <span class="n">warmup_steps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+</span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="p">)</span>
+</span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+</span><span id="__span-2-31"><a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 </span></code></pre></div>
 <hr />
-<h2 id="2-download-data">2. Download data<a class="headerlink" href="#2-download-data" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># TinyShakespeare — 1MB, trains in minutes</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>wget<span class="w"> </span>-O<span class="w"> </span>data/tiny_shakespeare.txt<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt
+<h2 id="3-watch-a-prediction-form">3. Watch a prediction form<a class="headerlink" href="#3-watch-a-prediction-form" title="Permanent link">&para;</a></h2>
+<p>The logit lens asks what the model would predict if it stopped early. Row 0 is
+before any block has run, and each later row adds one block.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"the cat sat on the "</span><span class="p">))</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">result</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">LogitLens</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">probs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">([</span><span class="n">result</span><span class="o">.</span><span class="n">probs</span><span class="p">[</span><span class="n">layer</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()])))</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># 0 'ran on the '</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># 1 'mat . the '</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># 2 'mat . the '</span>
 </span></code></pre></div>
+<p>The tokenizer learned merges that span words, so one token can be several words.
+Before any block runs, the model guesses a verb phrase, which is the wrong kind of
+word here. After the first block it guesses an object, and it doesn't change its
+mind after that. Exact values can vary slightly by machine.</p>
+<p>In a notebook, <code>result.plot()</code> draws the same thing for every position.</p>
 <hr />
-<h2 id="3-train-a-nano-model">3. Train a nano model<a class="headerlink" href="#3-train-a-nano-model" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>scripts/train.py<span class="w"> </span>--config<span class="w"> </span>configs/nano.yaml
+<h2 id="4-find-the-part-that-decides">4. Find the part that decides<a class="headerlink" href="#4-find-the-part-that-decides" title="Permanent link">&para;</a></h2>
+<p>Seeing where an answer appears doesn't prove what caused it. Activation patching
+tests that directly: run a broken input, put one clean part back, and see whether
+the answer returns. An effect of 1 means the answer fully returned, and 0 means
+nothing changed.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">corrupted</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"the cat mat . the "</span><span class="p">))</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">patcher</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">ActivationPatcher</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">patcher</span><span class="o">.</span><span class="n">patch_all_layers</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">corrupted</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s2">"ffn"</span><span class="p">)</span><span class="o">.</span><span class="n">effects</span><span class="p">)</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># tensor([0.9948, 0.0767])</span>
 </span></code></pre></div>
-<p>Expected output:
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>step=0    train_loss=8.941  lr=0.00e+00  grad_norm=2.341
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>step=50   train_loss=5.123  lr=1.50e-04  grad_norm=1.832
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>step=100  train_loss=3.891  lr=3.00e-04  grad_norm=1.234
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>...
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>step=2000 train_loss=1.621  val_loss=1.743  tokens_per_sec=9200
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>Training complete. Checkpoint saved: checkpoints/nano/step_0002000.pt
-</span></code></pre></div></p>
-<p>Training takes ~10 minutes on a T4 GPU, ~30 minutes on CPU.</p>
-<hr />
-<h2 id="4-generate-text">4. Generate text<a class="headerlink" href="#4-generate-text" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>scripts/evaluate.py<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--checkpoint<span class="w"> </span>checkpoints/nano/best.pt<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--generate<span class="w"> </span><span class="s2">"HAMLET:"</span>
-</span></code></pre></div>
-<hr />
-<h2 id="5-run-logit-lens">5. Run logit lens<a class="headerlink" href="#5-run-logit-lens" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">kamui</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Load model and tokenizer</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">KAMUITransformer</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="s2">"checkpoints/nano/best.pt"</span><span class="p">)</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">BPETokenizer</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"checkpoints/nano/tokenizer.json"</span><span class="p">)</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Run logit lens</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">lens</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">LogitLens</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">)</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">result</span> <span class="o">=</span> <span class="n">lens</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"To be, or not to be, that is the"</span><span class="p">)</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="n">result</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-</span></code></pre></div>
-<p>This renders a heatmap showing what the model predicts at each layer
-and position. You can watch "question" emerge as the predicted next token
-as the model processes the sequence.</p>
-<hr />
-<h2 id="6-find-induction-heads">6. Find induction heads<a class="headerlink" href="#6-find-induction-heads" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">detector</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">InductionHeadDetector</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">scores</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">score_all_heads</span><span class="p">()</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">detector</span><span class="o">.</span><span class="n">plot_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
-</span></code></pre></div>
-<p>Expected: high scores (&gt; 0.5) at layer 1, heads 2–5.</p>
+<p>Restoring the first block's feed-forward brings the answer back on its own.</p>
 <hr />
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../training_your_first_model/">Train the small model</a> for better results</li>
-<li><a href="../your_first_interpretability_experiment/">Run your first interpretability experiment</a></li>
+<li><a href="../your_first_interpretability_experiment/">Run a full investigation of this result</a></li>
+<li><a href="../training_your_first_model/">Train from the command line</a></li>
 <li><a href="../../architecture/transformer/">Read the architecture docs</a></li>
-<li><a href="https://github.com/RithvikReddy0-0/KAMUI/tree/main/notebooks">Browse the educational notebooks</a></li>
+<li><a href="https://github.com/RithvikReddy0-0/KAMUI/tree/main/notebooks">Browse the notebooks</a></li>
 </ul>
 
 

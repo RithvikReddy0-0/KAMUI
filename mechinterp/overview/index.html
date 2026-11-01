@@ -693,10 +693,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#kamuis-six-tools-v01" class="md-nav__link">
+  <a href="#kamuis-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        KAMUI's six tools (v0.1)
+        KAMUI's tools
       
     </span>
   </a>
@@ -719,17 +719,6 @@
     <span class="md-ellipsis">
       
         The causal vs. correlational distinction
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v02-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.2 scope
       
     </span>
   </a>
@@ -1191,10 +1180,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#kamuis-six-tools-v01" class="md-nav__link">
+  <a href="#kamuis-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        KAMUI's six tools (v0.1)
+        KAMUI's tools
       
     </span>
   </a>
@@ -1217,17 +1206,6 @@
     <span class="md-ellipsis">
       
         The causal vs. correlational distinction
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v02-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.2 scope
       
     </span>
   </a>
@@ -1265,50 +1243,80 @@ the relevant information, and <em>what algorithm</em> the model is running.</p>
 compiler engineer reverse-engineers a binary: understand the internal
 computation, not just the input-output behaviour.</p>
 <hr />
-<h2 id="kamuis-six-tools-v01">KAMUI's six tools (v0.1)<a class="headerlink" href="#kamuis-six-tools-v01" title="Permanent link">&para;</a></h2>
-<p>Each tool is a standalone class in <code>kamui/mechinterp/</code>. They are designed
-to be used in sequence, with each one building on the previous.</p>
+<h2 id="kamuis-tools">KAMUI's tools<a class="headerlink" href="#kamuis-tools" title="Permanent link">&para;</a></h2>
+<p>The core tools are classes importable from <code>kamui.mechinterp</code>, and they're designed
+to be used in sequence.</p>
+<p><strong>Tools that observe</strong></p>
 <table>
 <thead>
 <tr>
 <th>Tool</th>
 <th>Question it answers</th>
-<th>Start here</th>
+<th>Since</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>AttentionVisualizer</code></td>
 <td>What is each head attending to?</td>
-<td>Week 14</td>
+<td>v0.1</td>
 </tr>
 <tr>
 <td><code>LogitLens</code></td>
 <td>At each layer, what does the model predict?</td>
-<td>Week 15</td>
+<td>v0.1</td>
 </tr>
 <tr>
 <td><code>LinearProbe</code></td>
 <td>At each layer, what properties are encoded?</td>
-<td>Week 16</td>
+<td>v0.1</td>
 </tr>
+<tr>
+<td><code>GradientAttribution</code></td>
+<td>Which input tokens is this output sensitive to?</td>
+<td>v0.2</td>
+</tr>
+<tr>
+<td><code>SparseAutoencoder</code></td>
+<td>What separate features are packed into a layer?</td>
+<td>v0.2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tools that intervene</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Question it answers</th>
+<th>Since</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>ActivationPatcher</code></td>
 <td>Which components <em>cause</em> a behaviour?</td>
-<td>Week 17</td>
-</tr>
-<tr>
-<td><code>InductionHeadDetector</code></td>
-<td>Which heads implement in-context pattern matching?</td>
-<td>Week 18</td>
+<td>v0.1</td>
 </tr>
 <tr>
 <td><code>CircuitAblator</code></td>
 <td>What is the minimal set of components for a behaviour?</td>
-<td>Week 19</td>
+<td>v0.1</td>
+</tr>
+<tr>
+<td><code>InductionHeadDetector</code></td>
+<td>Which heads implement in-context pattern matching?</td>
+<td>v0.1</td>
+</tr>
+<tr>
+<td><code>FeatureSteerer</code></td>
+<td>What changes if a feature is pushed up or down?</td>
+<td>v0.4</td>
 </tr>
 </tbody>
 </table>
+<p><code>InductionHeadDetector</code> does both: its scores are observations, and
+<code>ablate_and_measure</code> is an intervention.</p>
 <hr />
 <h2 id="suggested-workflow-for-a-new-behaviour">Suggested workflow for a new behaviour<a class="headerlink" href="#suggested-workflow-for-a-new-behaviour" title="Permanent link">&para;</a></h2>
 <p>When you find an interesting model behaviour, investigate it in this order:</p>
@@ -1329,19 +1337,26 @@ to be used in sequence, with each one building on the previous.</p>
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>6. LinearProbe (optional)
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>   → "What linguistic property does each layer encode?"
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>7. SparseAutoencoder (optional)
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>   → "What features is that layer made of?"
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>8. FeatureSteerer (optional)
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>   → "Does pushing on that feature change behaviour?"
 </span></code></pre></div>
+<p><a href="../../tutorials/your_first_interpretability_experiment/">Your First Interpretability Experiment</a>
+walks through steps 1 to 5 on a real model. Notebook
+<a href="https://github.com/RithvikReddy0-0/KAMUI/blob/main/notebooks/07_sparse_autoencoders.ipynb"><code>07_sparse_autoencoders.ipynb</code></a>
+covers features, and the <a href="../../api/">API reference</a> lists everything else.</p>
 <hr />
 <h2 id="the-causal-vs-correlational-distinction">The causal vs. correlational distinction<a class="headerlink" href="#the-causal-vs-correlational-distinction" title="Permanent link">&para;</a></h2>
 <p>This is the most important concept in mechanistic interpretability.</p>
 <p><strong>Correlation</strong>: head X is active when behaviour Y occurs.
 <strong>Causation</strong>: removing head X causes behaviour Y to disappear.</p>
-<p><code>AttentionVisualizer</code> and <code>LogitLens</code> show correlation.
-<code>ActivationPatcher</code> and <code>CircuitAblator</code> show causation.</p>
+<p><code>AttentionVisualizer</code>, <code>LogitLens</code>, <code>LinearProbe</code> and <code>GradientAttribution</code> show
+correlation or local sensitivity. <code>ActivationPatcher</code>, <code>CircuitAblator</code> and
+<code>FeatureSteerer</code> show causation.</p>
 <p>Always verify with a causal tool before claiming you have found a circuit.</p>
-<hr />
-<h2 id="v02-scope">v0.2 scope<a class="headerlink" href="#v02-scope" title="Permanent link">&para;</a></h2>
-<p>Sparse autoencoders (SAEs) for feature decomposition are planned for v0.2.
-See <code>research/future/sae_design.md</code> for the design specification.</p>
 
 
 

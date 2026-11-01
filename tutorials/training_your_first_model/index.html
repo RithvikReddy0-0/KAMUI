@@ -922,10 +922,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-download-and-prepare-tinystories" class="md-nav__link">
+  <a href="#step-1-make-a-corpus" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1: Download and prepare TinyStories
+        Step 1: Make a corpus
       
     </span>
   </a>
@@ -933,10 +933,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-train-the-bpe-tokenizer" class="md-nav__link">
+  <a href="#step-2-train" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2: Train the BPE tokenizer
+        Step 2: Train
       
     </span>
   </a>
@@ -944,10 +944,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-pre-tokenize-the-corpus" class="md-nav__link">
+  <a href="#step-3-inspect-the-checkpoint" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3: Pre-tokenize the corpus
+        Step 3: Inspect the checkpoint
       
     </span>
   </a>
@@ -955,10 +955,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-4-train" class="md-nav__link">
+  <a href="#step-4-generate-text" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4: Train
+        Step 4: Generate text
       
     </span>
   </a>
@@ -966,10 +966,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-5-verify-the-checkpoint" class="md-nav__link">
+  <a href="#step-5-load-it-in-python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 5: Verify the checkpoint
+        Step 5: Load it in Python
       
     </span>
   </a>
@@ -977,10 +977,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-6-generate-text-sanity-check" class="md-nav__link">
+  <a href="#train-on-real-text" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 6: Generate text (sanity check)
+        Train on real text
       
     </span>
   </a>
@@ -1224,10 +1224,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-download-and-prepare-tinystories" class="md-nav__link">
+  <a href="#step-1-make-a-corpus" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1: Download and prepare TinyStories
+        Step 1: Make a corpus
       
     </span>
   </a>
@@ -1235,10 +1235,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-train-the-bpe-tokenizer" class="md-nav__link">
+  <a href="#step-2-train" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2: Train the BPE tokenizer
+        Step 2: Train
       
     </span>
   </a>
@@ -1246,10 +1246,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-pre-tokenize-the-corpus" class="md-nav__link">
+  <a href="#step-3-inspect-the-checkpoint" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3: Pre-tokenize the corpus
+        Step 3: Inspect the checkpoint
       
     </span>
   </a>
@@ -1257,10 +1257,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-4-train" class="md-nav__link">
+  <a href="#step-4-generate-text" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4: Train
+        Step 4: Generate text
       
     </span>
   </a>
@@ -1268,10 +1268,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-5-verify-the-checkpoint" class="md-nav__link">
+  <a href="#step-5-load-it-in-python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 5: Verify the checkpoint
+        Step 5: Load it in Python
       
     </span>
   </a>
@@ -1279,10 +1279,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-6-generate-text-sanity-check" class="md-nav__link">
+  <a href="#train-on-real-text" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 6: Generate text (sanity check)
+        Train on real text
       
     </span>
   </a>
@@ -1321,97 +1321,108 @@
 
 
 <h1 id="training-your-first-model">Training Your First Model<a class="headerlink" href="#training-your-first-model" title="Permanent link">&para;</a></h1>
-<p>This guide walks through training the small model — the one used for all
-KAMUI interpretability experiments — from scratch.</p>
+<p>This guide trains a model from the command line, saves a checkpoint, and loads it
+back. It uses the <code>tiny</code> config, which trains in seconds on a CPU, so you can see every
+step work before you commit to a longer run. CI runs this page's commands in order, up
+to the section on real text.</p>
 <hr />
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>Follow the install step in the <a href="../quickstart/">Quickstart</a>, and run these commands from
+the repository root.</p>
+<div class="admonition warning">
+<p class="admonition-title">KAMUI trains on the CPU for now</p>
+<p>A GPU won't be used, even if you have one. See
+<a href="../../architecture/training/#where-training-runs">Where Training Runs</a>.</p>
+</div>
+<hr />
+<h2 id="step-1-make-a-corpus">Step 1: Make a corpus<a class="headerlink" href="#step-1-make-a-corpus" title="Permanent link">&para;</a></h2>
+<p>Save this as a script, or paste it into Python. It writes the same grammar as the
+Quickstart to <code>data/animals.txt</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">animals</span><span class="p">,</span> <span class="n">verbs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"dog"</span><span class="p">,</span> <span class="s2">"bird"</span><span class="p">,</span> <span class="s2">"fish"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"sat"</span><span class="p">,</span> <span class="s2">"ran"</span><span class="p">,</span> <span class="s2">"slept"</span><span class="p">,</span> <span class="s2">"hid"</span><span class="p">]</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">preps</span><span class="p">,</span> <span class="n">objects</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"on"</span><span class="p">,</span> <span class="s2">"under"</span><span class="p">,</span> <span class="s2">"near"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"mat"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">,</span> <span class="s2">"rug"</span><span class="p">,</span> <span class="s2">"box"</span><span class="p">]</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">corpus</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="sa">f</span><span class="s2">"the </span><span class="si">{</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">animals</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">verbs</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">preps</span><span class="p">)</span><span class="si">}</span><span class="s2"> the </span><span class="si">{</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span><span class="si">}</span><span class="s2"> ."</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">700</span><span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">Path</span><span class="p">(</span><span class="s2">"data"</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">Path</span><span class="p">(</span><span class="s2">"data/animals.txt"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+</span></code></pre></div>
+<hr />
+<h2 id="step-2-train">Step 2: Train<a class="headerlink" href="#step-2-train" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>scripts/train.py<span class="w"> </span>--config<span class="w"> </span>configs/tiny.yaml<span class="w"> </span>--corpus<span class="w"> </span>data/animals.txt<span class="w"> </span>--steps<span class="w"> </span><span class="m">200</span>
+</span></code></pre></div>
+<p>If you installed the package, <code>kamui-train</code> is the same command.</p>
+<p>This trains a tokenizer on the corpus, trains the model for 200 steps, and measures
+the validation loss. It logs every step, and the loss falls from about 5.8 to
+about 1.8:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>step=1 train_loss=5.7982 lr=0.00e+00 grad_norm=2.942
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>step=2 train_loss=5.7916 lr=3.00e-04 grad_norm=2.975
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>...
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>step=200 train_loss=1.7736 lr=2.74e-03 grad_norm=0.666
+</span></code></pre></div>
+<p>Your exact numbers may differ slightly. Two files appear in <code>checkpoints/tiny/</code>:</p>
 <ul>
-<li>GPU with at least 8GB VRAM (T4, RTX 3080, or better)</li>
-<li>4GB disk space for data and checkpoints</li>
-<li>KAMUI installed: <code>pip install -e ".[all]"</code></li>
+<li><code>tokenizer.json</code>: the trained tokenizer</li>
+<li><code>step_0000200.pt</code>: the model, optimizer state and config at the final step</li>
 </ul>
 <hr />
-<h2 id="step-1-download-and-prepare-tinystories">Step 1: Download and prepare TinyStories<a class="headerlink" href="#step-1-download-and-prepare-tinystories" title="Permanent link">&para;</a></h2>
-<p>TinyStories (Eldan &amp; Li, 2023) is a dataset of simple children's stories.
-It is ideal for training interpretability-research models because:
-- Stories have clear narrative structure (useful for probing experiments)
-- Short sequences mean fast training
-- Simple language means patterns emerge clearly</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="s2">from datasets import load_dataset</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s2">ds = load_dataset('roneneldan/TinyStories', split='train')</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s2">with open('data/tinystories.txt', 'w') as f:</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s2">    for item in ds:</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s2">        f.write(item['text'] + '\n&lt;|endoftext|&gt;\n')</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s2">print(f'Written {len(ds)} stories.')</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s2">"</span>
+<h2 id="step-3-inspect-the-checkpoint">Step 3: Inspect the checkpoint<a class="headerlink" href="#step-3-inspect-the-checkpoint" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>scripts/inspect_checkpoint.py<span class="w"> </span>--checkpoint<span class="w"> </span>checkpoints/tiny/step_0000200.pt
+</span></code></pre></div>
+<p>This prints the step, the training and validation losses, the model config, and
+every saved tensor with its shape.</p>
+<hr />
+<h2 id="step-4-generate-text">Step 4: Generate text<a class="headerlink" href="#step-4-generate-text" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>scripts/evaluate.py<span class="w"> </span>--checkpoint<span class="w"> </span>checkpoints/tiny/step_0000200.pt<span class="w"> </span>--config<span class="w"> </span>configs/tiny.yaml<span class="w"> </span>--tokenizer<span class="w"> </span>checkpoints/tiny/tokenizer.json<span class="w"> </span>--generate<span class="w"> </span><span class="s2">"the cat"</span><span class="w"> </span>--max-new-tokens<span class="w"> </span><span class="m">12</span>
+</span></code></pre></div>
+<p><code>--config</code> is required, because it describes the model to rebuild, and <code>--generate</code>
+also needs <code>--tokenizer</code>. Sampling is random, but the output should follow the grammar
+of the corpus, like this run's <code>the bird slept near the mat . the fish hid under the
+log .</code> If it does, training worked.</p>
+<hr />
+<h2 id="step-5-load-it-in-python">Step 5: Load it in Python<a class="headerlink" href="#step-5-load-it-in-python" title="Permanent link">&para;</a></h2>
+<p>This is how you bring a trained model into the interpretability tools:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">kamui</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">kamui.training</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_model_only</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">ModelConfig</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="s2">"configs/tiny.yaml"</span><span class="p">)</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">model</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">KAMUITransformer</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">load_model_only</span><span class="p">(</span><span class="s2">"checkpoints/tiny/step_0000200.pt"</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">kamui</span><span class="o">.</span><span class="n">BPETokenizer</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"checkpoints/tiny/tokenizer.json"</span><span class="p">)</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">kamui</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="s2">"the cat"</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">12</span><span class="p">))</span>
 </span></code></pre></div>
 <hr />
-<h2 id="step-2-train-the-bpe-tokenizer">Step 2: Train the BPE tokenizer<a class="headerlink" href="#step-2-train-the-bpe-tokenizer" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="s2">from kamui.tokenizer import BPETokenizer</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="s2">tokenizer = BPETokenizer.train('data/tinystories.txt', vocab_size=8192)</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s2">tokenizer.save('checkpoints/small/tokenizer.json')</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="s2">print('Tokenizer trained and saved.')</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="s2">"</span>
+<h2 id="train-on-real-text">Train on real text<a class="headerlink" href="#train-on-real-text" title="Permanent link">&para;</a></h2>
+<p>Point <code>--corpus</code> at any UTF-8 text file. The <code>nano</code> config is the next size up:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>scripts/train.py<span class="w"> </span>--config<span class="w"> </span>configs/nano.yaml<span class="w"> </span>--corpus<span class="w"> </span>data/your_text.txt
 </span></code></pre></div>
-<hr />
-<h2 id="step-3-pre-tokenize-the-corpus">Step 3: Pre-tokenize the corpus<a class="headerlink" href="#step-3-pre-tokenize-the-corpus" title="Permanent link">&para;</a></h2>
-<p>Pre-tokenization is done once and saves time on subsequent training runs.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>scripts/tokenize_corpus.py<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--input<span class="w"> </span>data/tinystories.txt<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--tokenizer<span class="w"> </span>checkpoints/small/tokenizer.json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>--output<span class="w"> </span>data/tinystories_tokens.bin
-</span></code></pre></div>
-<hr />
-<h2 id="step-4-train">Step 4: Train<a class="headerlink" href="#step-4-train" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>scripts/train.py<span class="w"> </span>--config<span class="w"> </span>configs/small.yaml
-</span></code></pre></div>
-<p>Training will log to stdout:
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>step=0      train_loss=9.012  lr=0.00e+00   grad_norm=2.891
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>step=100    train_loss=4.231  lr=1.50e-04   grad_norm=1.432
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>step=500    train_loss=2.891  lr=2.95e-04   val_loss=2.934
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>step=1000   train_loss=2.341  lr=2.72e-04   val_loss=2.389
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>...
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>step=5000   train_loss=1.782  lr=3.00e-05   val_loss=1.891
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>Training complete.
-</span></code></pre></div></p>
-<p>Expected training time: ~2 hours on T4.
-Expected final val loss: 1.8–2.0 nats.
-Expected val perplexity: 6–8.</p>
-<hr />
-<h2 id="step-5-verify-the-checkpoint">Step 5: Verify the checkpoint<a class="headerlink" href="#step-5-verify-the-checkpoint" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>scripts/inspect_checkpoint.py<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>--checkpoint<span class="w"> </span>checkpoints/small/best.pt
-</span></code></pre></div>
-<p>Output:
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Model: KAMUITransformer
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  n_layers:  6
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  d_model:   256
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  n_heads:   8
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  vocab_size: 8192
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  Parameters: 12,431,360
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>Training:
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>  Step:       5000
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>  Train loss: 1.782
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>  Val loss:   1.891
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>  Val PPL:    6.63
-</span></code></pre></div></p>
-<hr />
-<h2 id="step-6-generate-text-sanity-check">Step 6: Generate text (sanity check)<a class="headerlink" href="#step-6-generate-text-sanity-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>scripts/evaluate.py<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>--checkpoint<span class="w"> </span>checkpoints/small/best.pt<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>--generate<span class="w"> </span><span class="s2">"Once upon a time there was a little girl"</span>
-</span></code></pre></div>
-<p>If the output is coherent (even if simple), training succeeded.
-If it is random garbage, the model did not converge — re-run with a lower
-learning rate or check for the common bugs listed in
-<a href="../../architecture/training/">Training Loop docs</a>.</p>
+<p>Before you start a long run, know these limits:</p>
+<ul>
+<li><strong>The tokenizer sets the pace.</strong> It's pure Python and retrains on every run.
+  With a vocabulary of 4,096, 1 MB of text took about 14 minutes to train the
+  tokenizer and 4 more to encode on a laptop CPU, all before the first training step.</li>
+<li><strong>The corpus must be large for its vocabulary.</strong> A larger <code>vocab_size</code> lets BPE merge
+  more, so a small corpus can collapse into very few tokens. A 21 KB corpus with
+  <code>nano</code>'s vocabulary of 4,096 became 60 tokens, which stops training with
+  <code>need at least context_length + 1 tokens</code>.</li>
+<li><strong>You get one checkpoint.</strong> <code>kamui-train</code> saves only when training finishes, so an
+  interrupted run saves nothing.</li>
+<li><strong>There are no reference numbers yet.</strong> This project hasn't published training times
+  or final losses for <code>nano</code>, <code>small</code> or <code>medium</code>.</li>
+</ul>
+<p>See <a href="../../architecture/training/#what-kamui-train-reads">What <code>kamui-train</code> Reads</a> for
+the config keys that apply. <code>data/README.md</code> lists public datasets.</p>
 <hr />
 <h2 id="next-run-interpretability-experiments">Next: run interpretability experiments<a class="headerlink" href="#next-run-interpretability-experiments" title="Permanent link">&para;</a></h2>
-<p>The small model trained here is the one used in all interpretability
-notebooks. See <a href="../your_first_interpretability_experiment/">Your First Interpretability Experiment</a>.</p>
+<p><a href="../your_first_interpretability_experiment/">Your First Interpretability Experiment</a>
+walks through a full investigation, and it works the same on a model you trained here.</p>
 
 
 
