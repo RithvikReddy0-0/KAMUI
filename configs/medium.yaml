@@ -2,9 +2,7 @@
 # Purpose: scaling experiments and higher-quality language modelling
 # Use case: research comparing circuit structure at different model scales
 #
-# Parameter count: ~85M
-# Training time: ~6 hours on a single A100 GPU (OpenWebText, 10K steps)
-# Expected val perplexity: ~25–30 on OpenWebText-10k
+# Parameter count: 63,823,360
 
 model:
   n_layers: 12

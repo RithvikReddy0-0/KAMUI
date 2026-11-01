@@ -190,7 +190,7 @@ sequenceDiagram
 ```mermaid
 graph LR
     CKP["Trained checkpoint
-    checkpoints/small/best.pt"]
+    checkpoints/small/step_*.pt"]
 
     CKP --> AV["AttentionVisualizer
     What does each head attend to?"]
@@ -244,8 +244,7 @@ graph TD
     BPE --> TKN["Tokenizer saved
     checkpoints/small/tokenizer.json"]
 
-    RAW --> PRE["tokenize_corpus.py
-    → data/tinystories_tokens.bin"]
+    RAW --> PRE["tokenizer.encode(corpus)"]
 
     TKN --> PRE
 
@@ -258,12 +257,11 @@ graph TD
     backward → grads
     clip → optimiser step
     LR schedule
-    checkpoint every N steps"]
+    one checkpoint at the end"]
 
     TR --> CKP["checkpoints/small/
     step_*.pt
-    best.pt
-    last.pt"]
+    tokenizer.json"]
 
     CKP --> EVL["evaluate.py
     val perplexity

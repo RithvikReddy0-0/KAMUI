@@ -2,8 +2,7 @@
 # Purpose: fast iteration and debugging — runs on CPU in minutes
 # Use case: unit testing, CI, first-time setup verification
 #
-# Parameter count: ~1.5M
-# Training time: ~10 min on a single T4 GPU (TinyShakespeare, 2000 steps)
+# Parameter count: 1,334,016
 
 model:
   n_layers: 4

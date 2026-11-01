@@ -350,7 +350,7 @@ def test_yaml_missing_model_section(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     "config_name",
-    ["nano.yaml", "small.yaml", "medium.yaml", "gpt2_compatible.yaml"],
+    ["tiny.yaml", "nano.yaml", "small.yaml", "medium.yaml", "gpt2_compatible.yaml"],
 )
 def test_shipped_configs_are_valid(config_name: str) -> None:
     """Every YAML config shipped in configs/ must load into a valid ModelConfig."""

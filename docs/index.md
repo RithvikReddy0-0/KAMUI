@@ -55,7 +55,7 @@ mechinterp tools: LogitLens | ActivationPatcher | InductionHeadDetector | Circui
 | RoPE positional encoding | v0.2 |
 | Gradient attribution (input×grad, integrated gradients) | v0.2 |
 | Sparse autoencoders | v0.2 |
-| Multi-GPU training (DDP) | v0.3 |
+| Distributed data parallelism (DDP), tested across CPU processes | v0.3 |
 | SAE feature analysis (interpretation, max-activating examples, co-occurrence, similarity) | v0.4 |
 | Steering, steered generation, contrastive vectors, feature ablation | v0.4 |
 | RMSNorm option, weight EMA, decoding controls, top-k accuracy, KV-cache, gradient checkpointing | v0.4 |

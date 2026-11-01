@@ -1,0 +1,33 @@
+# KAMUI tiny configuration
+# Purpose: the smallest model that still learns something
+# Use case: tutorials and first-time setup on a CPU, with a corpus of a few kilobytes
+#
+# This is the model from the README's story and the documentation tutorials.
+# Parameter count: 89,600
+
+model:
+  n_layers: 2
+  d_model: 64
+  n_heads: 4             # d_head = 16
+  d_ff: 128              # 2 * d_model, to keep it small
+  vocab_size: 320
+  context_length: 32
+  positional_encoding: "learned"   # or "sinusoidal" or "rope"
+  dropout: 0.0
+
+training:
+  batch_size: 8
+  grad_accum_steps: 1
+  max_steps: 1000
+  learning_rate: 3.0e-3
+  min_lr: 3.0e-5
+  warmup_steps: 10
+  grad_clip: 1.0
+  weight_decay: 0.1
+  eval_interval: 0
+
+data:
+  train_split: 0.95
+
+logging:
+  output_dir: "checkpoints/tiny"

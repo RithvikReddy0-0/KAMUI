@@ -15,6 +15,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   front page can't go stale unnoticed. It asserts the claims rather than exact
   decimals, so machine-to-machine rounding can't fail it, and undertraining
   the Quickstart's model makes 6 of its 9 tests fail.
+- `tests/integration/test_docs.py`: runs every `python` block under `docs/`,
+  really runs the training tutorial's commands in a temporary folder, and
+  parses every `python scripts/...` command in the guides with the real
+  script. It also rejects `pip install kamui` and unknown hook points.
+  Reintroducing 13 of the old documentation mistakes fails it 13 times.
+- `configs/tiny.yaml`: the README's model as a config, so the command-line
+  path can be tried in seconds on a CPU.
 
 ### Changed
 - README rewritten around an illustrated story: Kam, a stick figure, builds a
@@ -29,6 +36,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   as written, without downloading any data.
 - Removed the README's comparison table, which wrongly marked TransformerLens
   as having no notebooks or training support.
+- Documentation: `pip install kamui` was the first command in the Quickstart,
+  but that name on PyPI is an unrelated package. Every page now installs from
+  GitHub.
+- Documentation: the tutorials and reference pages used APIs that don't exist
+  (`from_checkpoint`, `measure_icl`, `replace_with`, `pre_softmax`), passed
+  strings to tools that take token IDs, and listed flags the scripts reject.
+  All of them now match the code, and the tutorials use a model that really
+  runs on a CPU.
+- Documentation: removed invented results, including induction scores, ablation
+  percentages, training times, and parameter counts. The induction pages now
+  report what KAMUI has measured, which is no trustworthy induction head yet.
+- Corrected the parameter counts in `configs/`, and removed their unmeasured
+  training times and perplexity targets.
+- Corrected the GPU claims. `Trainer` doesn't move batches to the model's device
+  and `kamui-train` never leaves the CPU, so DDP is now described as what has
+  been tested: two CPU processes. The documentation also lists the YAML keys
+  `kamui-train` ignores, and warns that its BPE trainer is slow on large corpora.
 
 ---
 

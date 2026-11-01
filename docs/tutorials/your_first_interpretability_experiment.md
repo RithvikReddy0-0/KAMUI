@@ -1,143 +1,170 @@
 # Your First Interpretability Experiment
 
-This tutorial walks through a complete interpretability investigation:
-finding and verifying an induction circuit in the KAMUI small model.
+The [Quickstart](quickstart.md) showed that the first block's feed-forward network
+matters on one input. This tutorial turns that into a proper investigation, with a
+question written down first, a causal test, a second independent test, and a rival
+explanation that fails.
 
-You need a trained checkpoint from [Training Your First Model](training_your_first_model.md).
-
----
-
-## Setup
-
-```python
-import kamui
-
-model     = kamui.KAMUITransformer.from_checkpoint("checkpoints/small/best.pt")
-tokenizer = kamui.BPETokenizer.load("checkpoints/small/tokenizer.json")
-
-model.eval()   # disable dropout for deterministic results
-```
+Stay in the same Python session as the Quickstart, because this page uses its
+`model`, `tokenizer`, `tokens`, `ids`, `corrupted` and `patcher`. If you closed the
+session, run the Quickstart's code again. It only takes seconds.
 
 ---
 
-## Step 1: Look at attention patterns
+## Step 1: Write down the question
 
-Before forming a hypothesis, look at what the model is doing.
+Do this before you look at any data, so the results can't quietly change what you
+claim you were asking.
+
+> After `the cat sat on the `, the model's top guess is `mat . the `. After
+> `the cat mat . the `, it is `dog `. Which component turns the last token into that
+> choice?
+
+A reasonable first guess is attention, because attention is what lets a token look
+at the words before it. Write that guess down too.
+
+---
+
+## Step 2: Look at attention patterns
 
 ```python
 from kamui.mechinterp import AttentionVisualizer
 
-viz = AttentionVisualizer(model, tokenizer)
-result = viz.run("the cat sat on the mat the cat")
-result.plot_all()
+attention = AttentionVisualizer(model, tokenizer).run(ids)
+print(attention.weights.shape)  # torch.Size([2, 4, 3, 3]): layers, heads, positions, positions
 ```
 
-Look for:
-- **Previous-token heads**: strong attention on the diagonal shifted left by 1
-- **Heads with sharp, non-diagonal patterns**: these are interesting
-
-Write down which (layer, head) pairs look interesting before running any
-quantitative analysis. This is good scientific practice — it prevents
-p-hacking.
+In a notebook, `attention.plot_all()` draws every head. Note any heads that look
+interesting, but don't conclude anything yet: this shows where attention goes, not
+whether it matters.
 
 ---
 
-## Step 2: Test the induction hypothesis
+## Step 3: Locate the layer
 
-Do any heads show induction behaviour (attending to repeated patterns)?
+The Quickstart's logit lens already answered this. The prediction changes between
+row 0 and row 1, so the choice is made somewhere inside the first block. That block
+holds both an attention layer and a feed-forward network, so the question is still
+open.
+
+---
+
+## Step 4: Intervene
+
+Patch each kind of component in turn:
 
 ```python
-from kamui.mechinterp import InductionHeadDetector
-
-detector = InductionHeadDetector(model)
-scores = detector.score_all_heads()
-detector.plot_scores(scores)
-
-# Print top-5 heads by induction score
-top5 = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:5]
-for (layer, head), score in top5:
-    print(f"  Layer {layer}, Head {head}: {score:.3f}")
+for component in ("attn", "ffn"):
+    print(component, patcher.patch_all_layers(ids, corrupted, component=component).effects)
+# attn tensor([-5.1457e-03,  3.7194e-05])
+# ffn tensor([0.9948, 0.0767])
 ```
 
-Expected output:
-```
-  Layer 1, Head 2: 0.831
-  Layer 1, Head 5: 0.714
-  Layer 1, Head 0: 0.612
-  Layer 0, Head 3: 0.094   ← this is probably a prev-token head
-  Layer 2, Head 1: 0.088
-```
-
----
-
-## Step 3: Verify causally with ablation
-
-Correlation is not causation. Verify that these heads actually drive
-in-context learning performance.
+Restoring attention does almost nothing, while restoring the first feed-forward
+network restores the answer. The first guess was wrong. Checking each attention head
+separately agrees:
 
 ```python
-induction_heads = [(l, h) for (l, h), s in scores.items() if s > 0.5]
-print(f"Induction heads: {induction_heads}")
-
-# Measure ICL degradation when induction heads are ablated
-baseline_icl  = detector.measure_icl(model)
-ablated_icl   = detector.ablate_and_measure(heads=induction_heads)
-
-degradation = (baseline_icl - ablated_icl) / baseline_icl
-print(f"ICL degradation from ablating induction heads: {degradation:.1%}")
-# Expected: 40-70% degradation
+heads = patcher.patch_all_heads(ids, corrupted)
+print(heads.effects.abs().max())  # under 0.02: no single head matters here
 ```
-
-If degradation is large (> 30%), you have causal evidence that these heads
-drive in-context learning.
 
 ---
 
-## Step 4: Use logit lens to understand what they contribute
+## Step 5: Confirm with a different method
+
+One method can mislead you, so test the finding a second way. Ablation switches a
+component off and measures what the model loses, which is a different question from
+"does restoring it fix a broken input?"
 
 ```python
-from kamui.mechinterp import LogitLens
+from kamui.mechinterp import CircuitAblator
 
-lens = LogitLens(model, tokenizer)
+target = tokenizer.encode("mat . the ")[0]
 
-# Use a sequence with a repeated pattern
-result = lens.run("cat dog cat dog cat dog cat")
-result.plot()
+
+def score(logits):
+    return logits[0, -1, target].item()
+
+
+ablator = CircuitAblator(model)
+for name in (
+    "blocks.0.attn.output",
+    "blocks.0.ffn.output",
+    "blocks.1.attn.output",
+    "blocks.1.ffn.output",
+):
+    print(f"{name:22} {ablator.ablate([name], ids, score).delta:+.2f}")
+# blocks.0.attn.output   -0.25
+# blocks.0.ffn.output    -10.00
+# blocks.1.attn.output   -0.02
+# blocks.1.ffn.output    -0.13
 ```
 
-Look for: at which layer does the repeated pattern start to be predicted
-correctly? Is it the same layer where induction heads live?
+The two methods agree. Zeroing the first feed-forward network drops the answer's
+logit by 10, from 7.16 to −2.84, and no other component moves it by more than 0.25.
 
 ---
 
-## Step 5: Document your findings
+## Step 6: Find the smallest circuit
 
-Create an experiment folder:
+`find_minimal_circuit` removes components greedily for as long as the score stays
+above a chosen fraction of the full model's score.
+
+```python
+from kamui.mechinterp.circuits import find_minimal_circuit
+
+circuit = find_minimal_circuit(model, ids, score, threshold=0.8)
+print(circuit)  # ['blocks.0.ffn.output']
+print(find_minimal_circuit(model, ids, score, threshold=0.95))
+# ['blocks.0.ffn.output', 'blocks.1.ffn.output']
+```
+
+One component keeps 80% of the score, and adding the second block's feed-forward
+network keeps 95%.
+
+---
+
+## Step 7: Test a rival explanation
+
+Induction heads are the most famous circuit in transformers. Could one be involved?
+
+```python
+detector = kamui.InductionHeadDetector(model, token_ids=set(tokens))
+scores = detector.score_all_heads(prefix_len=12, n_samples=4)
+print(max(scores.values()))  # about 0.08, on a scale where 1 is a perfect induction head
+```
+
+No head comes close. That's a real result: nothing in this corpus rewards copying
+earlier text, and a null result ruled out a tempting story.
+
+---
+
+## Step 8: Write it down
+
+Create a folder for the experiment:
 
 ```bash
-cp -r research/experiments/README.md research/experiments/exp_001_induction_circuit/
+mkdir research/experiments/exp_001_first_block_ffn
 ```
 
-Fill in:
-- `config.yaml`: exact model config used
-- `results.json`: induction scores, ICL degradation percentages
-- `notes.md`: your observations
+Add the three files described in
+[`research/experiments/README.md`](https://github.com/RithvikReddy0-0/KAMUI/blob/main/research/experiments/README.md):
 
-Add an entry to `research/RESEARCH_LOG.md`.
+- `config.yaml`: the exact model and experiment settings
+- `results.json`: the patching effects, ablation deltas and induction scores
+- `notes.md`: what you expected, what happened, and what you would test next
+
+Then add an entry to `research/RESEARCH_LOG.md`.
 
 ---
 
-## What you just did
+## What you found
 
-You completed a full mechanistic interpretability investigation:
+On this input, for this model, the first block's feed-forward network maps the last
+token to the kind of word that comes next. Attention isn't needed, because the last
+token alone carries the information.
 
-1. ✅ Observed attention patterns (exploratory)
-2. ✅ Formed a hypothesis (induction heads at layer 1)
-3. ✅ Quantified the hypothesis (induction scores)
-4. ✅ Tested causality (ablation experiment)
-5. ✅ Interpreted the finding (logit lens)
-6. ✅ Documented everything (research log)
-
-This is the same workflow used in published interpretability papers.
-The next step is to find a circuit that has *not* been documented before —
-something specific to your model or your training data.
+Keep the claim that narrow. It comes from one input to a tiny model, so a stronger
+claim needs many inputs. [Activation Patching](../mechinterp/activation_patching.md)
+and [Circuit Analysis](../mechinterp/circuits.md) describe the tools in more detail.

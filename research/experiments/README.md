@@ -1,8 +1,8 @@
 # Experiment Template
 
-Copy this folder for each new experiment:
+Create a folder for each new experiment:
 ```bash
-cp -r research/experiments/TEMPLATE research/experiments/exp_NNN_short_description
+mkdir research/experiments/exp_NNN_short_description
 ```
 
 Each experiment folder must contain exactly three files:
@@ -23,7 +23,7 @@ experiment:
   id: "exp_001"
   name: "induction_head_detection"
   hypothesis: "Induction heads appear in layers 1-2 of the 6-layer small model"
-  checkpoint: "checkpoints/small/step_005000.pt"
+  checkpoint: "checkpoints/small/step_0005000.pt"
 
 model:
   n_layers: 6
@@ -77,7 +77,7 @@ This becomes the Discussion section of your paper.
 ## Experiment exp_001 — Induction Head Detection
 
 **Date:** YYYY-MM-DD
-**Time to run:** ~3 minutes on T4
+**Time to run:** ~3 minutes
 
 ### What I expected
 Induction heads at layers 1-2, consistent with Olsson et al. (2022).

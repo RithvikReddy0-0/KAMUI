@@ -14,10 +14,10 @@ early, others require the full depth of the network.
 
 ## How it works
 
-```
+```text
 for layer L in 0..n_layers:
-    residual_L = residual_stream_at_layer_L      # (B, S, D)
-    probs_L    = softmax(unembed(final_ln(residual_L)))  # (B, S, V)
+    residual_L = residual_stream_at_layer_L      # (1, S, D)
+    probs_L    = softmax(unembed(final_ln(residual_L)))  # (1, S, V)
 ```
 
 The key insight: the final unembedding matrix can be applied to the
@@ -28,19 +28,26 @@ the residual stream always has shape `(B, S, D)` — the same at every layer.
 
 ## Usage
 
+The examples on this page use the `model` and `tokenizer` from the
+[Quickstart](../tutorials/quickstart.md). `run` takes token IDs, not a string.
+
 ```python
+import torch
+
 from kamui.mechinterp import LogitLens
 
 lens = LogitLens(model, tokenizer)
 
 # Run on a prompt
-result = lens.run("The Eiffel Tower is located in the city of")
+ids = torch.tensor(tokenizer.encode("the cat sat on the "))
+result = lens.run(ids)
 
 # Plot: rows = layers, columns = token positions, cell = top-1 prediction
 result.plot()
 
 # Inspect a specific position across all layers
-result.plot_position(pos=-1)   # last token — where the prediction is made
+last = len(result.tokens) - 1
+result.plot_position(pos=last)   # last token — where the prediction is made
 
 # Get raw probabilities
 probs = result.probs    # (n_layers+1, S, V)
@@ -50,17 +57,21 @@ probs = result.probs    # (n_layers+1, S, V)
 
 ## What to look for
 
-**Factual completion** (`"The Eiffel Tower is in [Paris]"`):
-- At layer 0: model predicts high-frequency tokens (function words)
-- At layer L*: the correct answer (Paris) first appears in top-3
-- At final layer: Paris dominates
+Row 0 is the residual stream before any block has run, and row L is the stream after
+L blocks.
 
-The layer L* where the correct answer emerges is where the factual
-association is likely stored. Use `ActivationPatcher` to verify causally.
+In the Quickstart's model, row 0 predicts a verb phrase and row 1 predicts an object,
+so the choice is made in the first block.
 
-**Syntax vs. semantics**:
-- Part-of-speech patterns typically emerge early (layers 0–2)
-- Semantic content emerges later (layers 3+)
+In a model large enough to store facts, you can run the same check on a factual
+completion:
+
+- Early layers predict high-frequency tokens, such as function words
+- At some layer L\*, the correct answer first appears near the top
+- By the final layer, the correct answer dominates
+
+The layer L\* is a good place to look for the association, but the lens only shows
+where an answer becomes visible. Use `ActivationPatcher` to verify it causally.
 
 ---
 
@@ -73,6 +84,9 @@ association is likely stored. Use `ActivationPatcher` to verify causally.
 | `probs` | `(L+1, S, V)` | Probability distribution at each layer and position |
 | `top_tokens` | `(L+1, S, k)` | Top-k predicted tokens at each layer and position |
 | `tokens` | `list[str]` | Input token strings (for axis labels) |
+| `tokenizer` | | The tokenizer, used to label plots |
+
+`run` takes `top_k` to set `k`, which defaults to 5.
 
 ---
 

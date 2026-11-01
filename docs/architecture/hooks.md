@@ -3,8 +3,11 @@
 ## Purpose
 
 The hook system is the bridge between the model and every interpretability
-tool in KAMUI. It allows any activation in the forward pass to be captured,
-inspected, and replaced — without touching a single line of model code.
+tool in KAMUI. It allows any activation in the forward pass to be captured
+and inspected — without touching a single line of model code.
+
+The examples on this page use a `model` and a batch of token IDs, `token_ids`, of
+shape `(1, S)`.
 
 ---
 
@@ -13,13 +16,18 @@ inspected, and replaced — without touching a single line of model code.
 PyTorch's `register_forward_hook` is powerful but dangerous:
 
 ```python
+def my_fn(module, inputs, output):
+    print(output.shape)
+
+
 # Dangerous pattern — hook handle must be manually removed
-handle = model.blocks[3].attn.register_forward_hook(my_fn)
-logits = model(ids)
+handle = model.blocks[1].attn.register_forward_hook(my_fn)
+logits = model(token_ids)
 handle.remove()    # ← easy to forget; silent memory leak if missed
 ```
 
 If `.remove()` is never called:
+
 - Hooks accumulate across forward passes
 - The activation cache grows unboundedly
 - Old activations contaminate new runs
@@ -39,14 +47,14 @@ exit — including on exceptions.
 from kamui.hooks import HookManager
 
 with HookManager(model) as hooks:
-    hooks.attach("blocks.3.attn", point="output")
-    hooks.attach("blocks.3.attn", point="weights")
+    hooks.attach("blocks.1.attn", point="output")
+    hooks.attach("blocks.1.attn", point="weights")
     hooks.attach("embed",         point="output")
 
     logits = model(token_ids)
 
-    attn_out  = hooks.get("blocks.3.attn.output")   # (B, S, D)
-    attn_wts  = hooks.get("blocks.3.attn.weights")  # (B, H, S, S)
+    attn_out  = hooks.get("blocks.1.attn.output")   # (B, S, D)
+    attn_wts  = hooks.get("blocks.1.attn.weights")  # (B, H, S, S)
     embedding = hooks.get("embed.output")           # (B, S, D)
 
 # ← All hooks removed here, even if an exception occurred inside
@@ -72,16 +80,15 @@ Hook points are strings in the format `"<module_path>.<io>"`.
 
 ### All valid hook points (small config, 6 layers)
 
-```
+```text
 embed.output                      # combined token + position embeddings  (B, S, D)
 
-blocks.0.attn.pre_softmax         # attention scores before masking       (B, H, S, S)
 blocks.0.attn.weights             # attention probabilities (post-softmax)(B, H, S, S)
 blocks.0.attn.output              # projected attention output             (B, S, D)
 blocks.0.ffn.mid                  # FFN hidden activations (post-GELU)    (B, S, F)
 blocks.0.ffn.output               # FFN output                             (B, S, D)
 
-blocks.1.attn.pre_softmax         # (same pattern for layers 1–5)
+blocks.1.attn.weights             # (same pattern for layers 1–5)
 ...
 blocks.5.ffn.output
 
@@ -97,32 +104,39 @@ from kamui.model import ModelConfig
 config = ModelConfig.from_yaml("configs/small.yaml")
 all_points = HookRegistry.all_points(config)
 print(all_points)
-# ["embed.output", "blocks.0.attn.pre_softmax", ..., "unembed.input"]
+# ['embed.output', 'blocks.0.attn.weights', ..., 'unembed.input']
 ```
 
 ---
 
 ## Activation Patching via Hooks
 
-The hook system supports output replacement: a hook can return a tensor
-to *replace* the module's output instead of just observing it. This is
-the mechanism behind `ActivationPatcher`.
+`HookManager` only observes. Replacing an activation uses a plain PyTorch hook: if a
+forward hook returns a tensor, that tensor replaces the module's output.
+`ActivationPatcher` does this, and removes the hook in a `finally` block:
 
 ```python
-# Internal mechanism used by ActivationPatcher
-def patch_fn(module, input, output):
+# First capture the clean activation
+with HookManager(model) as hooks:
+    hooks.attach("blocks.1.attn", point="output")
+    model(clean_ids.unsqueeze(0))
+    clean_activation = hooks.get("blocks.1.attn.output")
+
+
+def patch_fn(module, inputs, output):
     return clean_activation   # replaces the corrupted output
 
-handle = model.blocks[3].attn.register_forward_hook(patch_fn)
+
+# Then run the corrupted input with that activation swapped in
+handle = model.blocks[1].attn.register_forward_hook(patch_fn)
+try:
+    patched_logits = model(corrupted_ids.unsqueeze(0))
+finally:
+    handle.remove()
 ```
 
-`HookManager` exposes this cleanly:
-
-```python
-with HookManager(model) as hooks:
-    hooks.attach("blocks.3.attn", point="output", replace_with=clean_tensor)
-    patched_logits = model(corrupted_ids)
-```
+Use [`ActivationPatcher`](../mechinterp/activation_patching.md) rather than writing
+this yourself unless you need something it doesn't offer.
 
 ---
 

@@ -333,7 +333,7 @@ llama_style = dataclasses.replace(base, positional_encoding="rope", normalizatio
 | Piece | What it does |
 |-------|--------------|
 | `Trainer` / `TrainingConfig` | Explicit loop: gradient accumulation, clipping, cosine LR with warmup |
-| `kamui.training.distributed` | Multi-GPU data parallelism (DDP), verified with two real processes |
+| `kamui.training.distributed` | Data parallelism (DDP), verified with two real CPU processes. GPUs aren't supported yet |
 | `kamui.training.EMA` | Exponential moving average of the weights for evaluation / sampling |
 | `model.set_gradient_checkpointing(True)` | Recompute block activations in backward: ~17x less activation memory for ~14% more time |
 | `compute_perplexity` / `compute_accuracy` | Perplexity and top-k next-token accuracy |
@@ -429,7 +429,7 @@ pre-commit install
 |---------|-------|--------|
 | **v0.1** | Core transformer + 6 interpretability tools | ✅ Released |
 | **v0.2** | Sparse autoencoders, gradient attribution, RoPE | ✅ Released |
-| **v0.3** | Multi-GPU training (DDP) | ✅ Released |
+| **v0.3** | Distributed data parallelism (DDP), on CPU processes | ✅ Released |
 | **v0.4** | SAE feature analysis & steering, RMSNorm, weight EMA, decoding controls, accuracy metric, KV-cache, gradient checkpointing | ✅ Released |
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history, and the
@@ -466,7 +466,7 @@ RoPE Positional Encoding ██████████  ✅ complete
 Gradient Attribution     ██████████  ✅ complete
 Sparse Autoencoders      ██████████  ✅ complete
 ── v0.3 ─────────────────────────────────────────
-Multi-GPU Training (DDP) ██████████  ✅ complete
+DDP on CPU Processes     ██████████  ✅ complete
 ── v0.4 ─────────────────────────────────────────
 SAE Feature Analysis     ██████████  ✅ complete
 Steering & Ablation      ██████████  ✅ complete
@@ -478,7 +478,7 @@ KV-Cache Generation      ██████████  ✅ complete
 Gradient Checkpointing   ██████████  ✅ complete
 ```
 
-The suite has 932 tests at ~99% coverage, with `ruff`, `black`, and `mypy` all clean.
+The suite has 979 tests at ~99% coverage, with `ruff`, `black`, and `mypy` all clean.
 
 </details>
 

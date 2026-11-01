@@ -2,9 +2,7 @@
 # Purpose: primary development and interpretability research config
 # Use case: training the model used for all interpretability experiments
 #
-# Parameter count: ~12M
-# Training time: ~2 hours on a single T4 GPU (TinyStories, 5000 steps)
-# Expected val perplexity: ~8–12 on TinyStories
+# Parameter count: 6,901,760
 
 model:
   n_layers: 6

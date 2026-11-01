@@ -49,9 +49,11 @@ A learned lookup table of shape `(V, D)`. Each token ID maps to a
 
 ### Positional Encoding
 
-`kamui/model/embedding.py` → `LearnedPositionalEncoding` or `SinusoidalPositionalEncoding`
+`kamui/model/embedding.py` → `LearnedPositionalEncoding`, `SinusoidalPositionalEncoding`
+or `RotaryPositionalEncoding`
 
-KAMUI supports both. Default: learned (matches GPT-2).
+KAMUI supports all three through `positional_encoding`. Default: `"learned"`
+(matches GPT-2).
 
 **Sinusoidal** (Vaswani et al., 2017):
 ```
@@ -63,11 +65,16 @@ Fixed, non-trainable. Can extrapolate beyond training length in principle.
 **Learned**: a trainable `(context_length, D)` matrix. Better empirical
 performance but cannot extrapolate.
 
+**Rotary** (RoPE, Su et al., 2021): instead of adding a position vector to the
+embedding, it rotates the queries and keys inside attention, so attention sees
+relative positions. It's used by LLaMA, and it requires an even `d_head`.
+
 ### Pre-Layer Normalisation
 
-`kamui/model/normalization.py` → `LayerNorm`
+`kamui/model/normalization.py` → `LayerNorm` or `RMSNorm`
 
-Applied **before** each sublayer (Pre-LN), not after (Post-LN).
+Applied **before** each sublayer (Pre-LN), not after (Post-LN). Set
+`normalization="rmsnorm"` to use RMSNorm, which LLaMA uses. Default: `"layernorm"`.
 
 ```
 x = x + Attention(LayerNorm(x))     # ← Pre-LN: norm before sublayer
@@ -98,9 +105,10 @@ output = Concat(head_1, ..., head_H) W_O
 (not `0` — that is a common bug). This ensures `exp(-inf) = 0`, so
 future tokens receive zero attention weight.
 
-**KAMUI always returns attention weights**: the forward pass returns
-`(output, weights)`, not just `output`. This is a deliberate design
-choice — interpretability tools need the weights without hooks.
+**Attention weights on request**: `MultiHeadAttention` returns only its output by
+default, and `(output, weights)` with `return_weights=True`. Interpretability tools
+read the weights through the `blocks.{i}.attn.weights`
+[hook point](hooks.md) instead, so nothing in the model has to change.
 
 ### Feed-Forward Network
 
@@ -110,15 +118,16 @@ choice — interpretability tools need the weights without hooks.
 FFN(x) = W_2 · GELU(W_1 · x + b_1) + b_2
 ```
 
-Where `W_1 ∈ R^(D × 4D)` and `W_2 ∈ R^(4D × D)`. The 4× expansion factor
-is standard since Vaswani et al. (2017).
+Where `W_1 ∈ R^(D × F)` and `W_2 ∈ R^(F × D)`, and `F` is `d_ff`. A 4× expansion
+has been standard since Vaswani et al. (2017), and the `nano`, `small` and `medium`
+configs use it.
 
-GELU activation: smooth, non-monotonic, provides a learned soft gate.
-All modern transformers use GELU or SwiGLU. KAMUI uses GELU for simplicity.
+GELU activation: smooth and non-monotonic. Many modern transformers use GELU or
+SwiGLU. KAMUI uses GELU for simplicity.
 
 ### Final LayerNorm + Unembedding
 
-After all blocks, a final LayerNorm is applied to the residual stream,
+After all blocks, a final normalisation layer is applied to the residual stream,
 then a linear projection maps `D → V` to produce logits.
 
 **Weight tying**: the unembedding matrix is the **transpose** of the token
@@ -140,9 +149,8 @@ FFN (`W_2`) are initialised with reduced scale:
 std = 0.02 / sqrt(2 * n_layers)
 ```
 
-This prevents residual stream variance from growing with depth. Without it,
-a 12-layer model has activation variance ~12× larger at the output than
-the embedding, causing instability.
+This prevents residual stream variance from growing with depth, because every block
+adds to the same stream.
 
 ---
 
@@ -157,12 +165,22 @@ the embedding, causing instability.
 | `d_ff` | 1024 | FFN hidden dimension (`4 × d_model`) |
 | `vocab_size` | 8192 | BPE vocabulary |
 | `context_length` | 256 | Maximum sequence length |
-| Parameters | ~12M | Total trainable parameters |
+| Parameters | 6,901,760 | Total trainable parameters |
+
+---
+
+## Runtime Options
+
+| Option | How to use it | What it does |
+|--------|---------------|--------------|
+| KV-cache | `kamui.generate(..., use_cache=True)` or `model.new_cache()` | Reuses past keys and values, so generation only computes the newest token |
+| Gradient checkpointing | `model.set_gradient_checkpointing(True)` | Recomputes block activations during the backward pass, trading time for memory |
 
 ---
 
 ## References
 
 - Vaswani et al. (2017). Attention Is All You Need. https://arxiv.org/abs/1706.03762
+- Su et al. (2021). Roformer: Enhanced Transformer with Rotary Position Embedding. https://arxiv.org/abs/2104.09118
 - Xiong et al. (2020). On Layer Normalization in the Transformer Architecture. https://arxiv.org/abs/2002.04745
 - Elhage et al. (2021). A Mathematical Framework for Transformer Circuits. https://transformer-circuits.pub/2021/framework/

@@ -1,7 +1,7 @@
 """Distributed data-parallel (DDP) training for KAMUITransformer.
 
-Data parallelism trains one model across ``world_size`` processes (typically
-one per GPU).  Every process holds a full replica of the model and processes a
+Data parallelism trains one model across ``world_size`` processes.  Every
+process holds a full replica of the model and processes a
 **different shard** of each global batch; after the backward pass the processes
 **average their gradients** with an all-reduce, so every replica takes an
 identical optimiser step and the weights stay in sync.
@@ -42,13 +42,11 @@ Data:
     - ``shard_indices``          — this rank's slice of ``range(n)``.
     - ``DistributedDataLoader``  — a ``DataLoader`` that yields only this rank's shard.
 
-Typical worker (one process per GPU), driven by ``spawn_workers``::
+Typical worker, driven by ``spawn_workers``::
 
     def worker(rank, world_size, tokens, config):
-        init_process_group(rank, world_size, backend="nccl")
-        torch.cuda.set_device(rank)
-        model = KAMUITransformer(config).cuda(rank)
-        model = wrap_ddp(model, device_ids=[rank])
+        init_process_group(rank, world_size, backend="gloo")
+        model = wrap_ddp(KAMUITransformer(config))
         loader = DistributedDataLoader(TextDataset(tokens, config.context_length),
                                        batch_size=16)
         trainer = Trainer(model, loader, config=TrainingConfig(max_steps=2000))
@@ -58,13 +56,17 @@ Typical worker (one process per GPU), driven by ``spawn_workers``::
                             trainer.scheduler, trainer.step)
         destroy_process_group()
 
-    spawn_workers(worker, world_size=torch.cuda.device_count(), args=(tokens, config))
+    spawn_workers(worker, world_size=2, args=(tokens, config))
+
+This has only been run across CPU processes with ``gloo``.  ``Trainer`` doesn't
+move batches to the model's device yet, so a model on a GPU fails at its first
+forward pass, and the ``nccl`` path is untested.
 
 Because ``wrap_ddp`` leaves ``model.parameters()`` and the forward signature
 unchanged, the existing ``Trainer`` and ``build_optimizer`` work on a wrapped
 model with no changes.
 
-Implemented in: v0.3 (multi-GPU training).
+Implemented in: v0.3 (distributed training, tested on CPU).
 """
 
 from __future__ import annotations

@@ -8,6 +8,7 @@ read, modify, and understand in full.
 
 This is intentional. Understanding *how* a model is trained is as important
 as understanding its architecture. The training loop teaches:
+
 - How gradients accumulate and apply
 - Why learning rate warmup matters
 - What gradient clipping does and why
@@ -15,47 +16,64 @@ as understanding its architecture. The training loop teaches:
 
 ---
 
-## The Loop (pseudocode)
+## The Loop
 
-```python
-for step in range(max_steps):
+This is what `Trainer.train(n_steps)` does, in `kamui/training/trainer.py`:
 
-    # ── 1. Get a batch ───────────────────────────────────────────────────
-    input_ids, target_ids = next(dataloader)   # (B, S) each
+```text
+for _ in range(n_steps):
+    optimizer.zero_grad()
 
-    # ── 2. Forward pass + loss ───────────────────────────────────────────
-    loss = model(input_ids, targets=target_ids)
-    loss = loss / grad_accum_steps             # scale for accumulation
+    # ── 1. Accumulate gradients over micro-batches ───────────────────────
+    for _ in range(grad_accum_steps):
+        inputs, targets = next(data)                # (B, S) each
+        loss = model(inputs, targets=targets)
+        (loss / grad_accum_steps).backward()        # scale for accumulation
 
-    # ── 3. Backward pass ─────────────────────────────────────────────────
-    loss.backward()
+    # ── 2. Clip, keeping the norm from before clipping ───────────────────
+    grad_norm = clip_grad_norm_(model.parameters(), max_grad_norm)
 
-    # ── 4. Gradient update (every grad_accum_steps micro-batches) ────────
-    if (step + 1) % grad_accum_steps == 0:
+    # ── 3. Apply the scheduled learning rate and update ──────────────────
+    set_lr(optimizer, scheduler.get_lr(step))
+    optimizer.step()
+    step += 1
 
-        grad_norm_pre  = compute_grad_norm(model)
-        clip_grad_norm_(model.parameters(), max_norm=grad_clip)
-        grad_norm_post = compute_grad_norm(model)
-
-        lr = scheduler.get_lr(step)
-        set_lr(optimiser, lr)
-
-        optimiser.step()
-        optimiser.zero_grad()
-
-    # ── 5. Logging ───────────────────────────────────────────────────────
-    if step % log_interval == 0:
-        log(step, loss, lr, grad_norm_pre, grad_norm_post, tokens_per_sec)
-
-    # ── 6. Evaluation ────────────────────────────────────────────────────
-    if step % eval_interval == 0:
-        val_loss = evaluate(model, val_dataloader)
-        log(step, val_loss=val_loss)
-
-    # ── 7. Checkpoint ────────────────────────────────────────────────────
-    if step % checkpoint_interval == 0:
-        save_checkpoint(model, optimiser, scheduler, step)
+    # ── 4. Record, and evaluate if it is time ────────────────────────────
+    record = {step, train_loss, lr, grad_norm}
+    if eval_interval and val_loader and step % eval_interval == 0:
+        record["val_loss"] = evaluate()
 ```
+
+---
+
+## Where Training Runs
+
+!!! warning "KAMUI trains on the CPU for now"
+    `Trainer` doesn't move batches to the model's device, and `kamui-train` never
+    moves the model off the CPU. A GPU therefore sits idle under `kamui-train`, and
+    putting the model on a GPU yourself fails at the first forward pass with a device
+    mismatch.
+
+    `kamui.training.distributed` has only been run across CPU processes with the
+    `gloo` backend, so it's tested as distributed training, not as GPU training.
+
+---
+
+## What `kamui-train` Reads
+
+`kamui-train` reads these keys from the YAML config:
+
+| Section | Keys |
+|---------|------|
+| `model` | Every key |
+| `training` | `batch_size`, `grad_accum_steps`, `max_steps`, `learning_rate`, `min_lr`, `warmup_steps`, `grad_clip`, `weight_decay`, `eval_interval` |
+| `data` | `train_split` |
+| `logging` | `output_dir` |
+
+The shipped configs also contain `betas`, `checkpoint_interval`, `mixed_precision`,
+`log_interval`, `data.dataset` and `data.seed`, which `kamui-train` doesn't read yet.
+It logs every step, saves one checkpoint when training finishes, and always trains
+its tokenizer from the corpus you pass with `--corpus`.
 
 ---
 
@@ -63,7 +81,7 @@ for step in range(max_steps):
 
 Linear warmup → cosine decay → floor.
 
-```
+```text
 if step < warmup_steps:
     lr = max_lr * (step / warmup_steps)
 
@@ -87,15 +105,15 @@ spikes. The model gently anneals into a low-loss minimum.
 ## Gradient Accumulation
 
 Gradient accumulation simulates a larger effective batch size without
-requiring additional GPU memory.
+requiring additional memory.
 
-```
+```text
 effective_batch_size = batch_size × grad_accum_steps
 ```
 
 With `batch_size=32` and `grad_accum_steps=4`, the effective batch is 128 —
 equivalent to loading 128 sequences at once but using only 32 sequences
-worth of GPU memory per step.
+worth of memory per micro-batch.
 
 **Correctness requirement**: the loss must be divided by `grad_accum_steps`
 before `.backward()`. Otherwise gradients are scaled by the number of
@@ -106,15 +124,17 @@ accumulation steps relative to a true large-batch run.
 ## Gradient Clipping
 
 ```python
-clip_grad_norm_(model.parameters(), max_norm=1.0)
+from torch.nn.utils import clip_grad_norm_
+
+grad_norm = clip_grad_norm_(model.parameters(), max_norm=1.0)
 ```
 
 Limits the L2 norm of the gradient vector. Prevents occasional large
 gradient updates (from difficult training examples) from destabilising
 the model.
 
-**Diagnostics**: KAMUI logs `grad_norm_pre_clip` at every update step.
-If this value is consistently above 5–10, the learning rate is likely
+**Diagnostics**: KAMUI records this pre-clip norm as `grad_norm` at every update
+step. If this value is consistently above 5–10, the learning rate is likely
 too high or the model is unstable.
 
 ---
@@ -127,11 +147,10 @@ parameter groups:
 | Group | Parameters | Weight decay |
 |-------|-----------|-------------|
 | Decayed | All weight matrices (ndim ≥ 2) | 0.1 |
-| Not decayed | Biases, LayerNorm γ/β (ndim < 2) | 0.0 |
+| Not decayed | Biases, normalisation parameters (ndim < 2) | 0.0 |
 
-Applying weight decay to biases and LayerNorm parameters is incorrect —
-they should be unconstrained. This separation is subtle but measurably
-improves training stability.
+Biases and normalisation parameters are left out because they should be
+unconstrained. This is the standard separation for transformers.
 
 ---
 
@@ -141,7 +160,8 @@ improves training stability.
 |---------|-------------|-----|
 | Loss doesn't decrease at all | Causal mask broken (future leakage) or zero LR | Check mask uses `-inf`; check warmup |
 | Loss decreases then explodes | LR too high | Lower `learning_rate` |
-| Loss decreases very slowly | LR too low or gradient vanishing | Raise LR; check `grad_norm_pre_clip` |
-| `grad_norm_pre_clip` > 10 consistently | LR too high | Lower LR; tighten `grad_clip` |
+| Loss decreases very slowly | LR too low or gradient vanishing | Raise LR; check `grad_norm` |
+| `grad_norm` > 10 consistently | LR too high | Lower LR; tighten `grad_clip` |
 | Val loss diverges from train loss | Overfitting | Add dropout; use larger dataset |
 | Loss is exactly `log(vocab_size)` after 200 steps | Gradient not flowing | Check `.backward()` is called |
+| `need at least context_length + 1 tokens` | Corpus too small for the vocabulary | Use a larger corpus or a smaller `vocab_size` |

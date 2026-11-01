@@ -21,32 +21,35 @@ follow patterns from the context without any weight updates.
 
 Induction is a two-component circuit:
 
-```
-Layer 0: "Previous token" head
+```text
+Earlier layer: "Previous token" head
     At position t: attends to position t-1
     Copies token[t-1] into the residual stream at position t
 
-Layer 1+: "Induction" head
+Later layer: "Induction" head
     At position t: uses the "what came before me?" information
     to attend back to the previous occurrence of token[t]
     Boosts the probability of whatever followed it
 ```
 
 The two heads must work together — neither alone produces induction
-behaviour. This is the first documented **circuit** in transformers.
+behaviour, so a model needs at least two layers.
 
 ---
 
 ## Detection
 
+The examples on this page use the `model` and `tokens` from the
+[Quickstart](../tutorials/quickstart.md).
+
 ```python
 from kamui.mechinterp import InductionHeadDetector
 
-detector = InductionHeadDetector(model)
+# Sample test sequences from tokens the model has seen
+detector = InductionHeadDetector(model, token_ids=set(tokens))
 
-# Score all (layer, head) pairs
-scores = detector.score_all_heads()
-# Returns: {(0,0): 0.04, (0,1): 0.07, (1,2): 0.83, (1,5): 0.71, ...}
+# Score all (layer, head) pairs: {(layer, head): score}, each in [0, 1]
+scores = detector.score_all_heads(prefix_len=12, n_samples=4)
 
 # Visualise
 detector.plot_scores(scores)
@@ -56,43 +59,49 @@ detector.plot_scores(scores)
 induction_heads = [(l, h) for (l, h), s in scores.items() if s > 0.5]
 ```
 
+Without `token_ids`, the detector samples from the whole vocabulary, including tokens
+the model never saw in training.
+
 ### The scoring method
 
-Construct sequences of the form `[random × 50][same random × 50]`.
-At each position `t` in the second half, measure the attention weight
-on position `t - prefix_length` (the "induction position").
+Construct sequences of the form `[prefix][same prefix]`, where the prefix has length
+`L` (`prefix_len`, which defaults to `context_length // 2`).
 
-A high average weight on the induction position = induction head.
+At position `t` in the second half, the current token last appeared at `t - L`, so
+what followed it is at `t - L + 1`. The score is the mean attention weight on that
+position, across every `t` in the second half and every sample.
+
+A high average weight on the induction position suggests an induction head.
 
 ---
 
 ## Causal verification
 
-Detection alone is correlation. Verify causally with ablation:
+Detection alone is correlation. Verify causally with ablation, which zeroes the
+chosen heads and measures the loss on the second half of a repeated sequence:
 
 ```python
-# How much does removing induction heads hurt in-context learning?
-baseline_icl = measure_icl(model)
+best_head = max(scores, key=scores.get)
 
-ablated_icl = detector.ablate_and_measure(
-    heads=induction_heads,
-    task="repeat_pattern",
-)
-
-print(f"ICL degradation: {(baseline_icl - ablated_icl) / baseline_icl:.1%}")
-# Expected: significant drop (30-70%) — induction heads drive ICL
+# Rise in in-context loss: above 0 means removing the head hurt
+print(detector.ablate_and_measure(heads=[best_head], prefix_len=12))
 ```
+
+If a head scores high and removing it barely changes the loss, the score alone isn't
+evidence of a circuit.
 
 ---
 
-## Expected findings in KAMUI small model
+## What KAMUI's models show so far
 
-Based on Olsson et al. (2022) and replications in similar-scale models:
+KAMUI has not yet produced a trustworthy induction head. The Quickstart's model peaks
+at a score of about 0.08, which makes sense because its corpus doesn't reward copying
+from context. Notebook
+[`05_induction_heads.ipynb`](https://github.com/RithvikReddy0-0/KAMUI/blob/main/notebooks/05_induction_heads.ipynb)
+reports the same null result.
 
-- Layer 0: contains "previous token" heads (low induction score, high
-  attention to position t-1)
-- Layer 1: contains induction heads (high induction score, > 0.5)
-- Layers 2+: may contain weaker induction heads or other circuits
+Olsson et al. (2022) found induction heads across a range of larger models. Treat their
+findings as what to look for, not as what a given KAMUI model will show.
 
 ---
 
