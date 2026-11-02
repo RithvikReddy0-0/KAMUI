@@ -380,6 +380,17 @@ class TestBPETokenizerEncode:
 
 
 class TestBPETokenizerDecode:
+    def test_a_split_character_raises_by_default(self) -> None:
+        tokenizer = BPETokenizer.train("é", vocab_size=258)  # no merges: one token per byte
+        with pytest.raises(ValueError, match="UTF-8"):
+            tokenizer.decode(tokenizer.encode("é")[:1])
+
+    def test_a_split_character_can_be_replaced(self) -> None:
+        tokenizer = BPETokenizer.train("é", vocab_size=258)
+        ids = tokenizer.encode("é")
+        assert tokenizer.decode(ids[:1], errors="replace") == "�"
+        assert tokenizer.decode(ids, errors="replace") == "é"
+
     def test_empty_list_returns_empty_string(self, tiny_tokenizer: BPETokenizer) -> None:
         assert tiny_tokenizer.decode([]) == ""
 

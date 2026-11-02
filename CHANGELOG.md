@@ -30,6 +30,11 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from the notebooks' tiny model.
 
 ### Fixed
+- `generate` and `kamui-eval --generate` crashed with `byte sequence is not valid
+  UTF-8` when a sampled token ended partway through a multi-byte character,
+  losing everything generated. They now keep the text and substitute U+FFFD,
+  using a new `errors` argument on `BPETokenizer.decode`, which stays strict by
+  default so the interpretability tools can still label raw byte tokens.
 - README Quickstart: `cd kamui` failed on case-sensitive filesystems, and the
   examples relied on a `data/corpus.txt` that isn't in the repository. The
   Quickstart now builds the story's model from scratch and every block runs

@@ -52,7 +52,7 @@ def text_to_bytes(text: str) -> list[int]:
     return list(text.encode("utf-8"))
 
 
-def bytes_to_text(byte_values: list[int]) -> str:
+def bytes_to_text(byte_values: list[int], errors: str = "strict") -> str:
     """Convert a list of UTF-8 byte values back to a Unicode string.
 
     This is the inverse of ``text_to_bytes``.  The round-trip
@@ -60,6 +60,8 @@ def bytes_to_text(byte_values: list[int]) -> str:
 
     Args:
         byte_values: A list of integers in [0, 255] representing UTF-8 bytes.
+        errors:      What to do with invalid UTF-8: ``"strict"`` raises, and
+            ``"replace"`` substitutes U+FFFD.
 
     Returns:
         The decoded Unicode string.
@@ -67,7 +69,7 @@ def bytes_to_text(byte_values: list[int]) -> str:
     Raises:
         TypeError: If ``byte_values`` is not a list, or any element is not an int.
         ValueError: If any element is outside [0, 255], or the byte sequence is
-            not valid UTF-8.
+            not valid UTF-8 and ``errors`` is ``"strict"``.
 
     Examples:
         >>> bytes_to_text([104, 105])
@@ -85,7 +87,7 @@ def bytes_to_text(byte_values: list[int]) -> str:
         if not (0 <= b <= 255):
             raise ValueError(f"byte_values[{i}] = {b} is out of range [0, 255]")
     try:
-        return bytes(byte_values).decode("utf-8")
+        return bytes(byte_values).decode("utf-8", errors=errors)
     except UnicodeDecodeError as e:
         raise ValueError(f"byte sequence is not valid UTF-8: {e}") from e
 

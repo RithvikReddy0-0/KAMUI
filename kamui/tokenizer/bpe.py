@@ -326,7 +326,7 @@ class BPETokenizer:
     # Decoding
     # ------------------------------------------------------------------
 
-    def decode(self, ids: list[int]) -> str:
+    def decode(self, ids: list[int], errors: str = "strict") -> str:
         """Decode a list of token IDs back to a string.
 
         The decode is lossless for any sequence produced by ``encode``:
@@ -335,15 +335,21 @@ class BPETokenizer:
         Special-token IDs are decoded back to their string representation
         (e.g. token 256 → ``"<|endoftext|>"``).
 
+        Tokens are bytes, so IDs that didn't come from ``encode`` can end partway
+        through a multi-byte character.  That raises by default; pass
+        ``errors="replace"`` to substitute U+FFFD instead.
+
         Args:
-            ids: A list of integer token IDs.
+            ids:    A list of integer token IDs.
+            errors: ``"strict"`` or ``"replace"``, for invalid UTF-8.
 
         Returns:
             The decoded string.
 
         Raises:
             TypeError:  If ``ids`` is not a list or any element is not an int.
-            ValueError: If any ID is outside [0, vocab_size).
+            ValueError: If any ID is outside [0, vocab_size), or the bytes are
+                invalid UTF-8 and ``errors`` is ``"strict"``.
         """
         if not isinstance(ids, list):
             raise TypeError(f"ids must be a list, got {type(ids)}")
@@ -360,14 +366,14 @@ class BPETokenizer:
             if token_id in self._id_to_special:
                 # Flush any buffered bytes before emitting the special token
                 if byte_buf:
-                    text_parts.append(bytes_to_text(byte_buf))
+                    text_parts.append(bytes_to_text(byte_buf, errors))
                     byte_buf = []
                 text_parts.append(self._id_to_special[token_id])
             else:
                 byte_buf.extend(self._vocab[token_id])
 
         if byte_buf:
-            text_parts.append(bytes_to_text(byte_buf))
+            text_parts.append(bytes_to_text(byte_buf, errors))
 
         return "".join(text_parts)
 

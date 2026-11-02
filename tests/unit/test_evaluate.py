@@ -27,6 +27,7 @@ from kamui.evaluate.perplexity import (
 )
 from kamui.model.config import ModelConfig
 from kamui.model.transformer import KAMUITransformer
+from kamui.tokenizer.bpe import BPETokenizer
 
 
 def _config(**overrides: object) -> ModelConfig:
@@ -309,6 +310,31 @@ class _DigitTokenizer:
 
 # Token 0 narrowly beats token 1; everything else is far behind (vocab of 8).
 _LOGITS = [1.0, 0.9, -10.0, -10.0, -10.0, -10.0, -10.0, -10.0]
+
+
+class TestSplitCharacters:
+    """A sampled byte token can end partway through a multi-byte character."""
+
+    @staticmethod
+    def _always_splits() -> tuple[_FixedLogitModel, BPETokenizer]:
+        tokenizer = BPETokenizer.train("é", vocab_size=258)
+        logits = [0.0] * tokenizer.vocab_size
+        logits[tokenizer.encode("é")[0]] = 5.0
+        return _FixedLogitModel(logits), tokenizer
+
+    def test_generate_keeps_its_text(self) -> None:
+        model, tokenizer = self._always_splits()
+        assert generate(model, tokenizer, "hi", max_new_tokens=2) == "hi��"
+
+    def test_generate_with_probs_keeps_its_text(self) -> None:
+        model, tokenizer = self._always_splits()
+        assert generate_with_probs(model, tokenizer, "hi", n_tokens=1).text == "hi�"
+
+    def test_an_impossible_token_still_raises(self) -> None:
+        tokenizer = BPETokenizer.train("é", vocab_size=258)
+        logits = [0.0] * tokenizer.vocab_size + [5.0]  # one past the vocabulary
+        with pytest.raises(ValueError, match="out of range"):
+            generate(_FixedLogitModel(logits), tokenizer, "hi", max_new_tokens=1)
 
 
 class TestRepetitionPenaltyMath:

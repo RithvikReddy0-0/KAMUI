@@ -62,7 +62,7 @@ class TokenizerLike(Protocol):
     def encode(self, text: str) -> list[int]:
         """Convert a string to token IDs."""
 
-    def decode(self, ids: list[int]) -> str:
+    def decode(self, ids: list[int], errors: str = "strict") -> str:
         """Convert token IDs back to a string."""
 
 
@@ -135,6 +135,18 @@ def _validate_sampling_args(
         raise ValueError(f"top_p must be in (0, 1], got {top_p}")
     if repetition_penalty <= 0:
         raise ValueError(f"repetition_penalty must be > 0, got {repetition_penalty}")
+
+
+def _decode_generated(tokenizer: TokenizerLike, ids: list[int]) -> str:
+    """Decode generated IDs, keeping the text if a sampled token splits a character.
+
+    Tokens are bytes, so a model can stop partway through a multi-byte character.
+    That shouldn't cost the caller everything it generated.
+    """
+    try:
+        return tokenizer.decode(ids)
+    except ValueError:
+        return tokenizer.decode(ids, errors="replace")
 
 
 def _sample_next(
@@ -250,7 +262,7 @@ def generate(
 
     if was_training:
         model.train()
-    return tokenizer.decode(tokens[0].tolist())
+    return _decode_generated(tokenizer, tokens[0].tolist())
 
 
 @torch.no_grad()
@@ -298,7 +310,7 @@ def generate_with_probs(
     if was_training:
         model.train()
     return GenerationResult(
-        text=tokenizer.decode(tokens[0].tolist()),
+        text=_decode_generated(tokenizer, tokens[0].tolist()),
         token_ids=generated,
         probs=torch.stack(step_probs),
     )
