@@ -595,6 +595,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Where Training Runs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checking-a-real-gpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking a Real GPU
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1254,6 +1271,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Where Training Runs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checking-a-real-gpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking a Real GPU
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1382,15 +1416,64 @@ as understanding its architecture. The training loop teaches:</p>
 </span></code></pre></div>
 <hr />
 <h2 id="where-training-runs">Where Training Runs<a class="headerlink" href="#where-training-runs" title="Permanent link">&para;</a></h2>
+<p>Move the model, and everything else follows it. <code>KAMUITransformer.forward</code> moves its
+inputs to the model's device, so token IDs can stay on the CPU, which is where they
+arrive from a tokenizer.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">kamui.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_device</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">get_device</span><span class="p">())</span>   <span class="c1"># CUDA, then Apple's MPS, then the CPU</span>
+</span></code></pre></div>
+<p>Move the model before you create a <code>Trainer</code> or an <code>EMA</code>, because an <code>EMA</code> keeps its
+copy of the weights on the device it started on.</p>
+<p><code>kamui-train</code> and <code>kamui-eval</code> pick the best device by default. Pass <code>--device cpu</code> or
+<code>--device cuda:1</code> to choose one.</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where it lives</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Token IDs and targets</td>
+<td>Anywhere: <code>forward</code> moves them to the model</td>
+</tr>
+<tr>
+<td>Tool results, such as <code>probs</code> and <code>weights</code></td>
+<td>The model's device, so call <code>.cpu()</code> before <code>.numpy()</code></td>
+</tr>
+<tr>
+<td><code>collect_activations</code> and <code>LinearProbe</code> features</td>
+<td>The CPU, because they can outgrow a GPU's memory</td>
+</tr>
+<tr>
+<td><code>SparseAutoencoder</code></td>
+<td>Its own device: activations are moved to it</td>
+</tr>
+</tbody>
+</table>
 <div class="admonition warning">
-<p class="admonition-title">KAMUI trains on the CPU for now</p>
-<p><code>Trainer</code> doesn't move batches to the model's device, and <code>kamui-train</code> never
-moves the model off the CPU. A GPU therefore sits idle under <code>kamui-train</code>, and
-putting the model on a GPU yourself fails at the first forward pass with a device
-mismatch.</p>
-<p><code>kamui.training.distributed</code> has only been run across CPU processes with the
-<code>gloo</code> backend, so it's tested as distributed training, not as GPU training.</p>
+<p class="admonition-title">Not yet run on a real GPU</p>
+<p>CI has no GPU, so KAMUI's GPU support has only been tested on a simulated one.
+<code>tests/simulated_gpu.py</code> runs every tool on the CPU while enforcing CUDA's rules
+about devices. That catches tensors on the wrong device, but it can't find a
+problem with real hardware.</p>
+<p>Distributed training has run across two CPU processes with <code>gloo</code>. It has not
+been tested across several GPUs.</p>
 </div>
+<h3 id="checking-a-real-gpu">Checking a Real GPU<a class="headerlink" href="#checking-a-real-gpu" title="Permanent link">&para;</a></h3>
+<p><code>check_device.py</code> trains a small model on the device, runs every tool on it, compares
+its results with the CPU's, and prints PASS or FAIL for each:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>scripts/check_device.py<span class="w"> </span>--device<span class="w"> </span>cuda
+</span></code></pre></div>
+<p>To try it for free on Google Colab, choose <strong>Runtime &gt; Change runtime type &gt; T4 GPU</strong>,
+then run this in a cell:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>!git clone https://github.com/RithvikReddy0-0/KAMUI
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>%cd KAMUI
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>!pip install -q -e ".[all]"
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>!python scripts/check_device.py
+</span></code></pre></div>
 <hr />
 <h2 id="what-kamui-train-reads">What <code>kamui-train</code> Reads<a class="headerlink" href="#what-kamui-train-reads" title="Permanent link">&para;</a></h2>
 <p><code>kamui-train</code> reads these keys from the YAML config:</p>
@@ -1427,15 +1510,15 @@ its tokenizer from the corpus you pass with <code>--corpus</code>.</p>
 <hr />
 <h2 id="learning-rate-schedule">Learning Rate Schedule<a class="headerlink" href="#learning-rate-schedule" title="Permanent link">&para;</a></h2>
 <p>Linear warmup → cosine decay → floor.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>if step &lt; warmup_steps:
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    lr = max_lr * (step / warmup_steps)
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>elif step &lt; max_steps:
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    progress = (step - warmup_steps) / (max_steps - warmup_steps)
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    lr = min_lr + 0.5 * (max_lr - min_lr) * (1 + cos(π * progress))
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>else:
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    lr = min_lr
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>if step &lt; warmup_steps:
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    lr = max_lr * (step / warmup_steps)
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>elif step &lt; max_steps:
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    progress = (step - warmup_steps) / (max_steps - warmup_steps)
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    lr = min_lr + 0.5 * (max_lr - min_lr) * (1 + cos(π * progress))
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>else:
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    lr = min_lr
 </span></code></pre></div>
 <p><strong>Why warmup?</strong> At step 0, gradients are large and noisy. Starting at
 <code>max_lr</code> causes loss spikes or divergence. Warmup lets the model reach a
@@ -1446,7 +1529,7 @@ spikes. The model gently anneals into a low-loss minimum.</p>
 <h2 id="gradient-accumulation">Gradient Accumulation<a class="headerlink" href="#gradient-accumulation" title="Permanent link">&para;</a></h2>
 <p>Gradient accumulation simulates a larger effective batch size without
 requiring additional memory.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>effective_batch_size = batch_size × grad_accum_steps
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>effective_batch_size = batch_size × grad_accum_steps
 </span></code></pre></div>
 <p>With <code>batch_size=32</code> and <code>grad_accum_steps=4</code>, the effective batch is 128 —
 equivalent to loading 128 sequences at once but using only 32 sequences
@@ -1456,9 +1539,9 @@ before <code>.backward()</code>. Otherwise gradients are scaled by the number of
 accumulation steps relative to a true large-batch run.</p>
 <hr />
 <h2 id="gradient-clipping">Gradient Clipping<a class="headerlink" href="#gradient-clipping" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">clip_grad_norm_</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">grad_norm</span> <span class="o">=</span> <span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">clip_grad_norm_</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">grad_norm</span> <span class="o">=</span> <span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 </span></code></pre></div>
 <p>Limits the L2 norm of the gradient vector. Prevents occasional large
 gradient updates (from difficult training examples) from destabilising
