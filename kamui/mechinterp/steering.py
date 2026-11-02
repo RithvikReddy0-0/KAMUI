@@ -262,7 +262,7 @@ class FeatureSteerer:
         self.model.eval()
         baseline_logits = self.model(ids)
 
-        add = coefficient * direction.to(baseline_logits.dtype)
+        add = coefficient * direction.to(baseline_logits)
         module = self._resolve(hook_point.rsplit(".", 1)[0])
         handle = module.register_forward_hook(_steering_hook(add, position))
         try:
@@ -333,7 +333,7 @@ class FeatureSteerer:
                 not shape ``(d_model,)``.
         """
         self._validate(hook_point, direction)
-        add = coefficient * direction.detach().to(next(self.model.parameters()).dtype)
+        add = coefficient * direction.detach().to(next(self.model.parameters()))
         module = self._resolve(hook_point.rsplit(".", 1)[0])
         handle = module.register_forward_hook(_steering_hook(add, position=None))
         try:
@@ -385,7 +385,7 @@ class FeatureSteerer:
             return activations
         coded = sae.encode(activations)  # (..., n_features)
         contribution = coded[..., feature_list] @ sae.W_dec[feature_list]  # (..., d_model)
-        return activations - contribution
+        return activations - contribution.to(activations.device)
 
     @torch.no_grad()
     def ablate_features(

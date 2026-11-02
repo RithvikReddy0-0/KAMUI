@@ -48,14 +48,56 @@ for _ in range(n_steps):
 
 ## Where Training Runs
 
-!!! warning "KAMUI trains on the CPU for now"
-    `Trainer` doesn't move batches to the model's device, and `kamui-train` never
-    moves the model off the CPU. A GPU therefore sits idle under `kamui-train`, and
-    putting the model on a GPU yourself fails at the first forward pass with a device
-    mismatch.
+Move the model, and everything else follows it. `KAMUITransformer.forward` moves its
+inputs to the model's device, so token IDs can stay on the CPU, which is where they
+arrive from a tokenizer.
 
-    `kamui.training.distributed` has only been run across CPU processes with the
-    `gloo` backend, so it's tested as distributed training, not as GPU training.
+```python
+from kamui.utils import get_device
+
+model.to(get_device())   # CUDA, then Apple's MPS, then the CPU
+```
+
+Move the model before you create a `Trainer` or an `EMA`, because an `EMA` keeps its
+copy of the weights on the device it started on.
+
+`kamui-train` and `kamui-eval` pick the best device by default. Pass `--device cpu` or
+`--device cuda:1` to choose one.
+
+| What | Where it lives |
+|------|----------------|
+| Token IDs and targets | Anywhere: `forward` moves them to the model |
+| Tool results, such as `probs` and `weights` | The model's device, so call `.cpu()` before `.numpy()` |
+| `collect_activations` and `LinearProbe` features | The CPU, because they can outgrow a GPU's memory |
+| `SparseAutoencoder` | Its own device: activations are moved to it |
+
+!!! warning "Not yet run on a real GPU"
+    CI has no GPU, so KAMUI's GPU support has only been tested on a simulated one.
+    `tests/simulated_gpu.py` runs every tool on the CPU while enforcing CUDA's rules
+    about devices. That catches tensors on the wrong device, but it can't find a
+    problem with real hardware.
+
+    Distributed training has run across two CPU processes with `gloo`. It has not
+    been tested across several GPUs.
+
+### Checking a Real GPU
+
+`check_device.py` trains a small model on the device, runs every tool on it, compares
+its results with the CPU's, and prints PASS or FAIL for each:
+
+```bash
+python scripts/check_device.py --device cuda
+```
+
+To try it for free on Google Colab, choose **Runtime > Change runtime type > T4 GPU**,
+then run this in a cell:
+
+```text
+!git clone https://github.com/RithvikReddy0-0/KAMUI
+%cd KAMUI
+!pip install -q -e ".[all]"
+!python scripts/check_device.py
+```
 
 ---
 

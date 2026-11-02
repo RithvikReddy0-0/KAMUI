@@ -12,9 +12,9 @@ to the section on real text.
 Follow the install step in the [Quickstart](quickstart.md), and run these commands from
 the repository root.
 
-!!! warning "KAMUI trains on the CPU for now"
-    A GPU won't be used, even if you have one. See
-    [Where Training Runs](../architecture/training.md#where-training-runs).
+!!! note "Using a GPU"
+    `kamui-train` uses the best device it finds, but KAMUI hasn't been run on a real
+    GPU yet. See [Where Training Runs](../architecture/training.md#where-training-runs).
 
 ---
 

@@ -10,6 +10,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- GPU support. `KAMUITransformer.forward` moves its inputs to the model's device,
+  so tools and scripts only ever move the model, and `kamui-train` and `kamui-eval`
+  take `--device`, defaulting to the best one available. This has been tested on a
+  simulated GPU, not yet on real hardware.
+- `kamui-check-device` (`scripts/check_device.py`): trains a small model on a
+  device, runs every tool on it, and compares its results with the CPU's. This is
+  how to check real hardware, and it works on a free Colab GPU.
+- `tests/simulated_gpu.py`: a `TorchFunctionMode` that runs on the CPU but enforces
+  CUDA's device rules, so `tests/integration/test_devices.py` can run those same
+  checks in CI, which has no GPU. Undoing any of the 23 device fixes fails a test.
+- `resolve_device` and `module_device` in `kamui.utils`.
 - `tests/integration/test_readme.py`: runs the README Quickstart exactly as
   written and checks each chapter's claims on the resulting model, so the
   front page can't go stale unnoticed. It asserts the claims rather than exact
@@ -54,10 +65,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   report what KAMUI has measured, which is no trustworthy induction head yet.
 - Corrected the parameter counts in `configs/`, and removed their unmeasured
   training times and perplexity targets.
-- Corrected the GPU claims. `Trainer` doesn't move batches to the model's device
-  and `kamui-train` never leaves the CPU, so DDP is now described as what has
-  been tested: two CPU processes. The documentation also lists the YAML keys
-  `kamui-train` ignores, and warns that its BPE trainer is slow on large corpora.
+- Corrected the multi-GPU claims. KAMUI couldn't run on a GPU at all, and DDP had
+  only been tested across CPU processes, which is how it's now described. The
+  documentation also lists the YAML keys `kamui-train` ignores, and warns that its
+  BPE trainer is slow on large corpora.
+- Resuming on a GPU: `EMA.load_state_dict` left the shadow weights on the CPU, so
+  the next update crashed.
+- `all_reduce_mean` couldn't reduce a plain number with the `nccl` backend.
 
 ---
 

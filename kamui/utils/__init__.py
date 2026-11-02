@@ -15,7 +15,13 @@ Implemented in: Phase 0 (stubs), progressively during Phases 1–4
 
 from kamui.utils.logging import TrainingLogger, get_logger, log_model_stats, parse_log_line
 from kamui.utils.plotting import heatmap, layer_plot, save_figure, token_heatmap
-from kamui.utils.reproducibility import get_device, set_deterministic, set_seed
+from kamui.utils.reproducibility import (
+    get_device,
+    module_device,
+    resolve_device,
+    set_deterministic,
+    set_seed,
+)
 
 __all__: list[str] = [
     "get_logger",
@@ -29,4 +35,6 @@ __all__: list[str] = [
     "set_seed",
     "set_deterministic",
     "get_device",
+    "resolve_device",
+    "module_device",
 ]

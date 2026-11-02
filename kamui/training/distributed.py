@@ -42,11 +42,13 @@ Data:
     - ``shard_indices``          — this rank's slice of ``range(n)``.
     - ``DistributedDataLoader``  — a ``DataLoader`` that yields only this rank's shard.
 
-Typical worker, driven by ``spawn_workers``::
+Typical worker (one process per GPU), driven by ``spawn_workers``::
 
     def worker(rank, world_size, tokens, config):
-        init_process_group(rank, world_size, backend="gloo")
-        model = wrap_ddp(KAMUITransformer(config))
+        init_process_group(rank, world_size, backend="nccl")
+        torch.cuda.set_device(rank)
+        model = KAMUITransformer(config).cuda(rank)
+        model = wrap_ddp(model, device_ids=[rank])
         loader = DistributedDataLoader(TextDataset(tokens, config.context_length),
                                        batch_size=16)
         trainer = Trainer(model, loader, config=TrainingConfig(max_steps=2000))
@@ -56,17 +58,17 @@ Typical worker, driven by ``spawn_workers``::
                             trainer.scheduler, trainer.step)
         destroy_process_group()
 
-    spawn_workers(worker, world_size=2, args=(tokens, config))
+    spawn_workers(worker, world_size=torch.cuda.device_count(), args=(tokens, config))
 
-This has only been run across CPU processes with ``gloo``.  ``Trainer`` doesn't
-move batches to the model's device yet, so a model on a GPU fails at its first
-forward pass, and the ``nccl`` path is untested.
+For CPU processes, use ``backend="gloo"`` and leave out the ``cuda`` lines.  The
+test suite runs ``gloo`` with real processes.  The ``nccl`` path is exercised on
+one GPU by ``kamui-check-device``; a run across several GPUs is still untested.
 
 Because ``wrap_ddp`` leaves ``model.parameters()`` and the forward signature
 unchanged, the existing ``Trainer`` and ``build_optimizer`` work on a wrapped
 model with no changes.
 
-Implemented in: v0.3 (distributed training, tested on CPU).
+Implemented in: v0.3.
 """
 
 from __future__ import annotations
@@ -218,6 +220,13 @@ def unwrap_model(model: nn.Module) -> nn.Module:
     return model.module if isinstance(model, DistributedDataParallel) else model
 
 
+def _collective_device() -> torch.device:
+    """Return where a plain number must go to be reduced: NCCL only takes GPU tensors."""
+    if dist.get_backend() == "nccl":
+        return torch.device("cuda", torch.cuda.current_device())
+    return torch.device("cpu")
+
+
 def all_reduce_mean(value: float | Tensor) -> float | Tensor:
     """Average a scalar / tensor across all ranks (identity when not initialised).
 
@@ -235,7 +244,7 @@ def all_reduce_mean(value: float | Tensor) -> float | Tensor:
         tensor = value.detach().clone()
         dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
         return tensor / world_size
-    tensor = torch.tensor(float(value))
+    tensor = torch.tensor(float(value), device=_collective_device())
     dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
     return (tensor / world_size).item()
 

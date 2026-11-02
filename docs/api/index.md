@@ -83,3 +83,11 @@ distributed-training helpers live in `kamui.training`.
 ::: kamui.evaluate.generation.generate
 
 ::: kamui.evaluate.calibration.expected_calibration_error
+
+## Devices
+
+::: kamui.utils.reproducibility.get_device
+
+::: kamui.utils.reproducibility.resolve_device
+
+::: kamui.utils.reproducibility.module_device

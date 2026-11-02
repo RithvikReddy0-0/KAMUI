@@ -156,7 +156,7 @@ class InductionHeadDetector:
                 keys = queries - prefix_len + 1
                 for i in range(n_layers):
                     w = hooks.get(f"blocks.{i}.attn.weights")[0]  # (H, S, S)
-                    totals[i] += w[:, queries, keys].mean(dim=-1)
+                    totals[i] += w[:, queries, keys].mean(dim=-1).cpu()
 
         totals /= n_samples
         return {
@@ -280,4 +280,4 @@ class InductionHeadDetector:
         # Predict tokens at positions prefix_len..2L-1 from their predecessors.
         preds = logits[0, prefix_len - 1 : -1]  # (L, V)
         targets = ids[0, prefix_len:]  # (L,)
-        return F.cross_entropy(preds, targets).item()
+        return F.cross_entropy(preds, targets.to(preds.device)).item()

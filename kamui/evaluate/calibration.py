@@ -57,7 +57,7 @@ def _validate_probs_labels(probs: Tensor, labels: Tensor, n_bins: int) -> None:
 def _bin_stats(probs: Tensor, labels: Tensor, n_bins: int) -> tuple[Tensor, Tensor, Tensor]:
     """Return per-bin (confidence, accuracy, count) for top-1 predictions."""
     confidence, prediction = probs.max(dim=-1)
-    correct = (prediction == labels).float()
+    correct = (prediction == labels.to(prediction.device)).float()
 
     edges = torch.linspace(0.0, 1.0, n_bins + 1)
     conf_mean = torch.zeros(n_bins)
@@ -175,7 +175,7 @@ def temperature_scaling(
             inputs, targets = batch[:, :-1], batch[:, 1:]
         logits = model(inputs)
         all_logits.append(logits.reshape(-1, logits.shape[-1]))
-        all_targets.append(targets.reshape(-1))
+        all_targets.append(targets.to(logits.device).reshape(-1))
     if was_training:
         model.train()
     if not all_logits:

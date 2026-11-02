@@ -73,6 +73,7 @@ from kamui.model.embedding import Embedding
 from kamui.model.init_weights import init_weights
 from kamui.model.kv_cache import KVCache
 from kamui.model.normalization import build_norm
+from kamui.utils.reproducibility import module_device
 
 
 class KAMUITransformer(nn.Module):
@@ -145,6 +146,9 @@ class KAMUITransformer(nn.Module):
     ) -> Tensor:
         """Run the model.
 
+        ``token_ids`` and ``targets`` can be on any device: they are moved to the
+        model's own, so tools and scripts only ever move the model.
+
         Args:
             token_ids: Integer tensor of shape ``(B, S)``.
             targets:   Optional next-token labels of shape ``(B, S)``.  When
@@ -167,7 +171,7 @@ class KAMUITransformer(nn.Module):
                 f"cache has {len(cache.layers)} layers but the model has {len(self.blocks)}"
             )
         offset = cache.length if cache is not None else 0
-        x = self.embed(token_ids, offset)  # (B, S, D)
+        x = self.embed(token_ids.to(module_device(self)), offset)  # (B, S, D)
         for i, block in enumerate(self.blocks):
             x = self._run_block(block, x, cache, i)  # (B, S, D)
         x = self.final_ln(x)  # (B, S, D)
@@ -185,7 +189,9 @@ class KAMUITransformer(nn.Module):
             )
 
         # Cross-entropy over all positions; flatten batch and sequence.
-        loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), targets.reshape(-1))
+        loss = F.cross_entropy(
+            logits.reshape(-1, logits.shape[-1]), targets.to(logits.device).reshape(-1)
+        )
         return loss
 
     # ------------------------------------------------------------------

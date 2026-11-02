@@ -333,7 +333,8 @@ llama_style = dataclasses.replace(base, positional_encoding="rope", normalizatio
 | Piece | What it does |
 |-------|--------------|
 | `Trainer` / `TrainingConfig` | Explicit loop: gradient accumulation, clipping, cosine LR with warmup |
-| `kamui.training.distributed` | Data parallelism (DDP), verified with two real CPU processes. GPUs aren't supported yet |
+| `model.to(device)` / `kamui-check-device` | Run on a GPU: inputs follow the model. Tested on a simulated GPU, not yet on real hardware |
+| `kamui.training.distributed` | Data parallelism (DDP), verified with two real CPU processes. Not yet run across GPUs |
 | `kamui.training.EMA` | Exponential moving average of the weights for evaluation / sampling |
 | `model.set_gradient_checkpointing(True)` | Recompute block activations in backward: ~17x less activation memory for ~14% more time |
 | `compute_perplexity` / `compute_accuracy` | Perplexity and top-k next-token accuracy |
@@ -478,7 +479,7 @@ KV-Cache Generation      ██████████  ✅ complete
 Gradient Checkpointing   ██████████  ✅ complete
 ```
 
-The suite has 979 tests at ~99% coverage, with `ruff`, `black`, and `mypy` all clean.
+The suite has 1,050 tests at ~99% coverage, with `ruff`, `black`, and `mypy` all clean.
 
 </details>
 

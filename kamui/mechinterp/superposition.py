@@ -142,12 +142,13 @@ class SparseAutoencoder(nn.Module):
         """Encode activations to sparse, non-negative feature coefficients.
 
         Args:
-            x: Activations of shape ``(..., d_model)``.
+            x: Activations of shape ``(..., d_model)``, on any device (they are
+                moved to the SAE's).
 
         Returns:
             Feature activations of shape ``(..., n_features)`` (>= 0 via ReLU).
         """
-        return torch.relu((x - self.b_dec) @ self.W_enc + self.b_enc)
+        return torch.relu((x.to(self.b_dec.device) - self.b_dec) @ self.W_enc + self.b_enc)
 
     def decode(self, features: Tensor) -> Tensor:
         """Reconstruct activations from feature coefficients.
@@ -175,7 +176,7 @@ class SparseAutoencoder(nn.Module):
             An ``SAELoss`` with ``total``, ``reconstruction``, and ``sparsity``.
         """
         reconstruction, features = self.forward(x)
-        recon = F.mse_loss(reconstruction, x)
+        recon = F.mse_loss(reconstruction, x.to(reconstruction.device))
         sparsity = features.abs().mean()
         return SAELoss(
             total=recon + self.l1_coeff * sparsity, reconstruction=recon, sparsity=sparsity
@@ -240,7 +241,8 @@ def collect_activations(
     """Cache activations at ``hook_point`` over ``sequences`` into an ``(N, d_model)`` matrix.
 
     Every ``(B, S, d_model)`` capture is flattened to ``(B*S, d_model)`` and the
-    results are concatenated — one row per token — ready for SAE training.
+    results are concatenated — one row per token — ready for SAE training.  They
+    are kept on the CPU, because this matrix can outgrow a GPU's memory.
 
     Args:
         model:     A ``KAMUITransformer``.
@@ -248,7 +250,7 @@ def collect_activations(
         sequences: Iterable of token-ID tensors ``(S,)`` or ``(B, S)``.
 
     Returns:
-        A ``(N, d_model)`` tensor of activations.
+        A ``(N, d_model)`` tensor of activations, on the CPU.
 
     Raises:
         ValueError: If ``sequences`` is empty.
@@ -262,7 +264,7 @@ def collect_activations(
             hooks.attach(module_path, point)
             model(batch)
             activation = hooks.get(hook_point)  # (B, S, d_model)
-        rows.append(activation.reshape(-1, activation.shape[-1]))
+        rows.append(activation.reshape(-1, activation.shape[-1]).cpu())
     if not rows:
         raise ValueError("sequences produced no activations")
     return torch.cat(rows, dim=0)
@@ -360,7 +362,7 @@ def sae_feature_metrics(sae: SparseAutoencoder, activations: Tensor) -> SAEMetri
     reconstruction, features = sae.forward(activations)
     active = features > 0  # ReLU output: active iff strictly positive
     return SAEMetrics(
-        reconstruction_mse=F.mse_loss(reconstruction, activations).item(),
+        reconstruction_mse=F.mse_loss(reconstruction, activations.to(reconstruction.device)).item(),
         dead_feature_fraction=(~active.any(dim=0)).float().mean().item(),
         mean_l0=active.float().sum(dim=-1).mean().item(),
         mean_l1=features.abs().sum(dim=-1).mean().item(),

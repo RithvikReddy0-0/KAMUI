@@ -16,6 +16,7 @@ from kamui.model.transformer import KAMUITransformer
 from kamui.tokenizer.bpe import BPETokenizer
 from kamui.training.checkpointing import load_model_only
 from kamui.utils.logging import get_logger
+from kamui.utils.reproducibility import resolve_device
 
 logger = get_logger("kamui.eval")
 
@@ -29,6 +30,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--generate", type=str, default=None, help="prompt to continue")
     parser.add_argument("--max-new-tokens", type=int, default=50)
     parser.add_argument("--strategy", type=str, default="nucleus")
+    parser.add_argument("--device", type=str, default="auto", help="'auto', 'cpu', 'cuda', ...")
     return parser.parse_args(argv)
 
 
@@ -39,7 +41,7 @@ def main(argv: list[str] | None = None) -> None:
     config = ModelConfig.from_yaml(args.config)
     model = KAMUITransformer(config)
     load_model_only(args.checkpoint, model)
-    model.eval()
+    model.to(resolve_device(args.device)).eval()
     logger.info("loaded %s", args.checkpoint)
     logger.info("model parameters: %s", f"{model.num_parameters():,}")
 

@@ -26,6 +26,7 @@ from torch import nn
 
 from kamui.model.config import ModelConfig
 from kamui.model.transformer import KAMUITransformer
+from kamui.training import distributed
 from kamui.training.data import TextDataset
 from kamui.training.distributed import (
     DistributedDataLoader,
@@ -43,6 +44,7 @@ from kamui.training.distributed import (
     unwrap_model,
     wrap_ddp,
 )
+from tests.simulated_gpu import GPU, SimulatedGPU
 
 
 def _file_init_method() -> str:
@@ -103,6 +105,23 @@ class TestQueriesWithoutGroup:
 
     def test_destroy_is_noop_without_group(self) -> None:
         destroy_process_group()  # must not raise
+
+    def test_all_reduce_mean_sends_plain_numbers_to_the_gpu_on_nccl(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen: list[torch.device] = []
+
+        def fake_all_reduce(tensor: torch.Tensor, op: object) -> None:
+            seen.append(tensor.device)
+
+        monkeypatch.setattr(distributed, "is_dist_available_and_initialized", lambda: True)
+        monkeypatch.setattr(distributed.dist, "get_backend", lambda: "nccl")
+        monkeypatch.setattr(distributed.dist, "get_world_size", lambda: 1)
+        monkeypatch.setattr(distributed.dist, "all_reduce", fake_all_reduce)
+        monkeypatch.setattr(torch.cuda, "current_device", lambda: 0)
+        with SimulatedGPU():
+            assert all_reduce_mean(3.5) == 3.5
+        assert seen == [GPU]
 
     def test_all_reduce_mean_identity_without_group(self) -> None:
         assert all_reduce_mean(3.5) == 3.5

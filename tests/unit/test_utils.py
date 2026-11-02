@@ -23,7 +23,13 @@ from kamui.utils.logging import (  # noqa: E402
     parse_log_line,
 )
 from kamui.utils.plotting import heatmap, layer_plot, save_figure, token_heatmap  # noqa: E402
-from kamui.utils.reproducibility import get_device, set_deterministic, set_seed  # noqa: E402
+from kamui.utils.reproducibility import (  # noqa: E402
+    get_device,
+    module_device,
+    resolve_device,
+    set_deterministic,
+    set_seed,
+)
 
 # ===========================================================================
 # Reproducibility
@@ -48,6 +54,19 @@ class TestReproducibility:
         assert not torch.backends.cudnn.benchmark
         set_deterministic(False)  # restore default for other tests
         assert not torch.backends.cudnn.deterministic
+
+    def test_resolve_device_auto_uses_get_device(self) -> None:
+        assert resolve_device("auto") == get_device()
+        assert resolve_device() == get_device()
+
+    def test_resolve_device_accepts_any_name(self) -> None:
+        assert resolve_device("cuda:1") == torch.device("cuda", 1)
+
+    def test_module_device_reads_the_parameters(self) -> None:
+        assert module_device(torch.nn.Linear(2, 2).to("meta")).type == "meta"
+
+    def test_module_device_defaults_to_the_cpu(self) -> None:
+        assert module_device(torch.nn.Identity()) == torch.device("cpu")
 
     def test_get_device_returns_device(self) -> None:
         device = get_device()

@@ -24,7 +24,7 @@ from kamui.training.checkpointing import save_checkpoint
 from kamui.training.data import DataLoader, TextDataset, train_val_split
 from kamui.training.trainer import Trainer, TrainingConfig
 from kamui.utils.logging import get_logger
-from kamui.utils.reproducibility import set_seed
+from kamui.utils.reproducibility import resolve_device, set_seed
 
 logger = get_logger("kamui.train")
 
@@ -37,6 +37,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--steps", type=int, default=None, help="override training steps")
     parser.add_argument("--out", type=str, default=None, help="output directory")
     parser.add_argument("--seed", type=int, default=42, help="random seed")
+    parser.add_argument("--device", type=str, default="auto", help="'auto', 'cpu', 'cuda', ...")
     return parser.parse_args(argv)
 
 
@@ -91,8 +92,9 @@ def main(argv: list[str] | None = None) -> None:
         shuffle=False,
     )
 
-    model = KAMUITransformer(model_config)
-    logger.info("model parameters: %s", f"{model.num_parameters():,}")
+    device = resolve_device(args.device)
+    model = KAMUITransformer(model_config).to(device)
+    logger.info("model parameters: %s, on %s", f"{model.num_parameters():,}", device)
 
     trainer = Trainer(model, train_loader, val_loader=val_loader, config=training_config)
     n_steps = args.steps if args.steps is not None else training_config.max_steps

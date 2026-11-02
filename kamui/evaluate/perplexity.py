@@ -77,7 +77,7 @@ def compute_token_loss(model: KAMUITransformer, token_ids: Tensor) -> Tensor:
     logits = model(inputs)  # (1, S-1, V)
     loss = F.cross_entropy(
         logits.reshape(-1, logits.shape[-1]),
-        targets.reshape(-1),
+        targets.to(logits.device).reshape(-1),
         reduction="none",
     )
     if was_training:
@@ -135,7 +135,7 @@ def compute_sequence_perplexity(
         logits = model(inputs)
         nll_sum += F.cross_entropy(
             logits.reshape(-1, vocab),
-            targets.reshape(-1),
+            targets.to(logits.device).reshape(-1),
             reduction="sum",
             ignore_index=-100,
         ).item()
@@ -190,7 +190,7 @@ def compute_perplexity(
         logits = model(inputs)
         total_loss += F.cross_entropy(
             logits.reshape(-1, logits.shape[-1]),
-            targets.reshape(-1),
+            targets.to(logits.device).reshape(-1),
             reduction="sum",
         ).item()
         total_tokens += targets.numel()

@@ -59,3 +59,4 @@ mechinterp tools: LogitLens | ActivationPatcher | InductionHeadDetector | Circui
 | SAE feature analysis (interpretation, max-activating examples, co-occurrence, similarity) | v0.4 |
 | Steering, steered generation, contrastive vectors, feature ablation | v0.4 |
 | RMSNorm option, weight EMA, decoding controls, top-k accuracy, KV-cache, gradient checkpointing | v0.4 |
+| GPU support, tested on a simulated GPU so far | Unreleased |

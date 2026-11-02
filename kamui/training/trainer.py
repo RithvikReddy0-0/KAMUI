@@ -109,7 +109,7 @@ class Trainer:
         """Create a trainer.
 
         Args:
-            model:        The model to train.
+            model:        The model to train, already on its device.
             train_loader: An iterable of ``(inputs, targets)`` batches.
             val_loader:   Optional iterable for validation.
             config:       Training hyperparameters (defaults used if None).

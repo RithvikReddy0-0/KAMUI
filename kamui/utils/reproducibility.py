@@ -69,3 +69,21 @@ def get_device() -> torch.device:
         device = torch.device("cpu")
     logger.info("selected device: %s", device)
     return device
+
+
+def resolve_device(name: str = "auto") -> torch.device:
+    """Turn a device name into a device, where ``"auto"`` means ``get_device()``.
+
+    Args:
+        name: ``"auto"``, or any name ``torch.device`` accepts (``"cuda:1"``).
+
+    Returns:
+        The device.
+    """
+    return get_device() if name == "auto" else torch.device(name)
+
+
+def module_device(module: torch.nn.Module) -> torch.device:
+    """Return the device of ``module``'s parameters (the CPU if it has none)."""
+    parameter = next(module.parameters(), None)
+    return parameter.device if parameter is not None else torch.device("cpu")

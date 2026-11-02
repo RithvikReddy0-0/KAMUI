@@ -174,7 +174,7 @@ class LinearProbe:
                 hooks.attach(module_path, point)
                 self.model(batch)
                 feats.append(hooks.get(hook_point)[0, -1])
-        return torch.stack(feats)  # (N, D)
+        return torch.stack(feats).cpu()  # (N, D)
 
     @torch.no_grad()
     def _capture_streams(self, dataset: list[Tensor]) -> list[Tensor]:
@@ -202,7 +202,7 @@ class LinearProbe:
                         + hooks.get(f"blocks.{i}.ffn.output")
                     )
                     per_depth[i + 1].append(stream[0, -1])
-        return [torch.stack(feats) for feats in per_depth]
+        return [torch.stack(feats).cpu() for feats in per_depth]
 
     # ------------------------------------------------------------------
     # Public API

@@ -76,6 +76,7 @@ Changelog     = "https://github.com/RithvikReddy0-0/KAMUI/blob/main/CHANGELOG.md
 [project.scripts]
 kamui-train   = "kamui.scripts.train:main"
 kamui-eval    = "kamui.scripts.evaluate:main"
+kamui-check-device = "kamui.scripts.check_device:main"
 
 # ---------------------------------------------------------------------------
 # Tool configuration

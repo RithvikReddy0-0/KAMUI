@@ -62,7 +62,8 @@ def compute_accuracy(
         inputs, targets = _split_batch(batch)
         logits = model(inputs)  # (B, S, V)
         top = logits.topk(min(k, logits.shape[-1]), dim=-1).indices  # (B, S, k)
-        correct += int((top == targets.unsqueeze(-1)).any(dim=-1).sum().item())
+        hits = top == targets.to(top.device).unsqueeze(-1)
+        correct += int(hits.any(dim=-1).sum().item())
         total += targets.numel()
 
     if was_training:

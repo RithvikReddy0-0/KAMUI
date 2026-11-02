@@ -58,7 +58,8 @@ class EMA:
         """Start an EMA from the model's current weights.
 
         Args:
-            model: The model whose trainable parameters are tracked.
+            model: The model whose trainable parameters are tracked, already on
+                its device, because the shadow weights stay where they start.
             decay: Smoothing factor in ``[0, 1)``.
 
         Raises:
@@ -148,4 +149,5 @@ class EMA:
             raise ValueError("EMA state does not match: parameter names differ")
         self.decay = float(state["decay"])
         self.num_updates = int(state["num_updates"])
-        self.shadow = {name: tensor.clone() for name, tensor in shadow.items()}
+        for name, tensor in shadow.items():
+            self.shadow[name].copy_(tensor)  # stays on this EMA's device
