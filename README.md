@@ -479,7 +479,7 @@ KV-Cache Generation      ██████████  ✅ complete
 Gradient Checkpointing   ██████████  ✅ complete
 ```
 
-The suite has 1,050 tests at ~99% coverage, with `ruff`, `black`, and `mypy` all clean.
+The suite has 1,220 tests at ~99% coverage, with `ruff`, `black`, and `mypy` all clean.
 
 </details>
 

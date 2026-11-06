@@ -120,9 +120,10 @@ python scripts/train.py --config configs/nano.yaml --corpus data/your_text.txt
 
 Before you start a long run, know these limits:
 
-- **The tokenizer sets the pace.** It's pure Python and retrains on every run.
-  With a vocabulary of 4,096, 1 MB of text took about 14 minutes to train the
-  tokenizer and 4 more to encode on a laptop CPU, all before the first training step.
+- **The tokenizer retrains on every run.** With a vocabulary of 4,096, 1 MB of text
+  takes about 36 seconds to train the tokenizer and 10 more to encode on a laptop
+  CPU, before the first training step. Time and memory grow with the corpus, so
+  train on a slice of a very large dataset.
 - **The corpus must be large for its vocabulary.** A larger `vocab_size` lets BPE merge
   more, so a small corpus can collapse into very few tokens. A 21 KB corpus with
   `nano`'s vocabulary of 4,096 became 60 tokens, which stops training with

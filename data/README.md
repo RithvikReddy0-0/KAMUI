@@ -6,7 +6,7 @@ Download them using the scripts below.
 ## Datasets
 
 ### TinyShakespeare (1MB)
-Used for: nano config. Expect about 17 minutes of tokenizer work on a laptop CPU
+Used for: nano config. Expect about a minute of tokenizer work on a laptop CPU
 before training starts.
 ```bash
 curl -L -o data/tinyshakespeare.txt https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt

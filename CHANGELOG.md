@@ -35,6 +35,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   path can be tried in seconds on a CPU.
 
 ### Changed
+- BPE training and encoding are much faster, with identical results. On the same
+  100 KB, learning 3,838 merges went from 69.7 s to 1.6 s, and encoding from 38.6 s
+  to 0.33 s; 1 MB now takes about 46 seconds instead of about 17 minutes. The new
+  `kamui/tokenizer/merges.py` updates only the pairs each merge changes, and
+  `tests/unit/test_merges.py` checks it against the textbook loop, on 150 random
+  corpora and on real text. Existing tokenizers and checkpoints are unaffected.
 - README rewritten around an illustrated story: Kam, a stick figure, builds a
   language model, cuts windows into it, and investigates how it works, across
   ten comic strips in `docs/assets/story/`. Every number in the story comes
@@ -67,8 +73,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   training times and perplexity targets.
 - Corrected the multi-GPU claims. KAMUI couldn't run on a GPU at all, and DDP had
   only been tested across CPU processes, which is how it's now described. The
-  documentation also lists the YAML keys `kamui-train` ignores, and warns that its
-  BPE trainer is slow on large corpora.
+  documentation also lists the YAML keys `kamui-train` ignores.
 - Resuming on a GPU: `EMA.load_state_dict` left the shadow weights on the CPU, so
   the next update crashed.
 - `all_reduce_mean` couldn't reduce a plain number with the `nccl` backend.

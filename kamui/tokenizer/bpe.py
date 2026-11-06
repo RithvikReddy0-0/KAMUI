@@ -51,7 +51,8 @@ import json
 import re
 from pathlib import Path
 
-from kamui.tokenizer.utils import bytes_to_text, get_stats, merge_pair, text_to_bytes
+from kamui.tokenizer.merges import apply_merges, learn_merges
+from kamui.tokenizer.utils import bytes_to_text, text_to_bytes
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -137,7 +138,7 @@ class BPETokenizer:
     # ------------------------------------------------------------------
 
     @classmethod
-    def train(  # noqa: C901 — inherently branchy: corpus loading + BPE merge loop
+    def train(
         cls,
         corpus: str | Path,
         vocab_size: int,
@@ -152,7 +153,8 @@ class BPETokenizer:
         3. Reserve IDs for special tokens immediately after the 256 byte tokens.
         4. Iteratively find the most-frequent adjacent pair of IDs across the
            entire corpus, assign it a new merged ID, and update the corpus.
-           Repeat until ``vocab_size`` is reached.
+           Repeat until ``vocab_size`` is reached.  ``learn_merges`` does this
+           incrementally, with the same result as recounting every round.
 
         Args:
             corpus:        Path to the training corpus text file, or a raw string
@@ -220,36 +222,14 @@ class BPETokenizer:
         for i, tok in enumerate(special_tokens):
             vocab[_NUM_BYTE_TOKENS + i] = tok.encode("utf-8")
 
-        merges: list[tuple[int, int]] = []
-        num_merges = vocab_size - min_vocab
-
-        for merge_idx in range(num_merges):
-            if not sequences:
-                break
-
-            stats = get_stats(sequences)
-            if not stats:
-                break  # corpus too short to find more pairs
-
-            # Choose the most frequent pair; break ties deterministically by pair value
-            best_pair = max(stats, key=lambda p: (stats[p], p))
-            if stats[best_pair] < 2:
-                # Only unique pairs remain.  Merging count-1 pairs would just
-                # memorise the corpus (on a degenerate corpus it snowballs
-                # into a single token spanning the whole text), so stop here;
-                # the resulting vocabulary may be smaller than requested.
-                break
-            new_id = min_vocab + merge_idx
-
-            # Perform the merge across all sequences
-            sequences = [merge_pair(seq, best_pair, new_id) for seq in sequences]
-
-            # Record merge rule and vocab entry
-            merges.append(best_pair)
-            vocab[new_id] = vocab[best_pair[0]] + vocab[best_pair[1]]
-
-            if verbose and (merge_idx + 1) % 100 == 0:
-                print(f"  merge {merge_idx + 1}/{num_merges}: {best_pair} → {new_id}")
+        # Merge the most frequent pair, breaking ties by pair value, until the
+        # vocabulary is full or no pair occurs twice.  Merging pairs that occur
+        # once would just memorise the corpus (on a degenerate corpus it
+        # snowballs into a single token spanning the whole text), so the
+        # vocabulary may come out smaller than requested.
+        merges = learn_merges(sequences, vocab_size - min_vocab, min_vocab, verbose)
+        for index, (left, right) in enumerate(merges):
+            vocab[min_vocab + index] = vocab[left] + vocab[right]
 
         return cls(merges=merges, vocab=vocab, special_tokens=special_tokens)
 
@@ -310,17 +290,9 @@ class BPETokenizer:
         Returns:
             Merged token ID sequence.
         """
-        # One pass per merge rule, in training order, replacing every
-        # occurrence.  This is equivalent to repeatedly applying the highest-
-        # priority applicable merge: a pair learned at training step k can only
-        # involve tokens created by earlier merges, so by the time rule k is
-        # applied every occurrence of its pair already exists.  O(merges × S)
-        # instead of O(S) rescans per single replacement.
-        for pair, new_id in self._merge_map.items():
-            if len(ids) < 2:
-                break
-            ids = merge_pair(ids, pair, new_id)
-        return ids
+        # The same result as one ``merge_pair`` pass per rule in training order,
+        # without rescanning the whole sequence for every rule.
+        return apply_merges(ids, self._merge_map)
 
     # ------------------------------------------------------------------
     # Decoding

@@ -56,7 +56,6 @@ pytest tests/unit/ -v
 
 - Run `python scripts/check_device.py` on real GPUs and report what happens
 - Test distributed training across several GPUs
-- A faster BPE trainer, so larger corpora become practical
 - Reference training runs for the `nano`, `small` and `medium` configs
 - A KAMUI model with a verified induction head
 
