@@ -1405,9 +1405,10 @@ log .</code> If it does, training worked.</p>
 </span></code></pre></div>
 <p>Before you start a long run, know these limits:</p>
 <ul>
-<li><strong>The tokenizer sets the pace.</strong> It's pure Python and retrains on every run.
-  With a vocabulary of 4,096, 1 MB of text took about 14 minutes to train the
-  tokenizer and 4 more to encode on a laptop CPU, all before the first training step.</li>
+<li><strong>The tokenizer retrains on every run.</strong> With a vocabulary of 4,096, 1 MB of text
+  takes about 36 seconds to train the tokenizer and 10 more to encode on a laptop
+  CPU, before the first training step. Time and memory grow with the corpus, so
+  train on a slice of a very large dataset.</li>
 <li><strong>The corpus must be large for its vocabulary.</strong> A larger <code>vocab_size</code> lets BPE merge
   more, so a small corpus can collapse into very few tokens. A 21 KB corpus with
   <code>nano</code>'s vocabulary of 4,096 became 60 tokens, which stops training with
