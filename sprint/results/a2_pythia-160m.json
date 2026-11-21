@@ -1,0 +1,104 @@
+{
+ "model": "pythia-160m",
+ "note": "post-hoc control, not pre-registered",
+ "unmatched_pairs": 6966,
+ "mean_similarity": {
+  "variant": 0.42187122733165056,
+  "neighbour": 0.41977575153876573,
+  "control": -0.002898579821563684
+ },
+ "T_variant": {
+  "T": 0.8813199319807267,
+  "low": 0.8352746040482076,
+  "high": 0.931289312518235,
+  "n_words": 34
+ },
+ "T_neighbour": {
+  "T": 0.8628588486033439,
+  "low": 0.7376040794973698,
+  "high": 0.9275698541689441,
+  "n_words": 34
+ },
+ "examples": [
+  [
+   "ast",
+   "hest"
+  ],
+  [
+   "ast",
+   "amm"
+  ],
+  [
+   " Ast",
+   " Bra"
+  ],
+  [
+   "ast",
+   "hest"
+  ],
+  [
+   "ast",
+   "amm"
+  ],
+  [
+   " Ast",
+   " Bra"
+  ],
+  [
+   "ast",
+   "hest"
+  ],
+  [
+   "ast",
+   "amm"
+  ],
+  [
+   " Ast",
+   " Bra"
+  ],
+  [
+   " Road",
+   " Avenue"
+  ],
+  [
+   " Road",
+   " Avenue"
+  ],
+  [
+   " Road",
+   " Avenue"
+  ],
+  [
+   " two",
+   " three"
+  ],
+  [
+   "two",
+   "three"
+  ],
+  [
+   "Two",
+   "Three"
+  ],
+  [
+   " two",
+   " three"
+  ],
+  [
+   "two",
+   "three"
+  ],
+  [
+   "Two",
+   "Three"
+  ],
+  [
+   " two",
+   " three"
+  ],
+  [
+   "two",
+   "three"
+  ]
+ ]
+}

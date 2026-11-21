@@ -1,0 +1,104 @@
+{
+ "model": "gpt2",
+ "note": "post-hoc control, not pre-registered",
+ "unmatched_pairs": 6423,
+ "mean_similarity": {
+  "variant": 0.43213085329670703,
+  "neighbour": 0.43067543340926007,
+  "control": 0.008042746386520727
+ },
+ "T_variant": {
+  "T": 0.9051204199147345,
+  "low": 0.8800544273182818,
+  "high": 0.927420897900465,
+  "n_words": 98
+ },
+ "T_neighbour": {
+  "T": 0.611397189318526,
+  "low": 0.5533228658346767,
+  "high": 0.6663226524853401,
+  "n_words": 98
+ },
+ "examples": [
+  [
+   " over",
+   " of"
+  ],
+  [
+   " over",
+   " on"
+  ],
+  [
+   " Over",
+   " In"
+  ],
+  [
+   " over",
+   " of"
+  ],
+  [
+   " over",
+   " on"
+  ],
+  [
+   " Over",
+   " In"
+  ],
+  [
+   " over",
+   " of"
+  ],
+  [
+   " over",
+   " on"
+  ],
+  [
+   " Over",
+   " In"
+  ],
+  [
+   " buy",
+   " pay"
+  ],
+  [
+   " buy",
+   " pay"
+  ],
+  [
+   " buy",
+   " pay"
+  ],
+  [
+   " last",
+   " yesterday"
+  ],
+  [
+   "Last",
+   "Earlier"
+  ],
+  [
+   " last",
+   " yesterday"
+  ],
+  [
+   "Last",
+   "Earlier"
+  ],
+  [
+   " last",
+   " yesterday"
+  ],
+  [
+   "Last",
+   "Earlier"
+  ],
+  [
+   " league",
+   " NFL"
+  ],
+  [
+   " league",
+   " NFL"
+  ]
+ ]
+}
